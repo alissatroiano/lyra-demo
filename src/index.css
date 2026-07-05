@@ -1,1 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&display=swap');
 @import "tailwindcss";
+
+@theme {
+  --font-sans: "DM Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-serif: "Fraunces", Georgia, Cambria, serif;
+
+  --color-primary: #0f1117;
+  --color-secondary: #5a6478;
+  --color-muted: #9ca3af;
+
+  --color-surface-0: #f4f6fb;
+  --color-surface-1: #eef1f8;
+  --color-surface-2: #ffffff;
+
+  --color-teal-brand: #00c2b2;
+  --color-teal-dark: #1a4a45;
+  --color-teal-light: #e0faf8;
+  --color-teal-mid: #2ec4b8;
+
+  --color-gold-brand: #c97d10;
+  --color-gold-light: #fef3c7;
+}
+
+/* Float animations for mascot and interactive cards */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(2deg);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.02);
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 8s ease-in-out infinite;
+}
+
+/* Custom prints styling for classroom printables */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #worksheet-to-print, #worksheet-to-print * {
+    visibility: visible;
+  }
+  #worksheet-to-print {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+  #toggle-answers-btn, #print-worksheet-btn {
+    display: none !important;
+  }
+}
