@@ -26,14 +26,44 @@ import {
   Check,
   X,
   Play,
-  Upload
+  Upload,
+  Database,
+  Cloud,
+  LogIn,
+  LogOut,
+  Trash2
 } from "lucide-react";
 import { PRELOADED_LESSONS } from "./data/preloadedLessons";
 import { INITIAL_PROCESSED_LESSON } from "./data/initialProcessedLesson";
 import { ProcessedLesson, PreloadedLesson } from "./types";
 import InteractiveSlideshow from "./components/InteractiveSlideshow";
+import { useFirebase } from "./context/FirebaseContext";
 
 export default function App() {
+  const { 
+    user, 
+    signInWithGoogle, 
+    logOut, 
+    savedLessons, 
+    saveLessonToCloud, 
+    deleteLessonFromCloud, 
+    authLoading, 
+    dbLoading 
+  } = useFirebase();
+
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
+
+  const handleSaveToCloud = async () => {
+    try {
+      await saveLessonToCloud(lesson);
+      setSaveStatus("Saved to Cloud!");
+      setTimeout(() => setSaveStatus(null), 3000);
+    } catch (err: any) {
+      console.error("Failed to save lesson:", err);
+      alert("Failed to save lesson: " + err.message);
+    }
+  };
+
   // Selection and Input states
   const [selectedPreload, setSelectedPreload] = useState<string>("rocketry");
   const [customContent, setCustomContent] = useState<string>(PRELOADED_LESSONS[0]?.rawContent || "");
@@ -441,15 +471,51 @@ export default function App() {
           </div>
         </div>
 
-        {/* Educator badges */}
-        <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-50 border border-slate-200 rounded-full text-slate-700 text-[11px] font-medium shadow-2xs font-sans">
+        {/* Educator badges & Authentication */}
+        <div className="flex items-center gap-3.5 flex-wrap justify-end">
+          <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-slate-50 border border-slate-200 rounded-full text-slate-700 text-[11px] font-medium shadow-2xs font-sans">
             <BookOpen className="w-3.5 h-3.5 text-slate-500" />
             <span>STEM Classroom Suite</span>
           </div>
-          <div className="hidden md:flex items-center gap-1 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full text-emerald-800 text-[10px] font-semibold font-mono">
+          <div className="hidden lg:flex items-center gap-1 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full text-emerald-800 text-[10px] font-semibold font-mono">
             <span>Powered by Gemini 3.5 Flash</span>
           </div>
+
+          {/* Firebase Authentication Area */}
+          {authLoading ? (
+            <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin shrink-0" />
+          ) : user ? (
+            <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 p-1.5 pr-3.5 rounded-xl shadow-2xs shrink-0">
+              {user.photoURL ? (
+                <img referrerPolicy="no-referrer" src={user.photoURL} alt={user.displayName || 'User'} className="w-7 h-7 rounded-lg border border-emerald-200 object-cover shrink-0" />
+              ) : (
+                <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs shrink-0">
+                  {user.displayName?.[0]?.toUpperCase() || 'E'}
+                </div>
+              )}
+              <div className="hidden md:block">
+                <p className="text-[10px] font-bold text-slate-800 leading-tight truncate max-w-28">{user.displayName || 'Educator'}</p>
+                <p className="text-[8px] text-slate-400 font-mono leading-tight truncate max-w-28">{user.email}</p>
+              </div>
+              <button
+                type="button"
+                onClick={logOut}
+                className="p-1 hover:bg-rose-50 text-slate-400 hover:text-rose-600 rounded-md transition-all shrink-0"
+                title="Sign Out"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={signInWithGoogle}
+              className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white border border-slate-950 rounded-xl text-[11px] font-bold shadow-sm hover:shadow-md transition-all flex items-center gap-1.5 shrink-0"
+            >
+              <LogIn className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Sign In</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -743,6 +809,99 @@ export default function App() {
             </div>
           </div>
 
+          {/* Cloud Sync & Saved Lessons panel */}
+          <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2 font-sans">
+                <Database className="w-4.5 h-4.5 text-emerald-600" />
+                My Saved Lessons
+              </h3>
+              <span className="text-[10px] font-semibold text-slate-400 font-mono">CLOUDSYNC</span>
+            </div>
+
+            {authLoading ? (
+              <div className="flex items-center justify-center py-6">
+                <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : user ? (
+              <div className="space-y-2.5">
+                {savedLessons.length === 0 ? (
+                  <div className="text-center py-6 border border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                    <Cloud className="w-7 h-7 text-slate-300 mx-auto mb-1.5 animate-pulse" />
+                    <p className="text-xs font-semibold text-slate-600">No lessons saved yet</p>
+                    <p className="text-[10px] text-slate-400 leading-normal max-w-44 mx-auto mt-0.5 font-sans">
+                      Generate a lesson with AI and click "Save Current Lesson" to persist it in the cloud.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="max-h-60 overflow-y-auto pr-1 space-y-2">
+                    {savedLessons.map((saved) => (
+                      <div 
+                        key={saved.id}
+                        className="p-2.5 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-all flex justify-between items-center gap-3 group"
+                      >
+                        <div className="overflow-hidden flex-1">
+                          <p className="text-xs font-bold text-slate-800 truncate leading-snug">{saved.lessonTitle}</p>
+                          <p className="text-[9px] text-slate-400 font-mono mt-0.5 flex items-center gap-1">
+                            <Clock className="w-3.5 h-3.5 text-slate-300" /> {saved.duration} Block
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLesson(saved);
+                              setActiveTab("slides");
+                            }}
+                            className="px-2.5 py-1 bg-white hover:bg-emerald-50 text-emerald-700 border border-slate-200 hover:border-emerald-200 rounded-lg text-[10px] font-bold transition-all shadow-3xs cursor-pointer"
+                          >
+                            Load
+                          </button>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              if (confirm(`Are you sure you want to delete "${saved.lessonTitle}"?`)) {
+                                try {
+                                  await deleteLessonFromCloud(saved.id);
+                                } catch (err: any) {
+                                  alert("Failed to delete lesson: " + err.message);
+                                }
+                              }
+                            }}
+                            className="p-1.5 hover:bg-red-50 text-slate-400 hover:text-red-600 border border-transparent hover:border-red-100 rounded-lg transition-all cursor-pointer"
+                            title="Delete Lesson"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-4 border border-dashed border-slate-200 rounded-xl bg-slate-50 text-center space-y-3">
+                <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto shadow-3xs">
+                  <Cloud className="w-4.5 h-4.5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800">Classroom Cloud Saves</h4>
+                  <p className="text-[10px] text-slate-400 leading-relaxed mt-1 max-w-[190px] mx-auto font-sans">
+                    Sign in with your Google account to save custom plans, build histories, and load saved assets on any device.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={signInWithGoogle}
+                  className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-[11px] font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <LogIn className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Sign In with Google</span>
+                </button>
+              </div>
+            )}
+          </div>
+
         </div>
 
         {/* Right Hand: Active Lesson Workspace & Demo Preview (8 cols) */}
@@ -751,7 +910,7 @@ export default function App() {
           {/* Active Lesson Meta Header */}
           <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500/5 to-teal-500/5 rounded-full blur-2xl pointer-events-none" />
-            <div className="space-y-1 z-10">
+            <div className="space-y-1 z-10 flex-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[10px] font-mono font-bold tracking-wider text-emerald-600 bg-emerald-50 border border-emerald-100/80 px-2.5 py-0.5 rounded-full uppercase">
                   ACTIVE AI GENERATED PLAN
@@ -767,6 +926,35 @@ export default function App() {
               <p className="text-xs sm:text-sm text-slate-500 leading-relaxed font-sans max-w-2xl">
                 {lesson.summary}
               </p>
+            </div>
+
+            {/* Cloud Save / Sign In CTA */}
+            <div className="shrink-0 z-10 flex flex-col items-stretch sm:items-end gap-2 w-full md:w-auto">
+              {user ? (
+                <button
+                  type="button"
+                  onClick={handleSaveToCloud}
+                  disabled={dbLoading}
+                  className="px-4.5 py-2.5 bg-gradient-to-tr from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white rounded-xl text-xs font-bold shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Cloud className="w-4 h-4 text-emerald-200" />
+                  {dbLoading ? 'Saving...' : 'Save Current Lesson'}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={signInWithGoogle}
+                  className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200 rounded-xl text-xs font-bold shadow-2xs hover:shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <LogIn className="w-4 h-4 text-emerald-500" />
+                  Sign In to Save Lesson
+                </button>
+              )}
+              {saveStatus && (
+                <span className="text-[10px] font-medium text-emerald-600 text-center sm:text-right font-sans flex items-center justify-center sm:justify-end gap-1">
+                  <Check className="w-3.5 h-3.5" /> {saveStatus}
+                </span>
+              )}
             </div>
           </div>
 

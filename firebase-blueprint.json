@@ -1,0 +1,48 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile document containing basic profile metadata",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique user ID matching request.auth.uid" },
+        "email": { "type": "string", "description": "User email address" },
+        "displayName": { "type": "string", "description": "Display name of the user" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "The date and time the user was created" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "The date and time the user was last updated" }
+      },
+      "required": ["uid", "email", "createdAt", "updatedAt"]
+    },
+    "Lesson": {
+      "title": "Lesson",
+      "description": "A fully structured lesson generated or loaded in the Lyra application",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The unique document ID" },
+        "userId": { "type": "string", "description": "The unique ID of the user who owns this lesson" },
+        "lessonTitle": { "type": "string", "description": "Title of the STEM lesson" },
+        "duration": { "type": "string", "description": "Class duration (e.g., 45 minutes)" },
+        "summary": { "type": "string", "description": "A brief outline of the lesson" },
+        "keyTakeaways": { "type": "array", "description": "Key teaching goals/conclusions" },
+        "slides": { "type": "array", "description": "Array of Slide entities containing script, concept, and content" },
+        "handsOnActivity": { "type": "object", "description": "HandsOnActivity details (materials, steps, scientific principle)" },
+        "worksheet": { "type": "object", "description": "Worksheet containing list of questions, options, and keys" },
+        "quiz": { "type": "array", "description": "Quiz questions for smartboard team play" },
+        "mediaRecommendations": { "type": "array", "description": "Suggested high-yield video/media search phrases" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of creation" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Timestamp of update" }
+      },
+      "required": ["id", "userId", "lessonTitle", "duration", "summary", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User document containing basic profile metadata. Path variable userId must match the authenticated user UID."
+    },
+    "/lessons/{lessonId}": {
+      "schema": "Lesson",
+      "description": "Educational lessons generated or saved by educators. Path variable lessonId is a unique document ID."
+    }
+  }
+}
