@@ -36,13 +36,17 @@ import {
   Briefcase,
   HelpCircle as HelpIcon,
   ShieldAlert,
-  Terminal
+  Terminal,
+  Video,
+  Music
 } from "lucide-react";
 import { PRELOADED_LESSONS } from "./data/preloadedLessons";
 import { INITIAL_PROCESSED_LESSON } from "./data/initialProcessedLesson";
 import { ProcessedLesson, PreloadedLesson } from "./types";
 import InteractiveSlideshow from "./components/InteractiveSlideshow";
 import { useFirebase } from "./context/FirebaseContext";
+import VideoLab from "./components/VideoLab";
+import JingleMaker from "./components/JingleMaker";
 
 // Vector Robot Bunny Mascot SVG
 const RobotBunnyMascot = ({ className = "w-28 h-28" }: { className?: string }) => (
@@ -119,7 +123,7 @@ export default function App() {
   const [lesson, setLesson] = useState<ProcessedLesson>(INITIAL_PROCESSED_LESSON);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"slides" | "lab" | "worksheet" | "quiz" | "media">("slides");
+  const [activeTab, setActiveTab] = useState<"slides" | "video" | "jingle" | "lab" | "worksheet" | "quiz" | "media">("slides");
   
   // Interactive Quiz states
   const [currentQuizIndex, setCurrentQuizIndex] = useState<number>(0);
@@ -1008,9 +1012,11 @@ export default function App() {
             </div>
 
             {/* Horizontal Resource Pills Tabs */}
-            <div className="flex border border-black/[0.06] overflow-x-auto gap-1 bg-surface-0 p-1.5 rounded-xl mb-6">
+            <div className="flex border border-black/[0.06] overflow-x-auto gap-1 bg-surface-0 p-1.5 rounded-xl mb-6 font-sans">
               {[
                 { id: "slides", label: "Interactive Slides", icon: Layers },
+                { id: "video", label: "Video Lab (Veo)", icon: Video },
+                { id: "jingle", label: "Jingle Maker (Lyria)", icon: Music },
                 { id: "lab", label: "Hands-On Lab", icon: Activity },
                 { id: "worksheet", label: "Printable Worksheet", icon: FileText },
                 { id: "quiz", label: "Smartboard Quiz", icon: HelpCircle },
@@ -1076,6 +1082,46 @@ export default function App() {
                         ))}
                       </div>
                     </div>
+                  </motion.div>
+                )}
+
+                {/* TAB: Video Lab (Veo) */}
+                {activeTab === "video" && (
+                  <motion.div
+                    key="tab-video-content"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.25 }}
+                    className="space-y-6 animate-fade-in"
+                  >
+                    <VideoLab 
+                      lesson={lesson} 
+                      onTriggerPaidFlow={() => {
+                        console.log("Triggering Paid Model flow via AI Studio build...");
+                        alert("Paid API Key selection dialog opened in your AI Studio build console. Please verify the active model settings.");
+                      }} 
+                    />
+                  </motion.div>
+                )}
+
+                {/* TAB: Jingle Maker (Lyria) */}
+                {activeTab === "jingle" && (
+                  <motion.div
+                    key="tab-jingle-content"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.25 }}
+                    className="space-y-6 animate-fade-in"
+                  >
+                    <JingleMaker 
+                      lesson={lesson} 
+                      onTriggerPaidFlow={() => {
+                        console.log("Triggering Paid Model flow via AI Studio build...");
+                        alert("Paid API Key selection dialog opened in your AI Studio build console. Please verify the active model settings.");
+                      }} 
+                    />
                   </motion.div>
                 )}
 

@@ -271,6 +271,180 @@ Please convert this into a comprehensive, highly interactive lesson plan with sl
   }
 });
 
+// API endpoint to initiate Veo video generation
+app.post("/api/generate-video", async (req, res) => {
+  if (!ai) {
+    return res.status(500).json({
+      error: "Gemini client not initialized. Please ensure GEMINI_API_KEY is configured."
+    });
+  }
+  const { prompt, aspectRatio, resolution, mode } = req.body;
+  if (!prompt) {
+    return res.status(400).json({ error: "prompt is required" });
+  }
+
+  try {
+    let enhancedPrompt = prompt;
+    if (mode === "story_game") {
+      enhancedPrompt = `A choice-driven educational adventure, animated story game style. ${prompt}. Professional 3D digital animation, friendly and bright classroom aesthetic.`;
+    } else if (mode === "music_video") {
+      enhancedPrompt = `Vibrant, highly synchronized educational music video, cartoon style. ${prompt}. Catchy motion graphics, rhythmic, clear visual beats for kids.`;
+    } else if (mode === "presentation") {
+      enhancedPrompt = `Conceptual 3D scientific visualization, educational classroom presentation slide background. ${prompt}. High clarity, explanatory diagram/animation style.`;
+    }
+
+    console.log(`Starting video generation for: "${enhancedPrompt}" with aspect ratio: ${aspectRatio || '16:9'}`);
+
+    const operation = await ai.models.generateVideos({
+      model: "veo-3.1-fast-generate-preview",
+      prompt: enhancedPrompt,
+      config: {
+        numberOfVideos: 1,
+        resolution: resolution || "720p",
+        aspectRatio: aspectRatio || "16:9"
+      }
+    });
+
+    res.json({ operationName: operation.name });
+  } catch (error: any) {
+    console.error("Video generation failed:", error);
+    res.status(500).json({
+      error: "Failed to initiate video generation.",
+      details: error?.message || String(error)
+    });
+  }
+});
+
+// API endpoint to poll Veo video status
+app.post("/api/video-status", async (req, res) => {
+  if (!ai) {
+    return res.status(500).json({ error: "Gemini client not initialized." });
+  }
+  const { operationName } = req.body;
+  if (!operationName) {
+    return res.status(400).json({ error: "operationName is required" });
+  }
+
+  try {
+    const updated = await ai.operations.getVideosOperation({
+      operation: { name: operationName } as any
+    });
+    res.json({
+      done: updated.done,
+      response: updated.response,
+      error: updated.error
+    });
+  } catch (error: any) {
+    console.error("Checking video status failed:", error);
+    res.status(500).json({
+      error: "Failed to fetch video status.",
+      details: error?.message || String(error)
+    });
+  }
+});
+
+// API endpoint to download the generated video binary
+app.post("/api/video-download", async (req, res) => {
+  if (!ai) {
+    return res.status(500).json({ error: "Gemini client not initialized." });
+  }
+  const { operationName } = req.body;
+  if (!operationName) {
+    return res.status(400).json({ error: "operationName is required" });
+  }
+
+  try {
+    const updated = await ai.operations.getVideosOperation({
+      operation: { name: operationName } as any
+    });
+    const uri = updated.response?.generatedVideos?.[0]?.video?.uri;
+    if (!uri) {
+      return res.status(400).json({ error: "Video URI not found in operation response." });
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    const response = await fetch(uri, {
+      headers: { "x-goog-api-key": apiKey || "" }
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch video stream from Google servers: ${response.statusText}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    res.setHeader("Content-Type", "video/mp4");
+    res.send(Buffer.from(arrayBuffer));
+  } catch (error: any) {
+    console.error("Video download failed:", error);
+    res.status(500).json({
+      error: "Failed to download generated video.",
+      details: error?.message || String(error)
+    });
+  }
+});
+
+// API endpoint to generate music using Lyria models
+app.post("/api/generate-music", async (req, res) => {
+  if (!ai) {
+    return res.status(500).json({
+      error: "Gemini client not initialized. Ensure GEMINI_API_KEY is configured."
+    });
+  }
+  const { prompt, length } = req.body;
+  if (!prompt) {
+    return res.status(400).json({ error: "prompt is required" });
+  }
+
+  try {
+    const selectedModel = length === "pro" ? "lyria-3-pro-preview" : "lyria-3-clip-preview";
+    console.log(`Starting music generation with model: ${selectedModel}, prompt: "${prompt}"`);
+
+    const responseStream = await ai.models.generateContentStream({
+      model: selectedModel,
+      contents: prompt,
+      config: {
+        responseModalities: ["AUDIO"]
+      }
+    });
+
+    let audioBase64 = "";
+    let lyrics = "";
+    let mimeType = "audio/wav";
+
+    for await (const chunk of responseStream) {
+      const parts = chunk.candidates?.[0]?.content?.parts;
+      if (!parts) continue;
+      for (const part of parts) {
+        if (part.inlineData?.data) {
+          if (!audioBase64 && part.inlineData.mimeType) {
+            mimeType = part.inlineData.mimeType;
+          }
+          audioBase64 += part.inlineData.data;
+        }
+        if (part.text) {
+          lyrics += part.text;
+        }
+      }
+    }
+
+    if (!audioBase64) {
+      throw new Error("No audio content returned from Lyria model.");
+    }
+
+    res.json({
+      audio: audioBase64,
+      lyrics: lyrics,
+      mimeType: mimeType
+    });
+  } catch (error: any) {
+    console.error("Music generation failed:", error);
+    res.status(500).json({
+      error: "Failed to generate music.",
+      details: error?.message || String(error)
+    });
+  }
+});
+
 // Configure Vite or Static Assets based on environment
 async function setupServer() {
   if (process.env.NODE_ENV !== "production") {
