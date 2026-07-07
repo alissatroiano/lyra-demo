@@ -94,6 +94,7 @@ Core requirements for your response:
 3. DEMONSTRATE: Create a exciting, safe, and highly visual hands-on scientific demonstration or experiment that instructors can easily run with common materials.
 4. ASSESS: Generate an interactive, child-friendly worksheet and a multi-question quiz.
 5. RESOLVE: Provide suggestions to resolve potentially broken links in the original document by suggesting precise YouTube/Google search queries and explaining why they are suitable.
+6. ADAPT & OBSERVE: Identify the teacher's style, preferences, and classroom parameters from their custom instructions and inputs, and output a concise, actionable one-sentence 'extractedStyleNotes' summarizing their profile (e.g., "Educator prefers low-tech hands-on building challenges with structured classroom review.").
 
 You must output a highly structured JSON object matching the defined responseSchema strictly. Do not deviate.`;
 
@@ -124,8 +125,13 @@ Please convert this into a comprehensive, highly interactive lesson plan with sl
             "worksheet",
             "quiz",
             "mediaRecommendations",
+            "extractedStyleNotes",
           ],
           properties: {
+            extractedStyleNotes: {
+              type: Type.STRING,
+              description: "A short, one-sentence observation about this instructor's style, preferences, or technical level based on their inputs. Write in 3rd person singular/plural (e.g., 'Instructor prefers...').",
+            },
             lessonTitle: {
               type: Type.STRING,
               description: "A catchy, kid-friendly STEM title for the lesson.",

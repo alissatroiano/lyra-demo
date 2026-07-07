@@ -38,7 +38,9 @@ import {
   ShieldAlert,
   Terminal,
   Video,
-  Music
+  Music,
+  Brain,
+  Save
 } from "lucide-react";
 import { PRELOADED_LESSONS } from "./data/preloadedLessons";
 import { INITIAL_PROCESSED_LESSON } from "./data/initialProcessedLesson";
@@ -46,6 +48,7 @@ import { ProcessedLesson, PreloadedLesson } from "./types";
 import { useFirebase } from "./context/FirebaseContext";
 import VideoLab from "./components/VideoLab";
 import SoundStudio from "./components/SoundStudio";
+import InteractiveSlideshow from "./components/InteractiveSlideshow";
 
 // Vector Robot Bunny Mascot SVG
 const RobotBunnyMascot = ({ className = "w-28 h-28" }: { className?: string }) => (
@@ -86,16 +89,21 @@ const RobotBunnyMascot = ({ className = "w-28 h-28" }: { className?: string }) =
 export default function App() {
   const { 
     user, 
+    profile,
     signInWithGoogle, 
     logOut, 
     savedLessons, 
     saveLessonToCloud, 
     deleteLessonFromCloud, 
+    saveInstructorPreferences,
     authLoading, 
     dbLoading 
   } = useFirebase();
 
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSaveSuccess, setProfileSaveSuccess] = useState(false);
+  const [isManuallyEdited, setIsManuallyEdited] = useState<boolean>(false);
 
   const handleSaveToCloud = async () => {
     try {
@@ -122,7 +130,7 @@ export default function App() {
   const [lesson, setLesson] = useState<ProcessedLesson>(INITIAL_PROCESSED_LESSON);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"video" | "sound-studio" | "lab" | "worksheet" | "quiz" | "media">("video");
+  const [activeTab, setActiveTab] = useState<"slides" | "video" | "sound-studio" | "lab" | "worksheet" | "quiz" | "media">("slides");
   
   // Interactive Quiz states
   const [currentQuizIndex, setCurrentQuizIndex] = useState<number>(0);
@@ -171,11 +179,53 @@ export default function App() {
     setStudentAnswers({});
   }, [lesson]);
 
-  // Append parameters helper when chips are changed
+  // Append parameters helper when chips are changed (only if not manually edited)
   useEffect(() => {
+    if (!isManuallyEdited) {
+      const specs = `Tailor for ${selectedGrade} grade, class size of ${selectedSize}, duration of ${selectedDuration}, with ${selectedTech} available.`;
+      setCustomPreferences(specs);
+    }
+  }, [selectedGrade, selectedSize, selectedDuration, selectedTech, isManuallyEdited]);
+
+  // Load preferences from Firebase Profile when logged in
+  useEffect(() => {
+    if (profile) {
+      if (profile.customPreferences !== undefined && profile.customPreferences !== "") {
+        setCustomPreferences(profile.customPreferences);
+        setIsManuallyEdited(true);
+      }
+      if (profile.grade) setSelectedGrade(profile.grade);
+      if (profile.classSize) setSelectedSize(profile.classSize);
+      if (profile.duration) setSelectedDuration(profile.duration);
+      if (profile.tech) setSelectedTech(profile.tech);
+    }
+  }, [profile]);
+
+  const handleAutoGenerateFromChips = () => {
     const specs = `Tailor for ${selectedGrade} grade, class size of ${selectedSize}, duration of ${selectedDuration}, with ${selectedTech} available.`;
     setCustomPreferences(specs);
-  }, [selectedGrade, selectedSize, selectedDuration, selectedTech]);
+    setIsManuallyEdited(false);
+  };
+
+  const handleSavePreferences = async () => {
+    if (!user) return;
+    setProfileSaving(true);
+    try {
+      await saveInstructorPreferences(
+        customPreferences,
+        selectedGrade,
+        selectedSize,
+        selectedDuration,
+        selectedTech
+      );
+      setProfileSaveSuccess(true);
+      setTimeout(() => setProfileSaveSuccess(false), 3000);
+    } catch (err) {
+      console.error("Failed to save instructor preferences:", err);
+    } finally {
+      setProfileSaving(false);
+    }
+  };
 
   // Handle uploaded files by reading them as text
   const handleFileUpload = (file: File) => {
@@ -260,6 +310,21 @@ export default function App() {
     setIsLoading(true);
     setError(null);
     try {
+      // Autosave custom preferences immediately before processing
+      if (user) {
+        try {
+          await saveInstructorPreferences(
+            customPreferences,
+            selectedGrade,
+            selectedSize,
+            selectedDuration,
+            selectedTech
+          );
+        } catch (saveErr) {
+          console.error("Frictionless preferences autosave failed:", saveErr);
+        }
+      }
+
       const goalDirective = transformationGoal === "gamify" 
         ? "Objective: Gamify this lesson. Emphasize active gamification, gamified team-building exercises, interactive smart quizzes, and kid-friendly hands-on classroom experiments. Make it highly engaging, playful, and extremely interactive." 
         : "Objective: Create Presentation. Focus on building highly visual, conceptual slides with comprehensive step-by-step teaching guidelines, analogies, clear explanations, and structured classroom lecture summaries.";
@@ -282,7 +347,24 @@ export default function App() {
 
       const data = await response.json();
       setLesson(data);
-      setActiveTab("video");
+
+      // Save extractedStyleNotes from Gemini into instructor's profile memory
+      if (user && data.extractedStyleNotes) {
+        try {
+          await saveInstructorPreferences(
+            customPreferences,
+            selectedGrade,
+            selectedSize,
+            selectedDuration,
+            selectedTech,
+            data.extractedStyleNotes
+          );
+        } catch (saveNotesErr) {
+          console.error("Autosaving Lyra's extracted style notes failed:", saveNotesErr);
+        }
+      }
+
+      setActiveTab("slides");
     } catch (err: any) {
       console.error(err);
       setError(
@@ -484,7 +566,7 @@ export default function App() {
         });
       }
       setIsLoading(false);
-      setActiveTab("video");
+      setActiveTab("slides");
     }, 500);
   };
 
@@ -854,12 +936,97 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Preferences read-only showcase */}
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-secondary uppercase font-sans block">Generated Instruction Directive:</span>
-                <div className="bg-white p-2.5 border border-black/[0.06] rounded-lg text-[11px] font-mono text-teal-dark font-medium">
-                  {customPreferences || "Awaiting target specifications..."}
+              {/* Preferences editable showcase with adaptive memory */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-secondary uppercase font-sans block">
+                    Generated Instruction Directive
+                  </span>
+                  
+                  {/* Controls */}
+                  <div className="flex gap-2">
+                    {isManuallyEdited && (
+                      <button
+                        type="button"
+                        onClick={handleAutoGenerateFromChips}
+                        className="text-[9px] text-teal-brand hover:text-teal-dark font-sans font-bold flex items-center gap-0.5 cursor-pointer"
+                        title="Re-generate instruction text based on the selected chips above"
+                      >
+                        <RefreshCw className="w-2.5 h-2.5" />
+                        <span>Reset to Chips</span>
+                      </button>
+                    )}
+                    
+                    {user && (
+                      <button
+                        type="button"
+                        onClick={handleSavePreferences}
+                        disabled={profileSaving}
+                        className="text-[9px] text-teal-brand hover:text-teal-dark font-sans font-bold flex items-center gap-0.5 cursor-pointer disabled:opacity-50"
+                        title="Save these instruction preferences to your profile permanently"
+                      >
+                        {profileSaveSuccess ? (
+                          <>
+                            <Check className="w-2.5 h-2.5 text-teal-dark font-bold" />
+                            <span className="text-teal-dark">Saved!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Save className="w-2.5 h-2.5" />
+                            <span>{profileSaving ? "Saving..." : "Save to Profile"}</span>
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
+
+                <div className="relative group">
+                  <textarea
+                    value={customPreferences}
+                    onChange={(e) => {
+                      setCustomPreferences(e.target.value);
+                      setIsManuallyEdited(true);
+                    }}
+                    className="w-full bg-white p-3 border border-black/[0.08] rounded-xl text-[11px] font-mono text-teal-dark font-medium focus:outline-none focus:ring-2 focus:ring-teal-brand/10 focus:border-teal-brand transition-all resize-y min-h-[70px]"
+                    placeholder="Describe specific class constraints, student behaviors, curriculum alignment, or custom styles..."
+                  />
+                  {isManuallyEdited && (
+                    <div className="absolute right-2 bottom-2 text-[8px] text-teal-brand font-sans font-medium px-1.5 py-0.5 rounded-md bg-teal-light/50 border border-teal-brand/10 select-none">
+                      Edited
+                    </div>
+                  )}
+                </div>
+
+                {/* Lyra's Memory Profile & AI Insights */}
+                {user ? (
+                  <div className="bg-teal-light/10 border border-teal-brand/15 rounded-xl p-3 space-y-1.5 animate-fadeIn">
+                    <div className="flex items-center gap-1.5">
+                      <Brain className="w-3.5 h-3.5 text-teal-brand animate-pulse" />
+                      <span className="text-[9px] font-bold text-teal-dark uppercase tracking-wider font-sans">
+                        Lyra's Memory of You
+                      </span>
+                    </div>
+                    {profile?.instructorNotes ? (
+                      <div className="space-y-1">
+                        <p className="text-[10px] text-secondary font-sans leading-relaxed">
+                          "I've learned that you focus on: <span className="font-semibold text-teal-dark">{profile.instructorNotes}</span>"
+                        </p>
+                        <span className="text-[8px] text-teal-brand font-medium block">
+                          💡 Lyra automatically synthesizes these pedagogical preferences into new plans.
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="text-[9px] text-secondary/70 italic font-sans leading-normal">
+                        Generate a lesson to activate. Lyra will observe your input patterns and custom instructions to learn your style.
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-amber-50/40 border border-amber-200/50 rounded-xl p-2.5 text-[9px] text-amber-950 leading-normal font-sans">
+                    🔒 <span className="font-bold">Sign In</span> to enable Lyra's adaptive memory. Lyra will save your instructions and learn your pedagogical style across sessions!
+                  </div>
+                )}
               </div>
             </div>
 
@@ -928,7 +1095,7 @@ export default function App() {
                         type="button"
                         onClick={() => {
                           setLesson(saved);
-                          setActiveTab("video");
+                          setActiveTab("slides");
                         }}
                         className="px-2.5 py-1 bg-teal-light text-teal-brand hover:bg-teal-brand hover:text-white rounded-lg text-[10px] font-bold transition-all shadow-3xs cursor-pointer"
                       >
@@ -1013,6 +1180,7 @@ export default function App() {
             {/* Horizontal Resource Pills Tabs */}
             <div className="flex border border-black/[0.06] overflow-x-auto gap-1 bg-surface-0 p-1.5 rounded-xl mb-6 font-sans">
               {[
+                { id: "slides", label: "Interactive Slides", icon: Layers },
                 { id: "video", label: "Video Lab (Veo)", icon: Video },
                 { id: "sound-studio", label: "Sound Studio (Lyria)", icon: Music },
                 { id: "lab", label: "Hands-On Lab", icon: Activity },
@@ -1044,6 +1212,44 @@ export default function App() {
             <div className="min-h-[420px] relative z-10">
               <AnimatePresence mode="wait">
                 
+                {/* TAB: Interactive Slides */}
+                {activeTab === "slides" && (
+                  <motion.div
+                    key="tab-slides-content"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.25 }}
+                    className="space-y-6 animate-fade-in"
+                  >
+                    <InteractiveSlideshow slides={lesson.slides} />
+
+                    {/* Scientific learning pillars */}
+                    <div className="bg-surface-0/60 border border-black/[0.06] rounded-2xl p-5 space-y-4">
+                      <div className="flex items-center gap-2.5 border-b border-black/[0.05] pb-3">
+                        <div className="w-8 h-8 rounded-lg bg-teal-light flex items-center justify-center text-teal-brand border border-teal-brand/10">
+                          <CheckCircle2 className="w-4.5 h-4.5" />
+                        </div>
+                        <div>
+                          <h4 className="text-xs font-bold text-teal-dark uppercase font-sans">Curriculum Core Pillars</h4>
+                          <p className="text-[10px] text-secondary font-sans leading-none">Key Student Knowledge Deliverables</p>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        {lesson.keyTakeaways.map((takeaway, idx) => (
+                          <div key={idx} className="flex gap-2.5 items-start p-3 bg-white rounded-xl border border-black/[0.04]">
+                            <span className="w-5 h-5 rounded-full bg-teal-light flex items-center justify-center shrink-0 text-teal-brand font-bold text-[10px] mt-0.5">
+                              {idx + 1}
+                            </span>
+                            <span className="text-xs text-secondary leading-relaxed font-sans font-medium">{takeaway}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
                 {/* TAB: Video Lab (Veo) */}
                 {activeTab === "video" && (
                   <motion.div

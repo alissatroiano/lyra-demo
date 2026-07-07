@@ -39,6 +39,14 @@ interface FirebaseContextType {
   saveLessonToCloud: (lessonData: ProcessedLesson) => Promise<string>;
   deleteLessonFromCloud: (lessonId: string) => Promise<void>;
   loadLessons: () => Promise<void>;
+  saveInstructorPreferences: (
+    customPreferences: string,
+    grade?: string,
+    classSize?: string,
+    duration?: string,
+    tech?: string,
+    instructorNotes?: string
+  ) => Promise<void>;
 }
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);
@@ -208,6 +216,45 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  const saveInstructorPreferences = async (
+    customPreferences: string,
+    grade?: string,
+    classSize?: string,
+    duration?: string,
+    tech?: string,
+    instructorNotes?: string
+  ): Promise<void> => {
+    if (!auth.currentUser) return;
+    setDbLoading(true);
+    try {
+      const userDocRef = doc(db, 'users', auth.currentUser.uid);
+      const updatedFields: any = {
+        customPreferences,
+        updatedAt: serverTimestamp()
+      };
+      if (grade !== undefined) updatedFields.grade = grade;
+      if (classSize !== undefined) updatedFields.classSize = classSize;
+      if (duration !== undefined) updatedFields.duration = duration;
+      if (tech !== undefined) updatedFields.tech = tech;
+      if (instructorNotes !== undefined) updatedFields.instructorNotes = instructorNotes;
+
+      await setDoc(userDocRef, updatedFields, { merge: true });
+      
+      // Update local profile state
+      setProfile((prev: any) => ({
+        ...(prev || {}),
+        ...updatedFields,
+        uid: auth.currentUser ? auth.currentUser.uid : ''
+      }));
+    } catch (err: any) {
+      console.error("Error saving instructor preferences:", err);
+      handleFirestoreError(err, OperationType.UPDATE, `users/${auth.currentUser.uid}`);
+      throw err;
+    } finally {
+      setDbLoading(false);
+    }
+  };
+
   return (
     <FirebaseContext.Provider
       value={{
@@ -221,7 +268,8 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         logOut,
         saveLessonToCloud,
         deleteLessonFromCloud,
-        loadLessons
+        loadLessons,
+        saveInstructorPreferences
       }}
     >
       {children}

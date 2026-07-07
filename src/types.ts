@@ -49,6 +49,7 @@ export interface ProcessedLesson {
   worksheet: Worksheet;
   quiz: QuizQuestion[];
   mediaRecommendations: MediaRecommendation[];
+  extractedStyleNotes?: string;
 }
 
 export interface PreloadedLesson {
