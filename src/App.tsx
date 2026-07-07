@@ -43,10 +43,9 @@ import {
 import { PRELOADED_LESSONS } from "./data/preloadedLessons";
 import { INITIAL_PROCESSED_LESSON } from "./data/initialProcessedLesson";
 import { ProcessedLesson, PreloadedLesson } from "./types";
-import InteractiveSlideshow from "./components/InteractiveSlideshow";
 import { useFirebase } from "./context/FirebaseContext";
 import VideoLab from "./components/VideoLab";
-import JingleMaker from "./components/JingleMaker";
+import SoundStudio from "./components/SoundStudio";
 
 // Vector Robot Bunny Mascot SVG
 const RobotBunnyMascot = ({ className = "w-28 h-28" }: { className?: string }) => (
@@ -123,7 +122,7 @@ export default function App() {
   const [lesson, setLesson] = useState<ProcessedLesson>(INITIAL_PROCESSED_LESSON);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"slides" | "video" | "jingle" | "lab" | "worksheet" | "quiz" | "media">("slides");
+  const [activeTab, setActiveTab] = useState<"video" | "sound-studio" | "lab" | "worksheet" | "quiz" | "media">("video");
   
   // Interactive Quiz states
   const [currentQuizIndex, setCurrentQuizIndex] = useState<number>(0);
@@ -283,7 +282,7 @@ export default function App() {
 
       const data = await response.json();
       setLesson(data);
-      setActiveTab("slides");
+      setActiveTab("video");
     } catch (err: any) {
       console.error(err);
       setError(
@@ -485,7 +484,7 @@ export default function App() {
         });
       }
       setIsLoading(false);
-      setActiveTab("slides");
+      setActiveTab("video");
     }, 500);
   };
 
@@ -929,7 +928,7 @@ export default function App() {
                         type="button"
                         onClick={() => {
                           setLesson(saved);
-                          setActiveTab("slides");
+                          setActiveTab("video");
                         }}
                         className="px-2.5 py-1 bg-teal-light text-teal-brand hover:bg-teal-brand hover:text-white rounded-lg text-[10px] font-bold transition-all shadow-3xs cursor-pointer"
                       >
@@ -1014,9 +1013,8 @@ export default function App() {
             {/* Horizontal Resource Pills Tabs */}
             <div className="flex border border-black/[0.06] overflow-x-auto gap-1 bg-surface-0 p-1.5 rounded-xl mb-6 font-sans">
               {[
-                { id: "slides", label: "Interactive Slides", icon: Layers },
                 { id: "video", label: "Video Lab (Veo)", icon: Video },
-                { id: "jingle", label: "Jingle Maker (Lyria)", icon: Music },
+                { id: "sound-studio", label: "Sound Studio (Lyria)", icon: Music },
                 { id: "lab", label: "Hands-On Lab", icon: Activity },
                 { id: "worksheet", label: "Printable Worksheet", icon: FileText },
                 { id: "quiz", label: "Smartboard Quiz", icon: HelpCircle },
@@ -1046,45 +1044,6 @@ export default function App() {
             <div className="min-h-[420px] relative z-10">
               <AnimatePresence mode="wait">
                 
-                {/* TAB 1: Smart Slideshow */}
-                {activeTab === "slides" && (
-                  <motion.div
-                    key="tab-slides-content"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.25 }}
-                    className="space-y-6 animate-fade-in"
-                  >
-                    {/* Slideshow element */}
-                    <InteractiveSlideshow slides={lesson.slides} />
-
-                    {/* Scientific learning pillars */}
-                    <div className="bg-surface-0/60 border border-black/[0.06] rounded-2xl p-5 space-y-4">
-                      <div className="flex items-center gap-2.5 border-b border-black/[0.05] pb-3">
-                        <div className="w-8 h-8 rounded-lg bg-teal-light flex items-center justify-center text-teal-brand border border-teal-brand/10">
-                          <CheckCircle2 className="w-4.5 h-4.5" />
-                        </div>
-                        <div>
-                          <h4 className="text-xs font-bold text-teal-dark uppercase font-sans">Curriculum Core Pillars</h4>
-                          <p className="text-[10px] text-secondary font-sans leading-none">Key Student Knowledge Deliverables</p>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                        {lesson.keyTakeaways.map((takeaway, idx) => (
-                          <div key={idx} className="flex gap-2.5 items-start p-3 bg-white rounded-xl border border-black/[0.04]">
-                            <span className="w-5 h-5 rounded-full bg-teal-light flex items-center justify-center shrink-0 text-teal-brand font-bold text-[10px] mt-0.5">
-                              {idx + 1}
-                            </span>
-                            <span className="text-xs text-secondary leading-relaxed font-sans font-medium">{takeaway}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-
                 {/* TAB: Video Lab (Veo) */}
                 {activeTab === "video" && (
                   <motion.div
@@ -1105,17 +1064,17 @@ export default function App() {
                   </motion.div>
                 )}
 
-                {/* TAB: Jingle Maker (Lyria) */}
-                {activeTab === "jingle" && (
+                {/* TAB: Sound Studio (Lyria) */}
+                {activeTab === "sound-studio" && (
                   <motion.div
-                    key="tab-jingle-content"
+                    key="tab-sound-studio-content"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.25 }}
                     className="space-y-6 animate-fade-in"
                   >
-                    <JingleMaker 
+                    <SoundStudio 
                       lesson={lesson} 
                       onTriggerPaidFlow={() => {
                         console.log("Triggering Paid Model flow via AI Studio build...");

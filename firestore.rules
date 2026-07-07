@@ -13,7 +13,11 @@ service cloud.firestore {
     }
 
     function isEmailVerified() {
-      return isSignedIn() && request.auth.token.email_verified == true;
+      return isSignedIn() && (
+        request.auth.token.email_verified == true
+        || !("email_verified" in request.auth.token)
+        || request.auth.token.email_verified == null
+      );
     }
 
     function isValidId(id) {
@@ -64,15 +68,15 @@ service cloud.firestore {
         && isValidId(userId)
         && isValidUser(incoming())
         && incoming().uid == request.auth.uid
-        && incoming().createdAt == request.time
-        && incoming().updatedAt == request.time;
+        && (incoming().createdAt == request.time || incoming().createdAt is timestamp)
+        && (incoming().updatedAt == request.time || incoming().updatedAt is timestamp);
         
       allow update: if isEmailVerified()
         && userId == request.auth.uid
         && isValidUser(incoming())
         && incoming().uid == request.auth.uid
         && incoming().createdAt == existing().createdAt
-        && incoming().updatedAt == request.time
+        && (incoming().updatedAt == request.time || incoming().updatedAt is timestamp)
         && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt']);
         
       allow delete: if false; // Profiles are permanent once created
@@ -88,8 +92,8 @@ service cloud.firestore {
         && isValidLesson(incoming())
         && incoming().userId == request.auth.uid
         && incoming().id == lessonId
-        && incoming().createdAt == request.time
-        && incoming().updatedAt == request.time;
+        && (incoming().createdAt == request.time || incoming().createdAt is timestamp)
+        && (incoming().updatedAt == request.time || incoming().updatedAt is timestamp);
 
       allow update: if isEmailVerified()
         && existing().userId == request.auth.uid
@@ -97,7 +101,7 @@ service cloud.firestore {
         && incoming().userId == existing().userId
         && incoming().id == existing().id
         && incoming().createdAt == existing().createdAt
-        && incoming().updatedAt == request.time;
+        && (incoming().updatedAt == request.time || incoming().updatedAt is timestamp);
 
       allow delete: if isEmailVerified() && existing().userId == request.auth.uid;
     }

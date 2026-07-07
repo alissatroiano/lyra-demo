@@ -33,7 +33,8 @@ interface GeneratedVideoItem {
 
 export default function VideoLab({ lesson, onTriggerPaidFlow }: VideoLabProps) {
   const [prompt, setPrompt] = useState("");
-  const [mode, setMode] = useState<"story_game" | "music_video" | "presentation">("presentation");
+  const [mode, setMode] = useState<"3d_animation" | "cut_scene" | "cartoon" | "instructors_choice">("3d_animation");
+  const [customStylePrompt, setCustomStylePrompt] = useState("");
   const [aspectRatio, setAspectRatio] = useState<"16:9" | "9:16">("16:9");
   const [resolution, setResolution] = useState<"720p" | "1080p">("720p");
   
@@ -78,7 +79,8 @@ export default function VideoLab({ lesson, onTriggerPaidFlow }: VideoLabProps) {
           prompt: prompt.trim(),
           aspectRatio,
           resolution,
-          mode
+          mode,
+          customStyle: mode === "instructors_choice" ? customStylePrompt.trim() : undefined
         })
       });
 
@@ -224,24 +226,45 @@ export default function VideoLab({ lesson, onTriggerPaidFlow }: VideoLabProps) {
           {/* Mode Option Selection */}
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold text-secondary uppercase tracking-wider block font-sans">
-              Video Mode Style
+              Video Category Style
             </label>
-            <div className="grid grid-cols-3 gap-1.5">
-              {(["presentation", "story_game", "music_video"] as const).map((m) => (
+            <div className="grid grid-cols-2 gap-1.5">
+              {[
+                { id: "3d_animation", label: "3D Animation" },
+                { id: "cut_scene", label: "Cut Scene (Game Style)" },
+                { id: "cartoon", label: "Cartoon" },
+                { id: "instructors_choice", label: "Instructor's Choice" }
+              ].map((m) => (
                 <button
-                  key={m}
+                  key={m.id}
                   type="button"
-                  onClick={() => setMode(m)}
-                  className={`py-2 px-1 rounded-lg text-[10px] font-bold font-sans text-center transition-all ${
-                    mode === m 
+                  onClick={() => setMode(m.id as any)}
+                  className={`py-2 px-2.5 rounded-lg text-[10px] font-bold font-sans text-center transition-all cursor-pointer ${
+                    mode === m.id 
                       ? "bg-teal-dark text-white shadow-3xs" 
                       : "bg-white border border-black/[0.08] text-secondary hover:bg-surface-0"
                   }`}
                 >
-                  {m === "presentation" ? "Presentation" : m === "story_game" ? "Story Game" : "Music Video"}
+                  {m.label}
                 </button>
               ))}
             </div>
+
+            {/* Custom presentation style for Instructor's Choice */}
+            {mode === "instructors_choice" && (
+              <div className="space-y-1.5 pt-1.5 animate-fadeIn">
+                <label className="text-[10px] font-bold text-teal-brand uppercase tracking-wider block font-sans">
+                  Custom Style Definition
+                </label>
+                <input
+                  type="text"
+                  value={customStylePrompt}
+                  onChange={(e) => setCustomStylePrompt(e.target.value)}
+                  placeholder="e.g. Stop-motion claymation, pencil sketch, puppet show..."
+                  className="w-full text-xs p-2.5 border border-teal-brand/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-brand/10 focus:border-teal-brand font-sans bg-white text-primary"
+                />
+              </div>
+            )}
           </div>
 
           {/* Prompt description */}

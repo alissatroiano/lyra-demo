@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { ProcessedLesson } from "../types";
 
-interface JingleMakerProps {
+interface SoundStudioProps {
   lesson: ProcessedLesson;
   onTriggerPaidFlow: () => void;
 }
@@ -32,16 +32,14 @@ interface GeneratedSongItem {
 }
 
 const PRESET_STYLES = [
-  { id: "synthwave", label: "80s Synthwave", promptAdd: "retro electronic synthwave, heavy drum machines, upbeat neon analog synthesizers" },
-  { id: "acoustic", label: "Acoustic Classroom", promptAdd: "gentle acoustic guitar, handclaps, cheerful teacher vocals, simple tambourine rhythms" },
-  { id: "hiphop", label: "Energetic Hip-Hop", promptAdd: "modern lo-fi trap beats, crisp hi-hats, motivational energetic backing track" },
-  { id: "classical", label: "Orchestral Symphony", promptAdd: "epic cinematic strings, grand horns, soaring brass arrangements, majestic educational tone" },
-  { id: "future_bass", label: "Future Bass Dance", promptAdd: "modern future bass dance beat, sidechained chords, uplifting bouncy digital drops" }
+  { id: "catchy", label: "Catchy (6th - 8th grade)", promptAdd: "catchy, energetic rhythm with a modern pop/hip-hop beat and high engagement educational rhymes" },
+  { id: "funny", label: "Funny (3rd - 5th grade)", promptAdd: "funny, humorous, lighthearted acoustic and playful rhythm with goofy sound effects and funny teaching vocals" },
+  { id: "silly", label: "Super Silly Mode (K-2nd)", promptAdd: "extremely silly comical cartoon style rhythm, toy instruments, funny voice tones, and boing sounds for early childhood learning" }
 ];
 
-export default function JingleMaker({ lesson, onTriggerPaidFlow }: JingleMakerProps) {
+export default function SoundStudio({ lesson, onTriggerPaidFlow }: SoundStudioProps) {
   const [prompt, setPrompt] = useState("");
-  const [selectedGenre, setSelectedGenre] = useState("acoustic");
+  const [selectedGenre, setSelectedGenre] = useState("catchy");
   const [songLength, setSongLength] = useState<"clip" | "pro">("clip");
   
   const [status, setStatus] = useState<"idle" | "generating" | "completed" | "error">("idle");
@@ -174,7 +172,7 @@ export default function JingleMaker({ lesson, onTriggerPaidFlow }: JingleMakerPr
     } catch (err: any) {
       console.error(err);
       setStatus("error");
-      setErrorMsg(err.message || "Failed to generate your classroom jingle.");
+      setErrorMsg(err.message || "Failed to generate your classroom sound track.");
     }
   };
 
@@ -186,7 +184,7 @@ export default function JingleMaker({ lesson, onTriggerPaidFlow }: JingleMakerPr
   };
 
   return (
-    <div className="space-y-6" id="jingle-maker-panel">
+    <div className="space-y-6" id="sound-studio-panel">
       {/* Upper header note */}
       <div className="bg-surface-0 border border-black/[0.05] rounded-2xl p-5 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
@@ -195,13 +193,13 @@ export default function JingleMaker({ lesson, onTriggerPaidFlow }: JingleMakerPr
           </div>
           <div className="space-y-0.5 text-left">
             <h4 className="text-sm font-bold text-teal-dark font-sans flex items-center gap-1.5">
-              <span>Lyria 3.0 Audio Jingle Maker</span>
+              <span>Lyria 3.0 Sound Studio</span>
               <span className="text-[10px] bg-amber-100 border border-amber-200 text-amber-800 font-bold px-2 py-0.5 rounded-full uppercase">
                 Premium
               </span>
             </h4>
             <p className="text-xs text-secondary font-sans leading-normal">
-              Create catchy educational songs, rhythmic mnemonic jingles, and class backing tracks to make difficult science terms unforgettable.
+              Create catchy educational songs, rhythmic mnemonic jingles, and classroom rhythmic tracks to make difficult science terms unforgettable.
             </p>
           </div>
         </div>
@@ -222,7 +220,7 @@ export default function JingleMaker({ lesson, onTriggerPaidFlow }: JingleMakerPr
         <div className="md:col-span-5 bg-surface-0/40 border border-black/[0.06] rounded-2xl p-5 space-y-5">
           <div className="border-b border-black/[0.05] pb-3">
             <span className="text-[9px] font-mono font-bold text-secondary uppercase tracking-wider block">STUDIO TRACK CONTROL</span>
-            <h4 className="text-xs font-bold text-teal-dark font-sans">Jingle Configurations</h4>
+            <h4 className="text-xs font-bold text-teal-dark font-sans">Sound Studio Configurations</h4>
           </div>
 
           {/* Model selection */}
@@ -293,7 +291,7 @@ export default function JingleMaker({ lesson, onTriggerPaidFlow }: JingleMakerPr
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               rows={5}
-              placeholder="Write custom lyric ideas or vocabulary terms to enforce (e.g. Generate a fun classroom jingle about gravity pulling things down towards the center of Earth!)"
+              placeholder="Write custom lyric ideas or vocabulary terms to enforce (e.g. Generate a fun classroom song about gravity pulling things down towards the center of Earth!)"
               className="w-full text-xs p-3 border border-black/[0.1] rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-brand/10 focus:border-teal-brand font-sans bg-white text-primary leading-normal"
             />
           </div>
@@ -396,7 +394,7 @@ export default function JingleMaker({ lesson, onTriggerPaidFlow }: JingleMakerPr
                     {/* Download */}
                     <a
                       href={activeSong.audioUrl}
-                      download={`lyra_jingle_${Date.now()}.wav`}
+                      download={`lyra_sound_${Date.now()}.wav`}
                       className="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-all shrink-0 ml-auto"
                       title="Download Song"
                     >

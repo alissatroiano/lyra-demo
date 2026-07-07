@@ -278,14 +278,23 @@ app.post("/api/generate-video", async (req, res) => {
       error: "Gemini client not initialized. Please ensure GEMINI_API_KEY is configured."
     });
   }
-  const { prompt, aspectRatio, resolution, mode } = req.body;
+  const { prompt, aspectRatio, resolution, mode, customStyle } = req.body;
   if (!prompt) {
     return res.status(400).json({ error: "prompt is required" });
   }
 
   try {
     let enhancedPrompt = prompt;
-    if (mode === "story_game") {
+    if (mode === "3d_animation") {
+      enhancedPrompt = `Conceptual 3D scientific visualization, 3D animation style. ${prompt}. High clarity, detailed octane render, clean classroom presentation.`;
+    } else if (mode === "cut_scene") {
+      enhancedPrompt = `Cinematic video game cut scene style. ${prompt}. Dramatic camera angles, dynamic lighting, game engine cinematic, Unreal Engine 5 render style.`;
+    } else if (mode === "cartoon") {
+      enhancedPrompt = `Fun whimsical cartoon 2D animation style. ${prompt}. Bright friendly colors, clean lines, playful educational illustration.`;
+    } else if (mode === "instructors_choice") {
+      const styleName = customStyle || "Custom presentation style";
+      enhancedPrompt = `${styleName}. ${prompt}. Playful and clean educational presentation.`;
+    } else if (mode === "story_game") { // Fallbacks for old/loaded items if any
       enhancedPrompt = `A choice-driven educational adventure, animated story game style. ${prompt}. Professional 3D digital animation, friendly and bright classroom aesthetic.`;
     } else if (mode === "music_video") {
       enhancedPrompt = `Vibrant, highly synchronized educational music video, cartoon style. ${prompt}. Catchy motion graphics, rhythmic, clear visual beats for kids.`;
