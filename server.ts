@@ -1,8 +1,9 @@
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, LiveServerMessage, Modality } from "@google/genai";
 import { createServer as createViteServer } from "vite";
+import { WebSocketServer } from "ws";
 // @ts-ignore
 import pdfParse from "pdf-parse";
 // @ts-ignore
@@ -460,6 +461,152 @@ app.post("/api/generate-music", async (req, res) => {
   }
 });
 
+// API endpoint for Co-Teacher multi-turn chat assistant
+app.post("/api/chat", async (req, res) => {
+  if (!ai) {
+    return res.status(500).json({ error: "Gemini client not initialized." });
+  }
+
+  const { messages, model, systemInstruction, useSearch } = req.body;
+  if (!messages || !Array.isArray(messages)) {
+    return res.status(400).json({ error: "messages array is required" });
+  }
+
+  try {
+    const contents = messages.map((m: any) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }]
+    }));
+
+    const selectedModel = useSearch ? "gemini-3.5-flash" : (model || "gemini-3.5-flash");
+
+    const tools: any[] = [];
+    if (useSearch) {
+      tools.push({ googleSearch: {} });
+    }
+
+    const response = await ai.models.generateContent({
+      model: selectedModel,
+      contents: contents,
+      config: {
+        systemInstruction: systemInstruction || "You are Lyra, a friendly, energetic, encouraging, and innovative AI teaching copilot.",
+        tools: tools.length > 0 ? tools : undefined
+      }
+    });
+
+    res.json({
+      reply: response.text,
+      groundingMetadata: response.candidates?.[0]?.groundingMetadata || null
+    });
+  } catch (error: any) {
+    console.error("Chat failed:", error);
+    res.status(500).json({
+      error: "Chat request failed.",
+      details: error?.message || String(error)
+    });
+  }
+});
+
+// API endpoint for image creation and editing (gemini-3.1-flash-image)
+app.post("/api/generate-image", async (req, res) => {
+  if (!ai) {
+    return res.status(500).json({ error: "Gemini client not initialized." });
+  }
+
+  const { prompt, aspectRatio, base64Image, mimeType } = req.body;
+  if (!prompt) {
+    return res.status(400).json({ error: "prompt is required" });
+  }
+
+  try {
+    const parts: any[] = [];
+    if (base64Image) {
+      parts.push({
+        inlineData: {
+          data: base64Image,
+          mimeType: mimeType || "image/png"
+        }
+      });
+    }
+    parts.push({ text: prompt });
+
+    console.log(`Starting image generation with gemini-3.1-flash-image, prompt: "${prompt}"`);
+
+    const response = await ai.models.generateContent({
+      model: "gemini-3.1-flash-image",
+      contents: { parts },
+      config: {
+        imageConfig: {
+          aspectRatio: aspectRatio || "1:1",
+          imageSize: "1K"
+        }
+      }
+    });
+
+    let imageBase64 = "";
+    const responseParts = response.candidates?.[0]?.content?.parts || [];
+    for (const part of responseParts) {
+      if (part.inlineData?.data) {
+        imageBase64 = part.inlineData.data;
+        break;
+      }
+    }
+
+    if (!imageBase64) {
+      throw new Error("No image data returned from gemini-3.1-flash-image.");
+    }
+
+    res.json({
+      image: imageBase64,
+      mimeType: "image/png"
+    });
+  } catch (error: any) {
+    console.error("Image generation failed:", error);
+    res.status(500).json({
+      error: "Failed to generate image.",
+      details: error?.message || String(error)
+    });
+  }
+});
+
+// API endpoint for video content analysis (gemini-3.1-pro-preview)
+app.post("/api/analyze-video", async (req, res) => {
+  if (!ai) {
+    return res.status(500).json({ error: "Gemini client not initialized." });
+  }
+
+  const { videoBase64, mimeType, prompt } = req.body;
+  if (!videoBase64) {
+    return res.status(400).json({ error: "videoBase64 is required" });
+  }
+
+  try {
+    console.log("Analyzing video with gemini-3.1-pro-preview...");
+    const response = await ai.models.generateContent({
+      model: "gemini-3.1-pro-preview",
+      contents: [
+        {
+          inlineData: {
+            data: videoBase64,
+            mimeType: mimeType || "video/mp4"
+          }
+        },
+        {
+          text: prompt || "Analyze this video, summarize its contents, and provide pedagogical insights for a science/coding teacher."
+        }
+      ]
+    });
+
+    res.json({ analysis: response.text });
+  } catch (error: any) {
+    console.error("Video analysis failed:", error);
+    res.status(500).json({
+      error: "Failed to analyze video.",
+      details: error?.message || String(error)
+    });
+  }
+});
+
 // Configure Vite or Static Assets based on environment
 async function setupServer() {
   if (process.env.NODE_ENV !== "production") {
@@ -478,8 +625,84 @@ async function setupServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  const server = app.listen(PORT, "0.0.0.0", () => {
     console.log(`Express server is successfully listening on port ${PORT}`);
+  });
+
+  // Attach WebSocket Server for Live voice connections
+  const wss = new WebSocketServer({ noServer: true });
+
+  wss.on("connection", async (clientWs) => {
+    console.log("New client connected to Live Audio WS bridge!");
+    if (!ai) {
+      clientWs.send(JSON.stringify({ error: "Gemini AI client is not initialized on the server." }));
+      clientWs.close();
+      return;
+    }
+
+    try {
+      console.log("Connecting to Gemini Live Session using gemini-3.1-flash-live-preview...");
+      const session = await ai.live.connect({
+        model: "gemini-3.1-flash-live-preview",
+        config: {
+          responseModalities: [Modality.AUDIO],
+          speechConfig: {
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: "Zephyr" } },
+          },
+          systemInstruction: "You are Lyra, a supportive, energetic, and child-centric AI teaching co-pilot. Respond directly, conversationally, and concisely as if you are talking live with an instructor in a classroom. Give brief 1-2 sentence replies.",
+        },
+        callbacks: {
+          onmessage: (message: LiveServerMessage) => {
+            const audio = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
+            if (audio) {
+              clientWs.send(JSON.stringify({ audio }));
+            }
+            if (message.serverContent?.interrupted) {
+              clientWs.send(JSON.stringify({ interrupted: true }));
+            }
+          },
+        },
+      });
+
+      clientWs.on("message", (data) => {
+        try {
+          const parsed = JSON.parse(data.toString());
+          if (parsed.audio) {
+            session.sendRealtimeInput({
+              audio: { data: parsed.audio, mimeType: "audio/pcm;rate=16000" },
+            });
+          }
+        } catch (err) {
+          console.error("Error receiving/parsing client audio data:", err);
+        }
+      });
+
+      clientWs.on("close", () => {
+        console.log("Client closed WS connection, cleaning up Gemini Live session.");
+        session.close();
+      });
+
+    } catch (err: any) {
+      console.error("Failed to connect to Gemini Live session:", err);
+      clientWs.send(JSON.stringify({ error: "Failed to connect to Gemini Live API.", details: err?.message || String(err) }));
+      clientWs.close();
+    }
+  });
+
+  server.on("upgrade", (request, socket, head) => {
+    try {
+      const pathname = request.url ? new URL(request.url, `http://${request.headers.host}`).pathname : "";
+      if (pathname === "/api/live-ws") {
+        wss.handleUpgrade(request, socket, head, (ws) => {
+          wss.emit("connection", ws, request);
+        });
+      } else {
+        socket.destroy();
+      }
+    } catch (err) {
+      console.error("WebSocket upgrade upgrade error:", err);
+      socket.destroy();
+    }
   });
 }
 

@@ -49,6 +49,7 @@ import { useFirebase } from "./context/FirebaseContext";
 import VideoLab from "./components/VideoLab";
 import SoundStudio from "./components/SoundStudio";
 import InteractiveSlideshow from "./components/InteractiveSlideshow";
+import AICopilot from "./components/AICopilot";
 
 // Vector Robot Bunny Mascot SVG
 const RobotBunnyMascot = ({ className = "w-28 h-28" }: { className?: string }) => (
@@ -1181,6 +1182,7 @@ export default function App() {
             <div className="flex border border-black/[0.06] overflow-x-auto gap-1 bg-surface-0 p-1.5 rounded-xl mb-6 font-sans">
               {[
                 { id: "slides", label: "Interactive Slides", icon: Layers },
+                { id: "copilot", label: "Lyra AI Co-Teacher", icon: Sparkles },
                 { id: "video", label: "Video Lab (Veo)", icon: Video },
                 { id: "sound-studio", label: "Sound Studio (Lyria)", icon: Music },
                 { id: "lab", label: "Hands-On Lab", icon: Activity },
@@ -1247,6 +1249,26 @@ export default function App() {
                         ))}
                       </div>
                     </div>
+                  </motion.div>
+                )}
+
+                {/* TAB: Lyra AI Co-Teacher */}
+                {activeTab === "copilot" && (
+                  <motion.div
+                    key="tab-copilot-content"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.25 }}
+                    className="space-y-6 animate-fade-in"
+                  >
+                    <AICopilot 
+                      lesson={lesson} 
+                      onTriggerPaidFlow={() => {
+                        console.log("Triggering Paid Model flow via AI Studio build...");
+                        alert("Paid API Key selection dialog opened in your AI Studio build console. Please verify the active model settings.");
+                      }}
+                    />
                   </motion.div>
                 )}
 
