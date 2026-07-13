@@ -3,7 +3,8 @@ import {
   User as FirebaseUser,
   onAuthStateChanged,
   signInWithPopup,
-  signOut
+  signOut,
+  GoogleAuthProvider
 } from 'firebase/auth';
 import { 
   doc, 
@@ -20,6 +21,11 @@ import {
 import { auth, db, googleProvider, handleFirestoreError, OperationType } from '../lib/firebase';
 import { ProcessedLesson } from '../types';
 
+// Configure Google Workspace scopes for presentation creation and file reads
+googleProvider.addScope('https://www.googleapis.com/auth/presentations');
+googleProvider.addScope('https://www.googleapis.com/auth/drive.file');
+googleProvider.addScope('https://www.googleapis.com/auth/drive.readonly');
+
 export interface SavedLesson extends ProcessedLesson {
   id: string;
   userId: string;
@@ -34,6 +40,8 @@ interface FirebaseContextType {
   authLoading: boolean;
   dbLoading: boolean;
   error: string | null;
+  googleAccessToken: string | null;
+  setGoogleAccessToken: (token: string | null) => void;
   signInWithGoogle: () => Promise<void>;
   logOut: () => Promise<void>;
   saveLessonToCloud: (lessonData: ProcessedLesson) => Promise<string>;
@@ -58,6 +66,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [authLoading, setAuthLoading] = useState<boolean>(true);
   const [dbLoading, setDbLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null);
 
   // Load user's saved lessons
   const loadLessons = async () => {
@@ -130,6 +139,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       } else {
         setProfile(null);
         setSavedLessons([]);
+        setGoogleAccessToken(null);
         setAuthLoading(false);
       }
     });
@@ -140,7 +150,11 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const signInWithGoogle = async () => {
     try {
       setError(null);
-      await signInWithPopup(auth, googleProvider);
+      const result = await signInWithPopup(auth, googleProvider);
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      if (credential?.accessToken) {
+        setGoogleAccessToken(credential.accessToken);
+      }
     } catch (err: any) {
       console.error("Google Auth sign-in failed:", err);
       setError(err?.message || "Sign-in failed");
@@ -151,6 +165,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       setError(null);
       await signOut(auth);
+      setGoogleAccessToken(null);
     } catch (err: any) {
       console.error("Logout failed:", err);
       setError("Logout failed");
@@ -264,6 +279,8 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         authLoading,
         dbLoading,
         error,
+        googleAccessToken,
+        setGoogleAccessToken,
         signInWithGoogle,
         logOut,
         saveLessonToCloud,

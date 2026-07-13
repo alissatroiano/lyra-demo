@@ -10,9 +10,13 @@ import {
   Pause,
   Award,
   Layers,
-  Presentation
+  Presentation,
+  RefreshCw,
+  Check,
+  ExternalLink
 } from "lucide-react";
 import { ProcessedLesson } from "../types";
+import { useFirebase } from "../context/FirebaseContext";
 
 interface Slide {
   title: string;
@@ -23,13 +27,125 @@ interface Slide {
 
 interface InteractiveSlideshowProps {
   slides: Slide[];
+  lessonTitle: string;
 }
 
-export default function InteractiveSlideshow({ slides }: InteractiveSlideshowProps) {
+export default function InteractiveSlideshow({ slides, lessonTitle }: InteractiveSlideshowProps) {
+  const { user, googleAccessToken, signInWithGoogle } = useFirebase();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showNotes, setShowNotes] = useState(true);
   const [slideTimer, setSlideTimer] = useState<NodeJS.Timeout | null>(null);
+
+  // Google Slides Export states
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportUrl, setExportUrl] = useState("");
+  const [exportError, setExportError] = useState("");
+
+  const handleExportToGoogleSlides = async () => {
+    if (!googleAccessToken) {
+      try {
+        await signInWithGoogle();
+      } catch (err: any) {
+        setExportError("Please connect your Google Account first.");
+        return;
+      }
+      return;
+    }
+
+    setIsExporting(true);
+    setExportError("");
+    setExportUrl("");
+
+    try {
+      const createRes = await fetch("https://slides.googleapis.com/v1/presentations", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${googleAccessToken}`
+        },
+        body: JSON.stringify({
+          title: `Gamified: ${lessonTitle || "Untitled Lesson"}`
+        })
+      });
+
+      if (!createRes.ok) {
+        const errorText = await createRes.text();
+        throw new Error(`Google Slides connection issue: ${createRes.status} - ${errorText || createRes.statusText}`);
+      }
+
+      const presentation = await createRes.json();
+      const presentationId = presentation.presentationId;
+
+      const requests: any[] = [];
+      slides.forEach((slide, idx) => {
+        const randId = Math.random().toString(36).substring(2, 7);
+        const slideId = `slide_id_${idx}_${randId}`;
+        const titleId = `title_id_${idx}_${randId}`;
+        const bodyId = `body_id_${idx}_${randId}`;
+
+        requests.push({
+          createSlide: {
+            objectId: slideId,
+            slideLayoutReference: {
+              predefinedLayout: "TITLE_AND_BODY"
+            },
+            placeholderIdMappings: [
+              {
+                layoutPlaceholder: {
+                  type: "TITLE",
+                  index: 0
+                },
+                objectId: titleId
+              },
+              {
+                layoutPlaceholder: {
+                  type: "BODY",
+                  index: 0
+                },
+                objectId: bodyId
+              }
+            ]
+          }
+        });
+
+        requests.push({
+          insertText: {
+            objectId: titleId,
+            text: slide.title
+          }
+        });
+
+        requests.push({
+          insertText: {
+            objectId: bodyId,
+            text: slide.content.join("\n") + (slide.instructorNotes ? `\n\n[Teacher Guide]\n${slide.instructorNotes}` : "")
+          }
+        });
+      });
+
+      const batchRes = await fetch(`https://slides.googleapis.com/v1/presentations/${presentationId}:batchUpdate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${googleAccessToken}`
+        },
+        body: JSON.stringify({ requests })
+      });
+
+      if (!batchRes.ok) {
+        const errorText = await batchRes.text();
+        throw new Error(`Slides population issue: ${batchRes.status} - ${errorText || batchRes.statusText}`);
+      }
+
+      setExportUrl(`https://docs.google.com/presentation/d/${presentationId}/edit`);
+    } catch (err: any) {
+      console.error("Google Slides export error:", err);
+      setExportError(err.message || String(err));
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   if (!slides || slides.length === 0) {
     return (
@@ -97,6 +213,21 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
         <div className="flex items-center gap-2">
           <button
             type="button"
+            onClick={handleExportToGoogleSlides}
+            disabled={isExporting}
+            className="px-3 py-1.5 rounded-lg text-xs font-bold font-sans transition-all flex items-center gap-1.5 border cursor-pointer bg-amber-500 hover:bg-amber-600 text-white border-amber-500 disabled:opacity-50"
+            title="Export this presentation directly to your Google Slides account"
+          >
+            {isExporting ? (
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Presentation className="w-3.5 h-3.5 text-white" />
+            )}
+            <span>{googleAccessToken ? "Export to Google Slides" : "Connect & Export"}</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setShowNotes(!showNotes)}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold font-sans transition-all flex items-center gap-1.5 border cursor-pointer ${
               showNotes 
@@ -122,6 +253,50 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
           </button>
         </div>
       </div>
+
+      {/* Google Slides Export Feedback */}
+      {(isExporting || exportUrl || exportError) && (
+        <div className="bg-amber-50/50 border border-amber-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 shrink-0">
+              <Presentation className="w-4 h-4" />
+            </div>
+            <div className="text-left">
+              {isExporting && (
+                <>
+                  <h5 className="text-xs font-bold text-amber-900 font-sans">Exporting to Google Slides...</h5>
+                  <p className="text-[10px] text-amber-800 font-sans leading-none mt-0.5">Creating your presentation deck</p>
+                </>
+              )}
+              {exportUrl && (
+                <>
+                  <h5 className="text-xs font-bold text-emerald-800 font-sans flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /> Export Succeeded!
+                  </h5>
+                  <p className="text-[10px] text-emerald-700 font-sans leading-none mt-0.5">Your slides are successfully created</p>
+                </>
+              )}
+              {exportError && (
+                <>
+                  <h5 className="text-xs font-bold text-rose-800 font-sans">Export Failed</h5>
+                  <p className="text-[10px] text-rose-700 font-sans leading-none mt-0.5">{exportError}</p>
+                </>
+              )}
+            </div>
+          </div>
+          {exportUrl && (
+            <a
+              href={exportUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3.5 py-1.5 bg-amber-600 text-white rounded-lg text-xs font-bold font-sans hover:bg-amber-700 shadow-3xs flex items-center gap-1 shrink-0"
+            >
+              Open Google Slides
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
+        </div>
+      )}
 
       {/* Main Slideshow Stage */}
       <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-teal-dark to-slate-950 border border-slate-800 rounded-3xl shadow-xl min-h-[380px] flex flex-col justify-between p-6 sm:p-8 text-white">

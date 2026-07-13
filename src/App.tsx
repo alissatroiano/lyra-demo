@@ -98,8 +98,95 @@ export default function App() {
     deleteLessonFromCloud, 
     saveInstructorPreferences,
     authLoading, 
-    dbLoading 
+    dbLoading,
+    googleAccessToken
   } = useFirebase();
+
+  // Google Slides Import states & handlers
+  const [recentSlides, setRecentSlides] = useState<{ id: string; name: string }[]>([]);
+  const [isLoadingRecent, setIsLoadingRecent] = useState<boolean>(false);
+  const [recentError, setRecentError] = useState<string>("");
+  const [isImportingSlides, setIsImportingSlides] = useState<boolean>(false);
+  const [slidesImportError, setSlidesImportError] = useState<string>("");
+  const [selectedSlideId, setSelectedSlideId] = useState<string>("");
+  const [customSlideId, setCustomSlideId] = useState<string>("");
+
+  useEffect(() => {
+    const loadRecentSlides = async () => {
+      if (!googleAccessToken) return;
+      setIsLoadingRecent(true);
+      setRecentError("");
+      try {
+        const res = await fetch(
+          "https://www.googleapis.com/drive/v3/files?q=mimeType='application/vnd.google-apps.presentation' and trashed=false&pageSize=10&orderBy=viewedByMeTime desc",
+          {
+            headers: {
+              Authorization: `Bearer ${googleAccessToken}`
+            }
+          }
+        );
+        if (!res.ok) {
+          throw new Error(`Failed to load Google Drive files: ${res.statusText}`);
+        }
+        const data = await res.json();
+        if (data.files) {
+          setRecentSlides(data.files.map((f: any) => ({ id: f.id, name: f.name })));
+        }
+      } catch (err: any) {
+        console.error("Drive load error:", err);
+        setRecentError(err.message || String(err));
+      } finally {
+        setIsLoadingRecent(false);
+      }
+    };
+
+    loadRecentSlides();
+  }, [googleAccessToken]);
+
+  const importGoogleSlidesContent = async (presentationId: string) => {
+    if (!googleAccessToken) return;
+    setIsImportingSlides(true);
+    setSlidesImportError("");
+    setExtractionError(null);
+    try {
+      const res = await fetch(`https://slides.googleapis.com/v1/presentations/${presentationId}`, {
+        headers: {
+          Authorization: `Bearer ${googleAccessToken}`
+        }
+      });
+      if (!res.ok) {
+        throw new Error(`Failed to fetch slides: ${res.statusText}`);
+      }
+      const presentation = await res.json();
+      
+      let text = `Presentation Title: ${presentation.title || "Untitled"}\n\n`;
+      if (presentation.slides) {
+        presentation.slides.forEach((slide: any, idx: number) => {
+          text += `--- Slide ${idx + 1} ---\n`;
+          if (slide.pageElements) {
+            slide.pageElements.forEach((element: any) => {
+              if (element.shape?.text?.textElements) {
+                element.shape.text.textElements.forEach((textElement: any) => {
+                  if (textElement.textRun?.content) {
+                    text += textElement.textRun.content.trim() + " ";
+                  }
+                });
+              }
+            });
+          }
+          text += "\n\n";
+        });
+      }
+      
+      setCustomContent(text.trim());
+      setUploadedFileName(`Google Slide: ${presentation.title || "Untitled"}`);
+    } catch (err: any) {
+      console.error("Slides import error:", err);
+      setSlidesImportError(err.message || String(err));
+    } finally {
+      setIsImportingSlides(false);
+    }
+  };
 
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
   const [profileSaving, setProfileSaving] = useState(false);
@@ -704,142 +791,244 @@ export default function App() {
               </span>
             </div>
 
-            {/* Selection of transformation goal with high fidelity toggle buttons */}
+            {/* Pedagogical Goal Option - LOCKED to Gamified */}
             <div className="space-y-2">
               <label className="text-xs font-bold text-teal-dark block font-sans">Pedagogical Goal Option:</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setTransformationGoal("gamify")}
-                  className={`p-3.5 rounded-xl text-left border transition-all flex items-start gap-3 cursor-pointer ${
-                    transformationGoal === "gamify"
-                      ? "border-teal-brand bg-teal-light/20 text-teal-dark shadow-3xs"
-                      : "border-black/[0.08] hover:border-black/[0.18] text-secondary hover:text-primary"
-                  }`}
-                >
-                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
-                    transformationGoal === "gamify" ? "bg-teal-brand border-teal-brand text-white" : "border-black/[0.15] bg-white"
-                  }`}>
-                    {transformationGoal === "gamify" && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                  </div>
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-bold font-sans">Gamify Lesson Plan</p>
-                    <p className="text-[10px] text-secondary leading-normal font-sans">Inserts competitive trivia, student led roles, and hands-on laboratory games.</p>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTransformationGoal("presentation")}
-                  className={`p-3.5 rounded-xl text-left border transition-all flex items-start gap-3 cursor-pointer ${
-                    transformationGoal === "presentation"
-                      ? "border-teal-brand bg-teal-light/20 text-teal-dark shadow-3xs"
-                      : "border-black/[0.08] hover:border-black/[0.18] text-secondary hover:text-primary"
-                  }`}
-                >
-                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
-                    transformationGoal === "presentation" ? "bg-teal-brand border-teal-brand text-white" : "border-black/[0.15] bg-white"
-                  }`}>
-                    {transformationGoal === "presentation" && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                  </div>
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-bold font-sans">Create Highly Visual Presentation</p>
-                    <p className="text-[10px] text-secondary leading-normal font-sans">Focuses on comprehensive slides, teaching analogies, and deep topic guides.</p>
-                  </div>
-                </button>
+              <div className="p-3.5 rounded-xl border border-teal-brand/20 bg-teal-light/10 text-teal-dark flex items-start gap-3">
+                <div className="w-5 h-5 rounded-full bg-teal-brand text-white flex items-center justify-center shrink-0 mt-0.5">
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                </div>
+                <div className="space-y-0.5 text-left">
+                  <p className="text-xs font-bold font-sans text-teal-dark">Gamify Lesson Plan (Locked & Active)</p>
+                  <p className="text-[10px] text-secondary leading-normal font-sans">
+                    Inserts competitive trivia, active team-building laboratory quests, and interactive smart board games automatically. Traditional plain slideshows are disabled for maximum student engagement.
+                  </p>
+                </div>
               </div>
             </div>
 
-            {/* PDF / Docx File Dropzone (ly-upload-zone) */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-teal-dark block font-sans">Upload your file (PDF, DOCX, TXT):</label>
+            {/* Input Options: Local File vs Google Slides */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-1">
               
-              <div
-                onDragEnter={handleDrag}
-                onDragOver={handleDrag}
-                onDragLeave={handleDrag}
-                onDrop={handleDrop}
-                onClick={() => {
-                  const el = document.getElementById("file-upload-input");
-                  if (el) (el as HTMLInputElement).click();
-                }}
-                className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2.5 ${
-                  dragActive 
-                    ? "border-teal-brand bg-teal-light/30" 
-                    : "border-black/[0.12] hover:border-black/[0.22] bg-surface-0/50 hover:bg-surface-0"
-                }`}
-              >
-                <input
-                  id="file-upload-input"
-                  type="file"
-                  accept=".txt,.json,.md,.html,.pdf,.docx"
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      handleFileUpload(e.target.files[0]);
-                    }
+              {/* Method A: PDF / Docx File Dropzone (ly-upload-zone) */}
+              <div className="space-y-2 flex flex-col justify-between">
+                <div>
+                  <label className="text-xs font-bold text-teal-dark block font-sans text-left">Method A: Upload Curriculum File:</label>
+                  <p className="text-[10px] text-secondary font-sans leading-tight mt-0.5 text-left mb-2">Import from local PDF, DOCX, TXT or MD files</p>
+                </div>
+                
+                <div
+                  onDragEnter={handleDrag}
+                  onDragOver={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDrop={handleDrop}
+                  onClick={() => {
+                    const el = document.getElementById("file-upload-input");
+                    if (el) (el as HTMLInputElement).click();
                   }}
-                />
+                  className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2.5 min-h-[175px] ${
+                    dragActive 
+                      ? "border-teal-brand bg-teal-light/30" 
+                      : "border-black/[0.12] hover:border-black/[0.22] bg-surface-0/50 hover:bg-surface-0"
+                  }`}
+                >
+                  <input
+                    id="file-upload-input"
+                    type="file"
+                    accept=".txt,.json,.md,.html,.pdf,.docx"
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleFileUpload(e.target.files[0]);
+                      }
+                    }}
+                  />
 
-                {isExtracting ? (
-                  <div className="space-y-2">
-                    <RefreshCw className="w-8 h-8 text-teal-brand animate-spin mx-auto" />
-                    <div>
-                      <p className="text-xs font-bold text-primary font-sans">Reading file securely...</p>
-                      <p className="text-[10px] text-secondary font-sans mt-0.5">Running AI curriculum text parser</p>
+                  {isExtracting ? (
+                    <div className="space-y-2">
+                      <RefreshCw className="w-8 h-8 text-teal-brand animate-spin mx-auto" />
+                      <div>
+                        <p className="text-xs font-bold text-primary font-sans">Reading file securely...</p>
+                        <p className="text-[10px] text-secondary font-sans mt-0.5">Running AI curriculum text parser</p>
+                      </div>
+                    </div>
+                  ) : uploadedFileName && !uploadedFileName.startsWith("Google Slide:") ? (
+                    <div className="bg-white px-4 py-3 rounded-xl border border-teal-brand/30 flex items-center gap-3 shadow-3xs max-w-sm mx-auto">
+                      <div className="w-8 h-8 rounded-lg bg-teal-light flex items-center justify-center text-teal-brand shrink-0">
+                        <FileText className="w-4.5 h-4.5" />
+                      </div>
+                      <div className="text-left overflow-hidden">
+                        <p className="text-xs font-bold text-primary truncate max-w-[150px] font-sans">{uploadedFileName}</p>
+                        <p className="text-[9px] text-teal-brand font-semibold flex items-center gap-1">
+                          <Check className="w-3 h-3" /> Ready to parse
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setUploadedFileName(null);
+                          setCustomContent("");
+                          const input = document.getElementById("file-upload-input") as HTMLInputElement;
+                          if (input) input.value = "";
+                        }}
+                        className="p-1 text-secondary hover:text-red-600 hover:bg-red-50 rounded-md transition-all shrink-0 ml-2"
+                        title="Clear file"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-9 h-9 rounded-full bg-teal-light flex items-center justify-center text-teal-brand shrink-0 shadow-3xs">
+                        <Upload className="w-4.5 h-4.5" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-primary font-sans">
+                          Drag & drop file here, or <span className="text-teal-brand underline decoration-teal-brand/30">browse</span>
+                        </p>
+                        <p className="text-[10px] text-secondary mt-0.5 font-sans">
+                          Supports PDFs, Word docs, text files up to 10MB
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {extractionError && (
+                  <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-xs text-red-950 flex gap-2 font-sans leading-normal">
+                    <ShieldAlert className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+                    <div className="text-left">
+                      <span className="font-bold font-sans">Extraction Error:</span> {extractionError}
                     </div>
                   </div>
-                ) : uploadedFileName ? (
-                  <div className="bg-white px-4 py-3 rounded-xl border border-teal-brand/30 flex items-center gap-3 shadow-3xs max-w-sm mx-auto">
-                    <div className="w-8 h-8 rounded-lg bg-teal-light flex items-center justify-center text-teal-brand shrink-0">
-                      <FileText className="w-4.5 h-4.5" />
-                    </div>
-                    <div className="text-left overflow-hidden">
-                      <p className="text-xs font-bold text-primary truncate max-w-[180px] font-sans">{uploadedFileName}</p>
-                      <p className="text-[9px] text-teal-brand font-semibold flex items-center gap-1">
-                        <Check className="w-3 h-3" /> Ready to parse
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setUploadedFileName(null);
-                        setCustomContent("");
-                        const input = document.getElementById("file-upload-input") as HTMLInputElement;
-                        if (input) input.value = "";
-                      }}
-                      className="p-1 text-secondary hover:text-red-600 hover:bg-red-50 rounded-md transition-all shrink-0 ml-2"
-                      title="Clear file"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="w-10 h-10 rounded-full bg-teal-light flex items-center justify-center text-teal-brand shrink-0 shadow-3xs">
-                      <Upload className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-primary font-sans">
-                        Drag & drop your file here, or <span className="text-teal-brand underline decoration-teal-brand/30">click to browse</span>
-                      </p>
-                      <p className="text-[10px] text-secondary leading-relaxed mt-0.5 font-sans">
-                        PDF, DOCX, TXT, MD or Plain Text up to 10MB
-                      </p>
-                    </div>
-                  </>
                 )}
               </div>
 
-              {extractionError && (
-                <div className="p-3 bg-red-50 border border-red-100 rounded-xl text-xs text-red-950 flex gap-2 font-sans leading-normal">
-                  <ShieldAlert className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                  <div>
-                    <span className="font-bold font-sans">Extraction Error:</span> {extractionError}
-                  </div>
+              {/* Method B: Google Slides Importer */}
+              <div className="space-y-2 flex flex-col justify-between">
+                <div>
+                  <label className="text-xs font-bold text-teal-dark block font-sans text-left">Method B: Import from Google Slides:</label>
+                  <p className="text-[10px] text-secondary font-sans leading-tight mt-0.5 text-left mb-2 font-sans">Fetch lesson materials directly from any Google Presentation</p>
                 </div>
-              )}
+
+                <div className="border border-black/[0.12] rounded-xl p-4.5 bg-surface-0/50 flex flex-col justify-center min-h-[175px] space-y-2.5">
+                  {!googleAccessToken ? (
+                    <div className="flex flex-col items-center justify-center text-center space-y-2.5 py-2">
+                      <Presentation className="w-7 h-7 text-amber-500 animate-pulse" />
+                      <div className="space-y-0.5">
+                        <p className="text-xs font-bold text-primary font-sans">Connect Google Workspace</p>
+                        <p className="text-[9px] text-secondary font-sans max-w-[240px] mx-auto leading-tight">Authorize Lyra to read your presentation slides securely</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={signInWithGoogle}
+                        className="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold font-sans flex items-center gap-1.5 shadow-3xs cursor-pointer transition-all"
+                      >
+                        <LogIn className="w-3.5 h-3.5" />
+                        Connect Google Slides
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 text-left">
+                      {/* Dropdown with recent slides */}
+                      <div className="space-y-1">
+                        <span className="text-[9px] font-bold text-secondary uppercase tracking-wider block font-mono">Select Recent Presentation:</span>
+                        {isLoadingRecent ? (
+                          <div className="flex items-center gap-1.5 text-xs text-secondary py-1 font-sans">
+                            <RefreshCw className="w-3 h-3 animate-spin text-amber-500" />
+                            Loading recent slides...
+                          </div>
+                        ) : recentSlides.length > 0 ? (
+                          <select
+                            value={selectedSlideId}
+                            onChange={(e) => {
+                              setSelectedSlideId(e.target.value);
+                              if (e.target.value) {
+                                importGoogleSlidesContent(e.target.value);
+                              }
+                            }}
+                            className="w-full text-xs bg-white border border-black/[0.12] rounded-lg p-2 font-sans text-primary focus:outline-hidden focus:border-amber-500 cursor-pointer"
+                          >
+                            <option value="">-- Choose a Google Slideshow --</option>
+                            {recentSlides.map((slide) => (
+                              <option key={slide.id} value={slide.id}>
+                                {slide.name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <p className="text-[10px] text-rose-600 font-sans italic">No presentation files found in your Drive.</p>
+                        )}
+                      </div>
+
+                      {/* Manual Presentation ID Input */}
+                      <div className="space-y-1">
+                        <span className="text-[9px] font-bold text-secondary uppercase tracking-wider block font-mono">Or paste Presentation ID / URL:</span>
+                        <div className="flex gap-1.5">
+                          <input
+                            type="text"
+                            placeholder="https://docs.google.com/presentation/d/.../edit"
+                            value={customSlideId}
+                            onChange={(e) => setCustomSlideId(e.target.value)}
+                            className="flex-1 text-xs bg-white border border-black/[0.12] rounded-lg px-2.5 py-1.5 font-sans focus:outline-hidden focus:border-amber-500"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              let id = customSlideId.trim();
+                              // Extract ID from URL if they pasted URL
+                              if (id.includes("/d/")) {
+                                const parts = id.split("/d/");
+                                if (parts[1]) {
+                                  id = parts[1].split("/")[0];
+                                }
+                              }
+                              if (id) {
+                                importGoogleSlidesContent(id);
+                              }
+                            }}
+                            disabled={isImportingSlides || !customSlideId}
+                            className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-bold rounded-lg text-xs font-sans shrink-0 transition-all cursor-pointer"
+                          >
+                            {isImportingSlides ? (
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              "Import"
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      {uploadedFileName && uploadedFileName.startsWith("Google Slide:") && (
+                        <div className="bg-emerald-50 border border-emerald-200 p-2 rounded-lg flex items-center justify-between text-[10px] text-emerald-950 font-sans mt-1">
+                          <div className="flex items-center gap-1.5 overflow-hidden">
+                            <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0 stroke-[3]" />
+                            <span className="truncate max-w-[170px] font-bold">{uploadedFileName}</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setUploadedFileName(null);
+                              setCustomContent("");
+                              setSelectedSlideId("");
+                              setCustomSlideId("");
+                            }}
+                            className="text-secondary hover:text-red-600 hover:bg-red-50 p-1 rounded-md"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
+
+                      {slidesImportError && (
+                        <p className="text-[9px] text-rose-600 font-sans leading-snug font-medium">⚠️ {slidesImportError}</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
             </div>
 
             {/* Raw lesson plan box (Optional paste) */}
