@@ -3,8 +3,7 @@ import {
   User as FirebaseUser,
   onAuthStateChanged,
   signInWithPopup,
-  signOut,
-  GoogleAuthProvider
+  signOut
 } from 'firebase/auth';
 import { 
   doc, 
@@ -21,11 +20,6 @@ import {
 import { auth, db, googleProvider, handleFirestoreError, OperationType } from '../lib/firebase';
 import { ProcessedLesson } from '../types';
 
-// Configure Google Workspace scopes for presentation creation and file reads
-googleProvider.addScope('https://www.googleapis.com/auth/presentations');
-googleProvider.addScope('https://www.googleapis.com/auth/drive.file');
-googleProvider.addScope('https://www.googleapis.com/auth/drive.readonly');
-
 export interface SavedLesson extends ProcessedLesson {
   id: string;
   userId: string;
@@ -40,8 +34,6 @@ interface FirebaseContextType {
   authLoading: boolean;
   dbLoading: boolean;
   error: string | null;
-  googleAccessToken: string | null;
-  setGoogleAccessToken: (token: string | null) => void;
   signInWithGoogle: () => Promise<void>;
   logOut: () => Promise<void>;
   saveLessonToCloud: (lessonData: ProcessedLesson) => Promise<string>;
@@ -55,6 +47,7 @@ interface FirebaseContextType {
     tech?: string,
     instructorNotes?: string
   ) => Promise<void>;
+  subscribeUser: (plan: string) => Promise<void>;
 }
 
 const FirebaseContext = createContext<FirebaseContextType | undefined>(undefined);
@@ -66,7 +59,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [authLoading, setAuthLoading] = useState<boolean>(true);
   const [dbLoading, setDbLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [googleAccessToken, setGoogleAccessToken] = useState<string | null>(null);
 
   // Load user's saved lessons
   const loadLessons = async () => {
@@ -139,7 +131,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       } else {
         setProfile(null);
         setSavedLessons([]);
-        setGoogleAccessToken(null);
         setAuthLoading(false);
       }
     });
@@ -150,11 +141,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const signInWithGoogle = async () => {
     try {
       setError(null);
-      const result = await signInWithPopup(auth, googleProvider);
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      if (credential?.accessToken) {
-        setGoogleAccessToken(credential.accessToken);
-      }
+      await signInWithPopup(auth, googleProvider);
     } catch (err: any) {
       console.error("Google Auth sign-in failed:", err);
       setError(err?.message || "Sign-in failed");
@@ -165,7 +152,6 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       setError(null);
       await signOut(auth);
-      setGoogleAccessToken(null);
     } catch (err: any) {
       console.error("Logout failed:", err);
       setError("Logout failed");
@@ -270,6 +256,35 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  const subscribeUser = async (plan: string): Promise<void> => {
+    if (!auth.currentUser) {
+      throw new Error("You must be signed in to subscribe.");
+    }
+    setDbLoading(true);
+    try {
+      const userDocRef = doc(db, 'users', auth.currentUser.uid);
+      const updatedFields = {
+        isSubscribed: true,
+        stripeSubscriptionPlan: plan,
+        subscriptionDate: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+      await setDoc(userDocRef, updatedFields, { merge: true });
+      
+      setProfile((prev: any) => ({
+        ...(prev || {}),
+        ...updatedFields,
+        uid: auth.currentUser ? auth.currentUser.uid : ''
+      }));
+    } catch (err: any) {
+      console.error("Error updating subscription in Firestore:", err);
+      handleFirestoreError(err, OperationType.UPDATE, `users/${auth.currentUser.uid}`);
+      throw err;
+    } finally {
+      setDbLoading(false);
+    }
+  };
+
   return (
     <FirebaseContext.Provider
       value={{
@@ -279,14 +294,13 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         authLoading,
         dbLoading,
         error,
-        googleAccessToken,
-        setGoogleAccessToken,
         signInWithGoogle,
         logOut,
         saveLessonToCloud,
         deleteLessonFromCloud,
         loadLessons,
-        saveInstructorPreferences
+        saveInstructorPreferences,
+        subscribeUser
       }}
     >
       {children}
