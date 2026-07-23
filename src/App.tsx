@@ -52,9 +52,10 @@ import SubscriptionModal from "./components/SubscriptionModal";
 import InteractiveSlideshow from "./components/InteractiveSlideshow";
 import AICopilot from "./components/AICopilot";
 import NanaBananaPro from "./components/NanaBananaPro";
+import { LandingPage } from "./components/LandingPage";
 
 // Vector Robot Bunny Mascot SVG
-const RobotBunnyMascot = ({ className = "w-28 h-28" }: { className?: string }) => (
+export const RobotBunnyMascot = ({ className = "w-28 h-28" }: { className?: string }) => (
   <svg viewBox="0 0 120 120" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
     {/* Ears */}
     <g transform="translate(0, -4)">
@@ -131,6 +132,7 @@ export default function App() {
   const [extractionError, setExtractionError] = useState<string | null>(null);
   
   // App states
+  const [currentView, setCurrentView] = useState<"landing" | "studio">("landing");
   const [lesson, setLesson] = useState<ProcessedLesson>(INITIAL_PROCESSED_LESSON);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -646,9 +648,12 @@ export default function App() {
         
         {/* Navigation Bar (ly-nav) */}
         <nav className="px-6 py-4.5 border-b border-black/[0.09] flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+          <div 
+            className="flex items-center gap-3 cursor-pointer group"
+            onClick={() => setCurrentView("landing")}
+          >
             {/* Mascot in mini logo format */}
-            <div className="w-9 h-9 rounded-xl bg-teal-light flex items-center justify-center shrink-0 border border-teal-brand/30">
+            <div className="w-9 h-9 rounded-xl bg-teal-light flex items-center justify-center shrink-0 border border-teal-brand/30 group-hover:scale-105 transition-transform">
               <Sparkles className="w-5 h-5 text-teal-brand" />
             </div>
             <div>
@@ -659,10 +664,36 @@ export default function App() {
             </div>
           </div>
 
-          {/* Nav Links / Upgrade to Pro / Active Auth badge */}
-          <div className="flex items-center gap-3">
+          {/* Nav Links & Actions */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1 bg-surface-1 p-1 rounded-full border border-black/[0.06] text-xs font-bold font-sans">
+              <button
+                type="button"
+                onClick={() => setCurrentView("landing")}
+                className={`px-3 py-1.5 rounded-full transition-all cursor-pointer ${
+                  currentView === "landing"
+                    ? "bg-white text-teal-dark shadow-3xs"
+                    : "text-secondary hover:text-primary"
+                }`}
+              >
+                Landing Page
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentView("studio")}
+                className={`px-3 py-1.5 rounded-full transition-all flex items-center gap-1.5 cursor-pointer ${
+                  currentView === "studio"
+                    ? "bg-teal-dark text-white shadow-3xs"
+                    : "text-secondary hover:text-primary"
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <span>Instructor Studio</span>
+              </button>
+            </div>
+
             {profile?.isSubscribed ? (
-              <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-300 text-emerald-800 font-bold text-xs rounded-full shadow-3xs">
+              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-300 text-emerald-800 font-bold text-xs rounded-full shadow-3xs">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
                 <span>Pro Member</span>
               </div>
@@ -670,13 +701,10 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => setShowSubscriptionModal(true)}
-                className="px-3.5 py-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 font-extrabold text-xs rounded-full shadow-3xs hover:shadow-xs transition-all flex items-center gap-1.5 cursor-pointer border border-amber-300/60"
+                className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 font-extrabold text-xs rounded-full shadow-3xs hover:shadow-xs transition-all cursor-pointer border border-amber-300/60"
               >
                 <Crown className="w-3.5 h-3.5 text-slate-950 shrink-0" />
-                <span>Upgrade to Pro</span>
-                <span className="bg-slate-950/15 text-slate-950 text-[10px] px-1.5 py-0.2 rounded font-mono font-black">
-                  {generatedCount >= 1 ? "1/1 Free Used" : "1 Free Lesson"}
-                </span>
+                <span>Upgrade</span>
               </button>
             )}
 
@@ -691,11 +719,11 @@ export default function App() {
                     {user.displayName?.[0]?.toUpperCase() || 'E'}
                   </div>
                 )}
-                <span className="font-sans font-medium text-teal-dark max-w-[80px] truncate">{user.displayName?.split(" ")[0]}</span>
+                <span className="font-sans font-medium text-teal-dark max-w-[80px] truncate hidden sm:inline">{user.displayName?.split(" ")[0]}</span>
                 <button
                   type="button"
                   onClick={logOut}
-                  className="ml-1 text-[10px] text-red-600 hover:text-red-700 font-bold transition-all px-1.5 py-0.5 rounded-md hover:bg-red-50"
+                  className="ml-1 text-[10px] text-red-600 hover:text-red-700 font-bold transition-all px-1.5 py-0.5 rounded-md hover:bg-red-50 cursor-pointer"
                   title="Sign Out"
                 >
                   Exit
@@ -705,7 +733,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={signInWithGoogle}
-                className="px-3.5 py-1.5 bg-teal-dark hover:bg-opacity-95 text-white rounded-full text-xs font-bold transition-all shadow-3xs flex items-center gap-1.5"
+                className="px-3.5 py-1.5 bg-teal-dark hover:bg-opacity-95 text-white rounded-full text-xs font-bold transition-all shadow-3xs flex items-center gap-1.5 cursor-pointer"
               >
                 <LogIn className="w-3.5 h-3.5 text-teal-brand" />
                 <span>Sign In</span>
@@ -714,8 +742,17 @@ export default function App() {
           </div>
         </nav>
 
-        {/* Hero Section (ly-hero) */}
-        <header className="px-6 sm:px-8 py-10 relative overflow-hidden bg-gradient-to-b from-teal-light/20 to-transparent border-b border-black/[0.04]">
+        {currentView === "landing" ? (
+          <LandingPage 
+            onLaunchStudio={() => setCurrentView("studio")} 
+            onSelectPlan={() => setShowSubscriptionModal(true)}
+            user={user}
+            onSignIn={signInWithGoogle}
+          />
+        ) : (
+          <div className="flex-1 flex flex-col">
+            {/* Hero Section (ly-hero) */}
+            <header className="px-6 sm:px-8 py-10 relative overflow-hidden bg-gradient-to-b from-teal-light/20 to-transparent border-b border-black/[0.04]">
           <div className="absolute top-0 right-0 w-48 h-48 bg-teal-brand/5 rounded-full blur-3xl pointer-events-none" />
           
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -1859,6 +1896,8 @@ export default function App() {
           </div>
 
         </section>
+          </div>
+        )}
 
         {/* Minimal professional footer */}
         <footer className="px-6 sm:px-8 pt-8 mt-auto border-t border-black/[0.05] text-center text-[10px] text-secondary font-sans leading-normal space-y-1">

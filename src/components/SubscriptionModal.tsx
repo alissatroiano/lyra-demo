@@ -157,7 +157,7 @@ export default function SubscriptionModal({
                       <span className="text-xs font-bold text-slate-800">Monthly Plan</span>
                       <input type="radio" checked={selectedPlan === "monthly"} onChange={() => {}} className="accent-teal-dark" />
                     </div>
-                    <p className="text-xl font-serif font-bold text-teal-dark mt-2">$19<span className="text-xs font-sans font-normal text-slate-500">/mo</span></p>
+                    <p className="text-xl font-serif font-bold text-teal-dark mt-2">$19.99<span className="text-xs font-sans font-normal text-slate-500">/mo</span></p>
                     <p className="text-[10px] text-slate-500 mt-1">Flexible, cancel anytime</p>
                   </button>
 
@@ -259,7 +259,7 @@ export default function SubscriptionModal({
                 className="w-full py-3.5 bg-gradient-to-r from-teal-dark to-teal-800 hover:from-teal-800 hover:to-teal-dark text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <ShieldCheck className="w-4 h-4 text-teal-brand" />
-                <span>{loading ? "Processing Stripe Payment..." : `Pay ${selectedPlan === "yearly" ? "$159" : "$19"} & Subscribe`}</span>
+                <span>{loading ? "Processing Stripe Payment..." : `Pay ${selectedPlan === "yearly" ? "$159" : "$19.99"} & Subscribe`}</span>
               </button>
 
               <div className="text-center text-[10px] text-slate-400 flex items-center justify-center gap-2">
