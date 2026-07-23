@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   ChevronLeft, 
@@ -10,7 +10,9 @@ import {
   Pause,
   Award,
   Layers,
-  Presentation
+  Presentation,
+  Maximize2,
+  Minimize2
 } from "lucide-react";
 import { ProcessedLesson } from "../types";
 
@@ -29,7 +31,9 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showNotes, setShowNotes] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [slideTimer, setSlideTimer] = useState<NodeJS.Timeout | null>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
 
   if (!slides || slides.length === 0) {
     return (
@@ -65,6 +69,32 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
     }
   };
 
+  const toggleFullscreen = () => {
+    if (!isFullscreen) {
+      if (stageRef.current && stageRef.current.requestFullscreen) {
+        stageRef.current.requestFullscreen().catch(() => {
+          setIsFullscreen(true);
+        });
+      } else {
+        setIsFullscreen(true);
+      }
+    } else {
+      if (document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+      setIsFullscreen(false);
+    }
+  };
+
+  // Listen to standard fullscreen change
+  React.useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFsChange);
+    return () => document.removeEventListener("fullscreenchange", handleFsChange);
+  }, []);
+
   // Clean up timer on unmount
   React.useEffect(() => {
     return () => {
@@ -97,6 +127,15 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
         <div className="flex items-center gap-2">
           <button
             type="button"
+            onClick={toggleFullscreen}
+            className="px-3.5 py-1.5 rounded-lg text-xs font-bold font-sans transition-all flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 shadow-3xs cursor-pointer"
+          >
+            {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+            <span>{isFullscreen ? "Exit Full Screen" : "Full Screen"}</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setShowNotes(!showNotes)}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold font-sans transition-all flex items-center gap-1.5 border cursor-pointer ${
               showNotes 
@@ -124,11 +163,36 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
       </div>
 
       {/* Main Slideshow Stage */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-teal-dark to-slate-950 border border-slate-800 rounded-3xl shadow-xl min-h-[380px] flex flex-col justify-between p-6 sm:p-8 text-white">
-        
+      <div 
+        ref={stageRef}
+        className={`relative overflow-hidden bg-gradient-to-br from-slate-900 via-teal-dark to-slate-950 border border-slate-800 rounded-3xl shadow-xl flex flex-col justify-between text-white transition-all ${
+          isFullscreen 
+            ? "fixed inset-0 z-50 rounded-none border-none p-8 sm:p-14 bg-slate-950" 
+            : "min-h-[400px] p-6 sm:p-8"
+        }`}
+      >
         {/* Subtle grid backing decoration */}
         <div className="absolute inset-0 bg-[radial-gradient(#ffffff08_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none opacity-30" />
         
+        {/* Top Header line inside stage */}
+        <div className="relative z-10 flex items-center justify-between pb-2">
+          <span className="text-[10px] sm:text-xs uppercase tracking-wider font-bold text-teal-brand flex items-center gap-1.5 font-mono">
+            <Sparkles className="w-3.5 h-3.5 text-teal-brand" />
+            <span>SLIDE {currentIndex + 1} DIRECTIVE</span>
+          </span>
+
+          {isFullscreen && (
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className="px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer border border-white/20"
+            >
+              <Minimize2 className="w-3.5 h-3.5 text-amber-300" />
+              <span>Exit Full Screen</span>
+            </button>
+          )}
+        </div>
+
         {/* Progress indicators */}
         <div className="absolute top-0 left-0 right-0 p-1 flex gap-1 z-10">
           {slides.map((_, idx) => (
@@ -162,37 +226,44 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
-              className="space-y-6"
+              className="space-y-6 max-w-4xl mx-auto w-full"
             >
-              <div className="space-y-2">
-                <span className="text-[10px] uppercase tracking-wider font-bold text-teal-brand flex items-center gap-1.5 font-mono">
-                  <Sparkles className="w-3.5 h-3.5 text-teal-brand" />
-                  <span>SLIDE {currentIndex + 1} DIRECTIVE</span>
-                </span>
-                <h3 className="text-xl sm:text-2xl font-black font-sans text-white tracking-tight leading-tight">
-                  {currentSlide.title}
-                </h3>
-              </div>
+              <h3 className={`font-black font-sans text-white tracking-tight leading-tight ${
+                isFullscreen ? "text-3xl sm:text-5xl" : "text-xl sm:text-3xl"
+              }`}>
+                {currentSlide.title}
+              </h3>
 
               {/* Main Content points */}
-              <div className="space-y-3.5 max-w-2xl">
+              <div className="space-y-3.5">
                 {currentSlide.content.map((point, index) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="flex items-start gap-3"
+                    className="flex items-start gap-3.5"
                   >
-                    <span className="w-5 h-5 rounded-full bg-teal-brand/20 text-teal-brand flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 border border-teal-brand/30">
+                    <span className={`rounded-full bg-teal-brand/20 text-teal-brand flex items-center justify-center font-bold shrink-0 mt-0.5 border border-teal-brand/30 ${
+                      isFullscreen ? "w-8 h-8 text-sm" : "w-6 h-6 text-xs"
+                    }`}>
                       {index + 1}
                     </span>
-                    <p className="text-sm sm:text-base text-slate-200 font-sans leading-relaxed">
+                    <p className={`text-slate-200 font-sans leading-relaxed ${
+                      isFullscreen ? "text-xl sm:text-2xl" : "text-sm sm:text-base"
+                    }`}>
                       {point}
                     </p>
                   </motion.div>
                 ))}
               </div>
+
+              {isFullscreen && showNotes && currentSlide.instructorNotes && (
+                <div className="pt-4 border-t border-white/10 text-amber-200 text-sm font-sans bg-black/40 p-4 rounded-xl border border-amber-400/20">
+                  <span className="font-bold text-amber-400 block text-xs uppercase mb-0.5">Teacher Tip:</span>
+                  {currentSlide.instructorNotes}
+                </div>
+              )}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -218,8 +289,8 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
             </button>
           </div>
 
-          <div className="text-right">
-            <span className="text-[10px] font-mono text-slate-400 block uppercase">Presenter Deck</span>
+          <div className="text-right font-mono">
+            <span className="text-[10px] text-slate-400 block uppercase">Presenter Deck</span>
             <span className="text-xs font-sans text-teal-brand font-bold">
               {currentIndex + 1} / {slides.length}
             </span>
@@ -252,23 +323,16 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-            id="instructor-notes-card"
+            className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-5 space-y-2 shadow-3xs"
+            id="facilitator-notes-card"
           >
-            <div className="bg-amber-50/70 border border-amber-200/50 rounded-2xl p-5 space-y-3">
-              <div className="flex items-center gap-2.5 text-amber-900">
-                <div className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700">
-                  <HelpCircle className="w-4 h-4" />
-                </div>
-                <div>
-                  <h5 className="text-xs font-bold uppercase font-sans tracking-tight">Facilitator Cues & Speaking Prompts</h5>
-                  <p className="text-[9px] text-amber-800/80 leading-none">Pedagogical recommendations by Lyra</p>
-                </div>
-              </div>
-              <p className="text-xs text-amber-950 leading-relaxed font-sans bg-white/70 border border-amber-200/30 p-3 rounded-xl">
-                {currentSlide.instructorNotes}
-              </p>
+            <div className="flex items-center gap-2 text-amber-900">
+              <Award className="w-4 h-4 text-amber-600" />
+              <h5 className="text-xs font-bold uppercase font-sans">Lyra's Instructor Script & Pacing Tip</h5>
             </div>
+            <p className="text-xs text-amber-950/90 leading-relaxed font-sans">
+              {currentSlide.instructorNotes}
+            </p>
           </motion.div>
         )}
       </AnimatePresence>

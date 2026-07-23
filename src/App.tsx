@@ -134,7 +134,9 @@ export default function App() {
   const [lesson, setLesson] = useState<ProcessedLesson>(INITIAL_PROCESSED_LESSON);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"slides" | "video" | "sound-studio" | "lab" | "worksheet" | "quiz" | "media" | "nana-banana">("slides");
+  const [activeTab, setActiveTab] = useState<"slides" | "lab" | "nana-banana" | "quiz" | "media">("slides");
+  const [copilotOpen, setCopilotOpen] = useState<boolean>(false);
+  const [mediaSearchQuery, setMediaSearchQuery] = useState<string>("");
   const [showSubscriptionModal, setShowSubscriptionModal] = useState<boolean>(false);
   const [generatedCount, setGeneratedCount] = useState<number>(() => {
     try {
@@ -751,47 +753,22 @@ export default function App() {
 
             {/* Selection of transformation goal with high fidelity toggle buttons */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-teal-dark block font-sans">Pedagogical Goal Option:</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setTransformationGoal("gamify")}
-                  className={`p-3.5 rounded-xl text-left border transition-all flex items-start gap-3 cursor-pointer ${
-                    transformationGoal === "gamify"
-                      ? "border-teal-brand bg-teal-light/20 text-teal-dark shadow-3xs"
-                      : "border-black/[0.08] hover:border-black/[0.18] text-secondary hover:text-primary"
-                  }`}
-                >
-                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
-                    transformationGoal === "gamify" ? "bg-teal-brand border-teal-brand text-white" : "border-black/[0.15] bg-white"
-                  }`}>
-                    {transformationGoal === "gamify" && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+              <label className="text-xs font-bold text-teal-dark block font-sans">Upload Option:</label>
+              <div className="p-4 rounded-xl border border-teal-brand bg-teal-light/20 text-teal-dark shadow-3xs flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-teal-brand text-white flex items-center justify-center shrink-0 shadow-3xs">
+                    <Upload className="w-5 h-5" />
                   </div>
                   <div className="space-y-0.5">
-                    <p className="text-xs font-bold font-sans">Gamify Lesson Plan</p>
-                    <p className="text-[10px] text-secondary leading-normal font-sans">Inserts competitive trivia, student led roles, and hands-on laboratory games.</p>
+                    <p className="text-xs font-bold font-sans">Upload & Generate</p>
+                    <p className="text-[10px] text-secondary leading-normal font-sans">
+                      Seamlessly transforms raw lesson plans into interactive slides, Nana Banana Pro visual diagrams, hands-on activities, and smartboard quizzes.
+                    </p>
                   </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setTransformationGoal("presentation")}
-                  className={`p-3.5 rounded-xl text-left border transition-all flex items-start gap-3 cursor-pointer ${
-                    transformationGoal === "presentation"
-                      ? "border-teal-brand bg-teal-light/20 text-teal-dark shadow-3xs"
-                      : "border-black/[0.08] hover:border-black/[0.18] text-secondary hover:text-primary"
-                  }`}
-                >
-                  <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
-                    transformationGoal === "presentation" ? "bg-teal-brand border-teal-brand text-white" : "border-black/[0.15] bg-white"
-                  }`}>
-                    {transformationGoal === "presentation" && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                  </div>
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-bold font-sans">Create Highly Visual Presentation</p>
-                    <p className="text-[10px] text-secondary leading-normal font-sans">Focuses on comprehensive slides, teaching analogies, and deep topic guides.</p>
-                  </div>
-                </button>
+                </div>
+                <span className="text-[10px] font-bold font-mono px-2.5 py-1 rounded-full bg-teal-brand text-white shrink-0 uppercase tracking-wide">
+                  Active
+                </span>
               </div>
             </div>
 
@@ -964,7 +941,7 @@ export default function App() {
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold text-secondary uppercase font-sans">Technology Available</span>
                   <div className="flex flex-wrap gap-1.5">
-                    {["Smart Board", "Chromebooks", "Low Tech (Paper Only)"].map((val) => (
+                    {["Smart Board", "Chromebooks", "Tablets", "Low Tech (Paper Only)"].map((val) => (
                       <button
                         key={val}
                         type="button"
@@ -1227,10 +1204,8 @@ export default function App() {
             <div className="flex border border-black/[0.06] overflow-x-auto gap-1 bg-surface-0 p-1.5 rounded-xl mb-6 font-sans">
               {[
                 { id: "slides", label: "Interactive Slides", icon: Layers },
-                { id: "copilot", label: "Lyra AI Co-Teacher", icon: Sparkles },
                 { id: "lab", label: "Hands-On Lab", icon: Activity },
                 { id: "nana-banana", label: "🍌 Nana Banana Pro Visuals", icon: Palette },
-                { id: "worksheet", label: "Printable Worksheet", icon: FileText },
                 { id: "quiz", label: "Smartboard Quiz", icon: HelpCircle },
                 { id: "media", label: "Media Fixer", icon: Link2Off }
               ].map((tab) => {
@@ -1293,26 +1268,6 @@ export default function App() {
                         ))}
                       </div>
                     </div>
-                  </motion.div>
-                )}
-
-                {/* TAB: Lyra AI Co-Teacher */}
-                {activeTab === "copilot" && (
-                  <motion.div
-                    key="tab-copilot-content"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.25 }}
-                    className="space-y-6 animate-fade-in"
-                  >
-                    <AICopilot 
-                      lesson={lesson} 
-                      onTriggerPaidFlow={() => {
-                        console.log("Triggering Paid Model flow via AI Studio build...");
-                        alert("Paid API Key selection dialog opened in your AI Studio build console. Please verify the active model settings.");
-                      }}
-                    />
                   </motion.div>
                 )}
 
@@ -1445,114 +1400,6 @@ export default function App() {
                     className="space-y-6 animate-fade-in"
                   >
                     <NanaBananaPro lesson={lesson} />
-                  </motion.div>
-                )}
-
-                {/* TAB 3: Printable Worksheet */}
-                {activeTab === "worksheet" && (
-                  <motion.div
-                    key="tab-worksheet-content"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.25 }}
-                    className="space-y-4 animate-fade-in"
-                  >
-                    {/* Simulated paper sheet block */}
-                    <div className="bg-white border border-black/[0.12] rounded-2xl p-6 sm:p-8 shadow-3xs space-y-6 relative overflow-hidden" id="worksheet-to-print">
-                      
-                      {/* Name/Date lines */}
-                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b-2 border-dashed border-black/[0.1] pb-5">
-                        <div className="space-y-1">
-                          <h3 className="font-serif text-lg font-bold text-teal-dark">{lesson.worksheet.title}</h3>
-                          <p className="text-xs text-secondary font-sans leading-relaxed">{lesson.worksheet.instructions}</p>
-                        </div>
-                        
-                        <div className="flex gap-4 text-[10px] font-mono text-secondary shrink-0 w-full sm:w-auto">
-                          <div className="border-b border-black/[0.15] flex-1 sm:flex-initial sm:w-36 pb-1">
-                            <span>NAME: </span>
-                          </div>
-                          <div className="border-b border-black/[0.15] w-24 pb-1">
-                            <span>DATE: </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Question list */}
-                      <div className="space-y-6 py-2">
-                        {lesson.worksheet.questions.map((question, idx) => (
-                          <div key={question.id} className="space-y-3">
-                            <div className="flex items-start gap-2.5">
-                              <span className="font-mono font-bold text-teal-dark bg-teal-light border border-teal-brand/10 px-2.5 py-0.5 rounded-md text-[10px] mt-0.5 shrink-0">
-                                {question.id}
-                              </span>
-                              <span className="text-xs sm:text-sm font-bold text-primary leading-snug">
-                                {question.questionText}
-                              </span>
-                              <span className="text-[9px] font-mono text-secondary bg-surface-1 border border-black/[0.04] px-2 py-0.5 rounded ml-auto shrink-0 select-none">
-                                {question.answerType}
-                              </span>
-                            </div>
-
-                            {/* MC Choices if present */}
-                            {question.options && question.options.length > 0 ? (
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-9">
-                                {question.options.map((option, optIdx) => (
-                                  <div key={optIdx} className="flex items-center gap-2.5 p-2 bg-surface-0/60 border border-black/[0.04] rounded-xl text-xs text-secondary font-sans">
-                                    <div className="w-4 h-4 rounded-full border border-black/[0.15] bg-white shrink-0" />
-                                    <span>{option}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              /* Lined box for long-form responses */
-                              <div className="pl-9 space-y-2">
-                                <div className="h-6 border-b border-black/[0.06]" />
-                                <div className="h-6 border-b border-black/[0.06]" />
-                              </div>
-                            )}
-
-                            {/* Instructor key overlay */}
-                            {showSampleAnswers && (
-                              <div className="mt-2.5 ml-9 p-3 bg-teal-light/20 border border-teal-brand/10 rounded-xl text-xs text-teal-dark flex gap-2">
-                                <span className="font-bold font-mono uppercase text-teal-brand select-none">Instructor Key:</span>
-                                <p className="font-sans font-medium">{question.sampleAnswer}</p>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Print PDF Actions Footer */}
-                      <div className="border-t border-black/[0.05] pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                        <span className="text-[9px] font-mono text-secondary">Ages 6-14 · Resources generated via Lyra</span>
-                        <div className="flex gap-2 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => setShowSampleAnswers(!showSampleAnswers)}
-                            className={`flex items-center gap-1.5 px-3.5 py-2 border rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                              showSampleAnswers
-                                ? "bg-teal-light/30 border-teal-brand/20 text-teal-brand"
-                                : "bg-white border-black/[0.08] text-secondary hover:bg-surface-0"
-                            }`}
-                            id="toggle-answers-btn"
-                          >
-                            <BookOpen className="w-3.5 h-3.5" />
-                            <span>{showSampleAnswers ? "Hide Answer Key" : "Show Answer Key"}</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => window.print()}
-                            className="flex items-center gap-1.5 px-3.5 py-2 bg-teal-dark hover:bg-opacity-95 text-white border border-teal-dark rounded-xl text-xs font-bold transition-all shadow-3xs cursor-pointer"
-                            id="print-worksheet-btn"
-                          >
-                            <Printer className="w-3.5 h-3.5" />
-                            <span>Print PDF Worksheet</span>
-                          </button>
-                        </div>
-                      </div>
-
-                    </div>
                   </motion.div>
                 )}
 
@@ -1700,28 +1547,76 @@ export default function App() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
                     transition={{ duration: 0.25 }}
-                    className="space-y-4 animate-fade-in"
+                    className="space-y-5 animate-fade-in"
                   >
-                    <div className="bg-white border border-black/[0.08] rounded-2xl p-5 shadow-3xs flex flex-col sm:flex-row items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-red-50 border border-red-100 flex items-center justify-center text-red-600 shrink-0">
-                        <Link2Off className="w-5.5 h-5.5" />
+                    <div className="bg-white border border-black/[0.08] rounded-2xl p-5 shadow-3xs flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-red-50 border border-red-100 flex items-center justify-center text-red-600 shrink-0">
+                          <Link2Off className="w-5.5 h-5.5" />
+                        </div>
+                        <div className="space-y-0.5">
+                          <h4 className="text-xs font-bold text-teal-dark uppercase font-sans">Prevent "404 Broken Link" Disruption</h4>
+                          <p className="text-xs text-secondary leading-relaxed font-sans font-normal">
+                            Detects dead ends in lesson plans and provides grounded, filtered (no explicit content) Google SafeSearch alternatives.
+                          </p>
+                        </div>
                       </div>
-                      <div className="space-y-0.5">
-                        <h4 className="text-xs font-bold text-teal-dark uppercase font-sans">Prevent "404 Broken Link" Disruption</h4>
-                        <p className="text-xs text-secondary leading-relaxed font-sans font-normal">
-                          Afterschool STEM lessons are notorious for carrying outdated links or broken intranet URLs. 
-                          <strong> Lyra</strong> detects these dead ends and suggests high-yield fallback searches.
-                        </p>
+
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-extrabold rounded-full shrink-0">
+                        <ShieldAlert className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Google SafeSearch Active</span>
                       </div>
+                    </div>
+
+                    {/* Google SafeSearch Bar */}
+                    <div className="bg-gradient-to-r from-teal-50/80 via-white to-amber-50/60 border border-teal-brand/20 rounded-2xl p-4 sm:p-5 space-y-3 shadow-3xs">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-mono font-bold text-teal-dark uppercase tracking-wide flex items-center gap-1.5">
+                          <Search className="w-3.5 h-3.5 text-teal-brand" />
+                          <span>Google Search Assistant (Safe Content Filtered)</span>
+                        </span>
+                        <span className="text-[9px] font-mono text-emerald-700 font-bold bg-emerald-100/70 border border-emerald-300/60 px-2 py-0.5 rounded-full">
+                          Explicit Content Blocked
+                        </span>
+                      </div>
+
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const query = mediaSearchQuery.trim() || lesson.lessonTitle;
+                          window.open(`https://www.google.com/search?q=${encodeURIComponent(query + " K-12 STEM classroom demonstration")}&safe=active`, "_blank");
+                        }}
+                        className="flex flex-col sm:flex-row gap-2"
+                      >
+                        <input
+                          type="text"
+                          value={mediaSearchQuery}
+                          onChange={(e) => setMediaSearchQuery(e.target.value)}
+                          placeholder={`Search safe Google resources for "${lesson.lessonTitle}"...`}
+                          className="flex-1 px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-brand/30 font-sans"
+                        />
+                        <button
+                          type="submit"
+                          className="px-4 py-2.5 bg-teal-dark hover:bg-slate-900 text-amber-300 font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 shadow-xs"
+                        >
+                          <Search className="w-3.5 h-3.5" />
+                          <span>Google SafeSearch</span>
+                        </button>
+                      </form>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {lesson.mediaRecommendations.map((rec, idx) => (
                         <div key={idx} className="bg-surface-0/50 border border-black/[0.06] rounded-2xl p-5 flex flex-col justify-between gap-4 hover:border-teal-brand/30 transition-all">
                           <div className="space-y-3">
-                            <span className="px-2.5 py-0.5 bg-red-50 border border-red-100 text-[9px] font-bold text-red-800 rounded-full inline-block font-sans uppercase">
-                              Replaces Dead {rec.resourceType}
-                            </span>
+                            <div className="flex justify-between items-center gap-2">
+                              <span className="px-2.5 py-0.5 bg-red-50 border border-red-100 text-[9px] font-bold text-red-800 rounded-full inline-block font-sans uppercase">
+                                Replaces Dead {rec.resourceType}
+                              </span>
+                              <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                                Kid-Safe Filtered
+                              </span>
+                            </div>
                             
                             <div className="space-y-1">
                               <span className="text-[10px] text-secondary font-sans font-bold uppercase block">Verified YouTube Search Query:</span>
@@ -1746,12 +1641,13 @@ export default function App() {
                           </div>
 
                           <div className="pt-2 border-t border-black/[0.04] flex justify-between items-center text-[10px] text-secondary font-sans">
-                            <span>Ready-to-use Backup</span>
+                            <span className="font-medium">Ready-to-use Backup</span>
                             <button
-                              onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(rec.suggestedSearchQuery)}`, "_blank")}
-                              className="text-teal-brand hover:underline font-bold flex items-center gap-0.5"
+                              onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(rec.suggestedSearchQuery)}&safe=active`, "_blank")}
+                              className="text-teal-brand hover:underline font-bold flex items-center gap-0.5 cursor-pointer"
                             >
-                              <span>Google Search</span>
+                              <Search className="w-3 h-3" />
+                              <span>Google SafeSearch</span>
                               <ChevronRight className="w-3.5 h-3.5" />
                             </button>
                           </div>
@@ -1982,6 +1878,73 @@ export default function App() {
             authLoading={authLoading}
           />
         )}
+
+        {/* Floating Sparkle Icon for Lyra AI Co-Teacher Popup */}
+        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
+          {copilotOpen && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2 }}
+              className="w-[92vw] sm:w-[520px] max-h-[85vh] bg-white rounded-3xl border border-teal-brand/30 shadow-2xl overflow-hidden flex flex-col mb-2"
+            >
+              {/* Modal Header */}
+              <div className="bg-teal-dark px-5 py-4 text-white flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-teal-brand/20 border border-teal-brand/40 flex items-center justify-center text-teal-brand">
+                    <Sparkles className="w-4 h-4 animate-pulse" />
+                  </div>
+                  <div>
+                    <h3 className="text-xs font-bold font-sans uppercase tracking-wide">Lyra AI Co-Teacher</h3>
+                    <p className="text-[10px] text-teal-light/80 font-sans">Active Lesson Partner & Adaptations Assistant</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCopilotOpen(false)}
+                  className="w-8 h-8 rounded-xl hover:bg-white/10 flex items-center justify-center text-teal-light hover:text-white transition-all cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-4 overflow-y-auto flex-1 bg-surface-0/30">
+                <AICopilot 
+                  lesson={lesson} 
+                  onTriggerPaidFlow={() => {
+                    console.log("Triggering Paid Model flow via AI Studio build...");
+                    alert("Paid API Key selection dialog opened in your AI Studio build console. Please verify the active model settings.");
+                  }}
+                />
+              </div>
+            </motion.div>
+          )}
+
+          {/* Floating Action Button */}
+          <button
+            type="button"
+            onClick={() => setCopilotOpen(!copilotOpen)}
+            className={`group relative px-4 py-3.5 rounded-full font-bold text-xs shadow-xl transition-all duration-300 flex items-center gap-2.5 cursor-pointer border ${
+              copilotOpen
+                ? "bg-slate-900 text-white border-slate-700 hover:bg-slate-800"
+                : "bg-teal-dark text-white border-teal-brand/40 hover:bg-teal-brand hover:scale-105"
+            }`}
+            id="lyra-copilot-sparkle-trigger"
+          >
+            <Sparkles className={`w-5 h-5 text-amber-300 ${copilotOpen ? "" : "animate-spin-slow"}`} />
+            <span className="font-sans font-bold text-xs pr-0.5">
+              {copilotOpen ? "Close Lyra AI" : "Ask Lyra AI"}
+            </span>
+            {!copilotOpen && (
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
+              </span>
+            )}
+          </button>
+        </div>
 
       </div>
     </div>
