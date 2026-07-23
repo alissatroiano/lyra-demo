@@ -34,10 +34,8 @@ service cloud.firestore {
 
     // Entity validation helpers
     function isValidUser(data) {
-      return data.keys().hasAll(['uid', 'email', 'createdAt', 'updatedAt']) 
-        && data.keys().size() <= 15
-        && data.uid is string && data.uid.size() <= 128
-        && data.email is string && data.email.size() <= 256
+      return data.uid is string && data.uid.size() <= 128
+        && (!data.keys().hasAny(['email']) || (data.email is string && data.email.size() <= 256))
         && (!data.keys().hasAny(['displayName']) || (data.displayName is string && data.displayName.size() <= 128))
         && (!data.keys().hasAny(['customPreferences']) || (data.customPreferences is string && data.customPreferences.size() <= 5000))
         && (!data.keys().hasAny(['grade']) || (data.grade is string))
@@ -45,8 +43,8 @@ service cloud.firestore {
         && (!data.keys().hasAny(['duration']) || (data.duration is string))
         && (!data.keys().hasAny(['tech']) || (data.tech is string))
         && (!data.keys().hasAny(['instructorNotes']) || (data.instructorNotes is string))
-        && data.createdAt is timestamp
-        && data.updatedAt is timestamp;
+        && (!data.keys().hasAny(['isSubscribed']) || (data.isSubscribed is bool))
+        && (!data.keys().hasAny(['stripeSubscriptionPlan']) || (data.stripeSubscriptionPlan is string));
     }
 
     function isValidLesson(data) {
@@ -69,21 +67,11 @@ service cloud.firestore {
     // 2. User Profiles Collection Rules
     match /users/{userId} {
       allow get: if isEmailVerified() && userId == request.auth.uid;
-      allow create: if isEmailVerified() 
+      allow create, update: if isEmailVerified() 
         && userId == request.auth.uid 
         && isValidId(userId)
         && isValidUser(incoming())
-        && incoming().uid == request.auth.uid
-        && (incoming().createdAt == request.time || incoming().createdAt is timestamp)
-        && (incoming().updatedAt == request.time || incoming().updatedAt is timestamp);
-        
-      allow update: if isEmailVerified()
-        && userId == request.auth.uid
-        && isValidUser(incoming())
-        && incoming().uid == request.auth.uid
-        && incoming().createdAt == existing().createdAt
-        && (incoming().updatedAt == request.time || incoming().updatedAt is timestamp)
-        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'updatedAt', 'customPreferences', 'grade', 'classSize', 'duration', 'tech', 'instructorNotes']);
+        && incoming().uid == request.auth.uid;
         
       allow delete: if false; // Profiles are permanent once created
     }

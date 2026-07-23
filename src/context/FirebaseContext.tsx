@@ -264,6 +264,9 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       const userDocRef = doc(db, 'users', auth.currentUser.uid);
       const updatedFields = {
+        uid: auth.currentUser.uid,
+        email: auth.currentUser.email || '',
+        displayName: auth.currentUser.displayName || 'Educator',
         isSubscribed: true,
         stripeSubscriptionPlan: plan,
         subscriptionDate: serverTimestamp(),
@@ -274,6 +277,8 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setProfile((prev: any) => ({
         ...(prev || {}),
         ...updatedFields,
+        isSubscribed: true,
+        stripeSubscriptionPlan: plan,
         uid: auth.currentUser ? auth.currentUser.uid : ''
       }));
     } catch (err: any) {

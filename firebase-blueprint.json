@@ -8,6 +8,9 @@
         "uid": { "type": "string", "description": "The unique user ID matching request.auth.uid" },
         "email": { "type": "string", "description": "User email address" },
         "displayName": { "type": "string", "description": "Display name of the user" },
+        "isSubscribed": { "type": "boolean", "description": "Subscription status" },
+        "stripeSubscriptionPlan": { "type": "string", "description": "Stripe subscription plan name" },
+        "subscriptionDate": { "type": "string", "format": "date-time", "description": "Timestamp of subscription" },
         "createdAt": { "type": "string", "format": "date-time", "description": "The date and time the user was created" },
         "updatedAt": { "type": "string", "format": "date-time", "description": "The date and time the user was last updated" }
       },

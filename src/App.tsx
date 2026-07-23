@@ -40,16 +40,18 @@ import {
   Video,
   Music,
   Brain,
-  Save
+  Save,
+  Crown,
+  Palette
 } from "lucide-react";
 import { PRELOADED_LESSONS } from "./data/preloadedLessons";
 import { INITIAL_PROCESSED_LESSON } from "./data/initialProcessedLesson";
 import { ProcessedLesson, PreloadedLesson } from "./types";
 import { useFirebase } from "./context/FirebaseContext";
-import VideoLab from "./components/VideoLab";
-import SoundStudio from "./components/SoundStudio";
+import SubscriptionModal from "./components/SubscriptionModal";
 import InteractiveSlideshow from "./components/InteractiveSlideshow";
 import AICopilot from "./components/AICopilot";
+import NanaBananaPro from "./components/NanaBananaPro";
 
 // Vector Robot Bunny Mascot SVG
 const RobotBunnyMascot = ({ className = "w-28 h-28" }: { className?: string }) => (
@@ -97,6 +99,7 @@ export default function App() {
     saveLessonToCloud, 
     deleteLessonFromCloud, 
     saveInstructorPreferences,
+    subscribeUser,
     authLoading, 
     dbLoading 
   } = useFirebase();
@@ -131,7 +134,15 @@ export default function App() {
   const [lesson, setLesson] = useState<ProcessedLesson>(INITIAL_PROCESSED_LESSON);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"slides" | "video" | "sound-studio" | "lab" | "worksheet" | "quiz" | "media">("slides");
+  const [activeTab, setActiveTab] = useState<"slides" | "video" | "sound-studio" | "lab" | "worksheet" | "quiz" | "media" | "nana-banana">("slides");
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState<boolean>(false);
+  const [generatedCount, setGeneratedCount] = useState<number>(() => {
+    try {
+      return Number(localStorage.getItem('lyra_free_lessons_count') || '0');
+    } catch {
+      return 0;
+    }
+  });
   
   // Interactive Quiz states
   const [currentQuizIndex, setCurrentQuizIndex] = useState<number>(0);
@@ -308,6 +319,12 @@ export default function App() {
 
   // Call server-side backend API to process lesson using Gemini
   const handleProcessLesson = async () => {
+    // 1 Free Lesson enforcement
+    if (!profile?.isSubscribed && generatedCount >= 1) {
+      setShowSubscriptionModal(true);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     try {
@@ -348,6 +365,15 @@ export default function App() {
 
       const data = await response.json();
       setLesson(data);
+
+      // Increment 1 free lesson count
+      const newCount = generatedCount + 1;
+      setGeneratedCount(newCount);
+      try {
+        localStorage.setItem('lyra_free_lessons_count', newCount.toString());
+      } catch (e) {
+        console.error("Failed to store free lesson count:", e);
+      }
 
       // Save extractedStyleNotes from Gemini into instructor's profile memory
       if (user && data.extractedStyleNotes) {
@@ -614,7 +640,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-surface-0 text-primary flex flex-col antialiased">
       {/* Centered column wrapper matching the layout width */}
-      <div className="w-full max-w-[840px] mx-auto bg-white min-h-screen shadow-xs border-x border-slate-200/60 flex flex-col pb-16">
+      <div className="w-full max-w-7xl mx-auto bg-white min-h-screen shadow-xs border-x border-slate-200/60 flex flex-col pb-16 px-4 sm:px-8">
         
         {/* Navigation Bar (ly-nav) */}
         <nav className="px-6 py-4.5 border-b border-black/[0.09] flex items-center justify-between gap-4">
@@ -631,8 +657,27 @@ export default function App() {
             </div>
           </div>
 
-          {/* Nav Links / Active Auth badge */}
+          {/* Nav Links / Upgrade to Pro / Active Auth badge */}
           <div className="flex items-center gap-3">
+            {profile?.isSubscribed ? (
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 border border-emerald-300 text-emerald-800 font-bold text-xs rounded-full shadow-3xs">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Pro Member</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowSubscriptionModal(true)}
+                className="px-3.5 py-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 font-extrabold text-xs rounded-full shadow-3xs hover:shadow-xs transition-all flex items-center gap-1.5 cursor-pointer border border-amber-300/60"
+              >
+                <Crown className="w-3.5 h-3.5 text-slate-950 shrink-0" />
+                <span>Upgrade to Pro</span>
+                <span className="bg-slate-950/15 text-slate-950 text-[10px] px-1.5 py-0.2 rounded font-mono font-black">
+                  {generatedCount >= 1 ? "1/1 Free Used" : "1 Free Lesson"}
+                </span>
+              </button>
+            )}
+
             {authLoading ? (
               <div className="w-5 h-5 border-2 border-teal-brand border-t-transparent rounded-full animate-spin" />
             ) : user ? (
@@ -1184,6 +1229,7 @@ export default function App() {
                 { id: "slides", label: "Interactive Slides", icon: Layers },
                 { id: "copilot", label: "Lyra AI Co-Teacher", icon: Sparkles },
                 { id: "lab", label: "Hands-On Lab", icon: Activity },
+                { id: "nana-banana", label: "🍌 Nana Banana Pro Visuals", icon: Palette },
                 { id: "worksheet", label: "Printable Worksheet", icon: FileText },
                 { id: "quiz", label: "Smartboard Quiz", icon: HelpCircle },
                 { id: "media", label: "Media Fixer", icon: Link2Off }
@@ -1266,46 +1312,6 @@ export default function App() {
                         console.log("Triggering Paid Model flow via AI Studio build...");
                         alert("Paid API Key selection dialog opened in your AI Studio build console. Please verify the active model settings.");
                       }}
-                    />
-                  </motion.div>
-                )}
-
-                {/* TAB: Video Lab (Veo) */}
-                {activeTab === "video" && (
-                  <motion.div
-                    key="tab-video-content"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.25 }}
-                    className="space-y-6 animate-fade-in"
-                  >
-                    <VideoLab 
-                      lesson={lesson} 
-                      onTriggerPaidFlow={() => {
-                        console.log("Triggering Paid Model flow via AI Studio build...");
-                        alert("Paid API Key selection dialog opened in your AI Studio build console. Please verify the active model settings.");
-                      }} 
-                    />
-                  </motion.div>
-                )}
-
-                {/* TAB: Sound Studio (Lyria) */}
-                {activeTab === "sound-studio" && (
-                  <motion.div
-                    key="tab-sound-studio-content"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.25 }}
-                    className="space-y-6 animate-fade-in"
-                  >
-                    <SoundStudio 
-                      lesson={lesson} 
-                      onTriggerPaidFlow={() => {
-                        console.log("Triggering Paid Model flow via AI Studio build...");
-                        alert("Paid API Key selection dialog opened in your AI Studio build console. Please verify the active model settings.");
-                      }} 
                     />
                   </motion.div>
                 )}
@@ -1397,7 +1403,48 @@ export default function App() {
                           {lesson.handsOnActivity.scientificPrinciple}
                         </p>
                       </div>
+
+                      {/* Nana Banana Pro Visual Trigger Banner */}
+                      <div className="bg-gradient-to-r from-amber-500/10 via-amber-400/20 to-yellow-500/10 border border-amber-400/40 rounded-2xl p-4.5 flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 font-black text-lg flex items-center justify-center shrink-0 shadow-xs">
+                            🍌
+                          </div>
+                          <div className="space-y-0.5">
+                            <h5 className="text-xs font-bold text-slate-900 font-sans flex items-center gap-1.5">
+                              <span>Nana Banana Pro Visual Illustrator</span>
+                              <span className="text-[9px] bg-slate-900 text-amber-300 font-mono font-extrabold px-1.5 py-0.2 rounded">Pro Feature</span>
+                            </h5>
+                            <p className="text-[11px] text-slate-600 font-sans">
+                              Generate a step-by-step visual diagram or lab setup poster for "{lesson.handsOnActivity.title}".
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab("nana-banana")}
+                          className="px-3.5 py-2 bg-slate-950 hover:bg-slate-800 text-amber-400 font-bold text-xs rounded-xl transition-all shrink-0 flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        >
+                          <Palette className="w-3.5 h-3.5" />
+                          <span>Visualize Lab</span>
+                        </button>
+                      </div>
                     </div>
+                  </motion.div>
+                )}
+
+                {/* TAB: Nana Banana Pro Visuals */}
+                {activeTab === "nana-banana" && (
+                  <motion.div
+                    key="tab-nana-banana-content"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.25 }}
+                    className="space-y-6 animate-fade-in"
+                  >
+                    <NanaBananaPro lesson={lesson} />
                   </motion.div>
                 )}
 
@@ -1922,6 +1969,19 @@ export default function App() {
           <p>© 2026 Lyra STEM - Immersive Lesson Plan Transformation Suite. All rights reserved.</p>
           <p className="text-[9px] text-secondary/75">Designed in partnership with XPRIZE Education Initiative for high-yield classroom activities.</p>
         </footer>
+
+        {showSubscriptionModal && !profile?.isSubscribed && (
+          <SubscriptionModal
+            user={user}
+            signInWithGoogle={signInWithGoogle}
+            onSubscribe={async (plan) => {
+              await subscribeUser(plan);
+              setShowSubscriptionModal(false);
+            }}
+            onClose={() => setShowSubscriptionModal(false)}
+            authLoading={authLoading}
+          />
+        )}
 
       </div>
     </div>
