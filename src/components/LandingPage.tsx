@@ -1,5 +1,5 @@
 import React from "react";
-import { Sparkles, ArrowRight, Layers, Activity, Palette, HelpCircle, Link2Off, Check, Database, FileCode, BookOpen } from "lucide-react";
+import { Sparkles, ArrowRight, Layers, Activity, Palette, HelpCircle, Link2Off, Check, Database, FileCode, BookOpen, LogIn } from "lucide-react";
 import { RobotBunnyMascot } from "../App";
 
 interface LandingPageProps {
@@ -37,15 +37,27 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </p>
 
             <div className="pt-2 flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={onLaunchStudio}
-                className="px-6 py-3.5 bg-teal-dark hover:bg-slate-900 text-white rounded-2xl text-xs sm:text-sm font-extrabold transition-all shadow-md hover:shadow-lg flex items-center gap-2.5 cursor-pointer border border-teal-brand/30 group"
-              >
-                <Sparkles className="w-4 h-4 text-amber-300 group-hover:rotate-12 transition-transform" />
-                <span>Launch Instructor Studio</span>
-                <ArrowRight className="w-4 h-4 text-teal-light group-hover:translate-x-1 transition-transform" />
-              </button>
+              {user ? (
+                <button
+                  type="button"
+                  onClick={onLaunchStudio}
+                  className="px-6 py-3.5 bg-teal-dark hover:bg-slate-900 text-white rounded-2xl text-xs sm:text-sm font-extrabold transition-all shadow-md hover:shadow-lg flex items-center gap-2.5 cursor-pointer border border-teal-brand/30 group"
+                >
+                  <Sparkles className="w-4 h-4 text-amber-300 group-hover:rotate-12 transition-transform" />
+                  <span>Enter Instructor Studio</span>
+                  <ArrowRight className="w-4 h-4 text-teal-light group-hover:translate-x-1 transition-transform" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={onSignIn}
+                  className="px-6 py-3.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 rounded-2xl text-xs sm:text-sm font-black transition-all shadow-md hover:shadow-lg flex items-center gap-2.5 cursor-pointer border border-amber-300/60 group"
+                >
+                  <LogIn className="w-4.5 h-4.5 text-slate-950" />
+                  <span>Sign In / Create Account to Launch Studio</span>
+                  <ArrowRight className="w-4 h-4 text-slate-950 group-hover:translate-x-1 transition-transform" />
+                </button>
+              )}
 
               <button
                 type="button"

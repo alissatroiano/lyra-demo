@@ -105,19 +105,19 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
   return (
     <div className="space-y-6" id="interactive-slides-container">
       {/* Upper header controls */}
-      <div className="bg-surface-0 border border-black/[0.05] rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="bg-surface-0 dark:bg-slate-900/90 border border-black/[0.05] dark:border-slate-800 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 liquid-glass-light dark:liquid-glass-dark">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-teal-light flex items-center justify-center text-teal-brand border border-teal-brand/10 shrink-0">
-            <Presentation className="w-5 h-5" />
+          <div className="w-9 h-9 rounded-xl bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center text-teal-brand border border-teal-brand/20 shrink-0 micro-glow-teal">
+            <Presentation className="w-5 h-5 text-teal-brand" />
           </div>
           <div className="space-y-0.5 text-left">
-            <h4 className="text-sm font-bold text-teal-dark font-sans flex items-center gap-1.5">
+            <h4 className="text-sm font-bold text-teal-dark dark:text-teal-brand font-sans flex items-center gap-1.5">
               <span>Smartboard Interactive Presentation</span>
-              <span className="text-[10px] bg-teal-100 border border-teal-200 text-teal-800 font-bold px-2 py-0.5 rounded-full uppercase">
+              <span className="text-[10px] bg-teal-100 dark:bg-teal-brand/20 border border-teal-200 dark:border-teal-brand/40 text-teal-800 dark:text-teal-300 font-bold px-2 py-0.5 rounded-full uppercase">
                 Active
               </span>
             </h4>
-            <p className="text-xs text-secondary font-sans leading-none">
+            <p className="text-xs text-secondary dark:text-slate-400 font-sans leading-none">
               Slide {currentIndex + 1} of {slides.length} — Interactive whiteboard companion
             </p>
           </div>
@@ -128,7 +128,7 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
           <button
             type="button"
             onClick={toggleFullscreen}
-            className="px-3.5 py-1.5 rounded-lg text-xs font-bold font-sans transition-all flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 shadow-3xs cursor-pointer"
+            className="px-3.5 py-1.5 rounded-xl text-xs font-bold font-sans transition-all flex items-center gap-1.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 shadow-3xs cursor-pointer micro-glow-amber"
           >
             {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
             <span>{isFullscreen ? "Exit Full Screen" : "Full Screen"}</span>
@@ -137,10 +137,10 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
           <button
             type="button"
             onClick={() => setShowNotes(!showNotes)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold font-sans transition-all flex items-center gap-1.5 border cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold font-sans transition-all flex items-center gap-1.5 border cursor-pointer ${
               showNotes 
-                ? "bg-teal-brand text-white border-teal-brand" 
-                : "bg-white border-black/[0.08] text-secondary hover:bg-surface-0"
+                ? "bg-teal-brand text-slate-950 border-teal-brand font-bold micro-glow-teal" 
+                : "bg-white dark:bg-slate-800 border-black/[0.08] dark:border-slate-700 text-secondary dark:text-slate-300 hover:bg-surface-0"
             }`}
           >
             <Eye className="w-3.5 h-3.5" />
@@ -150,14 +150,14 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
           <button
             type="button"
             onClick={togglePlay}
-            className={`p-2 rounded-lg text-xs font-bold font-sans transition-all flex items-center justify-center border cursor-pointer ${
+            className={`p-2 rounded-xl text-xs font-bold font-sans transition-all flex items-center justify-center border cursor-pointer ${
               isPlaying 
-                ? "bg-teal-light text-teal-brand border-teal-brand/20" 
-                : "bg-white border-black/[0.08] text-secondary hover:bg-surface-0"
+                ? "bg-teal-light dark:bg-teal-brand/20 text-teal-brand border-teal-brand/30 micro-glow-teal" 
+                : "bg-white dark:bg-slate-800 border-black/[0.08] dark:border-slate-700 text-secondary dark:text-slate-300 hover:bg-surface-0"
             }`}
             title={isPlaying ? "Pause Slideshow" : "Auto-Play Slides (7s)"}
           >
-            {isPlaying ? <Pause className="w-4 h-4 text-teal-brand" /> : <Play className="w-4 h-4 text-secondary" />}
+            {isPlaying ? <Pause className="w-4 h-4 text-teal-brand animate-pulse" /> : <Play className="w-4 h-4 text-secondary dark:text-slate-300" />}
           </button>
         </div>
       </div>

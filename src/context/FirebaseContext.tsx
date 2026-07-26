@@ -208,6 +208,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     try {
       await deleteDoc(doc(db, 'lessons', lessonId));
+      setSavedLessons(prev => prev.filter(l => l.id !== lessonId));
       await loadLessons();
     } catch (err: any) {
       handleFirestoreError(err, OperationType.DELETE, lessonPath);

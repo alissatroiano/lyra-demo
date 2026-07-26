@@ -95,4 +95,34 @@ KEY ASSESSMENT CONCEPTS:
 - Name three real-world devices that use electromagnets.
 - How can you make an electromagnet stronger? (More coils, higher voltage/current, better core material).`,
   },
+  {
+    id: "coding-scratch",
+    title: "Algorithm Architect: Scratch Maze & Code Logic",
+    topic: "Computer Science & Robotics",
+    description: "An interactive coding lesson with Scratch block instructions, events, conditionals, and loops.",
+    rawContent: `UNIT 3: COMPUTATIONAL THINKING & EVENT-DRIVEN PROGRAMMING WITH SCRATCH BLOCKS
+Duration: 45 Minutes
+
+Goal: Students will design a game algorithm in Scratch using block code instructions, event listeners, conditional IF statements, and loops.
+
+BACKGROUND FOR INSTRUCTORS:
+Computer code is a set of precise instructions given to a computer to solve a problem or create a program. In event-driven programming, code blocks wait for specific user actions—such as clicking a flag, pressing a key, or bumping into an object. In block-based programming environments like Scratch, colorful code blocks snap together like puzzle pieces to eliminate syntax errors while teaching core computational concepts:
+1. Events: "When Green Flag Clicked" or "When Key Space Pressed".
+2. Loops: "Repeat 10 Times" or "Forever Loop" to continuously execute action statements.
+3. Conditionals: "IF touching wall THEN bounce back" or "IF touching star THEN change score by 1".
+4. Variables: Named storage containers for tracking dynamic values like "Score" or "Timer".
+
+HANDS-ON CODING LAB & BLOCK SEQUENCE:
+Students will open Scratch 3.0 in their web browser and construct the following block sequence:
+Block Step 1: WHEN [GREEN FLAG] CLICKED -> SET [Score] TO 0 -> GO TO X: -180 Y: -120.
+Block Step 2: FOREVER LOOP -> IF <KEY [Up Arrow] PRESSED?> THEN [CHANGE Y BY 10].
+Block Step 3: IF <KEY [Down Arrow] PRESSED?> THEN [CHANGE Y BY -10].
+Block Step 4: IF <TOUCHING [Maze Wall Color]?> THEN [SAY "Ouch! Try Again!" FOR 1 SEC] -> GO TO X: -180 Y: -120.
+Block Step 5: IF <TOUCHING [Goal Star]?> THEN [CHANGE [Score] BY 1] -> [PLAY SOUND "Tada!"] -> STOP ALL.
+
+DISCUSSION & QUIZ:
+1. Why do we need a Forever Loop around the IF key pressed blocks?
+2. What happens to the sprite if we change Y by -10 vs +10?
+3. How can we add a timer variable to make the maze challenge harder?`,
+  }
 ];

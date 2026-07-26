@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Sparkles, Image as ImageIcon, Download, RefreshCw, Wand2, FlaskConical, Layers, Eye, CheckCircle2, Copy, Check, ZoomIn } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Sparkles, Image as ImageIcon, Download, RefreshCw, Wand2, FlaskConical, Layers, Eye, CheckCircle2, Copy, Check, ZoomIn, HelpCircle, BookOpen } from "lucide-react";
 import { ProcessedLesson } from "../types";
 
 interface NanaBananaProProps {
@@ -10,7 +10,7 @@ interface NanaBananaProProps {
 
 export default function NanaBananaPro({ lesson, initialPrompt }: NanaBananaProProps) {
   const [prompt, setPrompt] = useState<string>(
-    initialPrompt || `Step-by-step visual experiment guide for hands-on STEM lab: "${lesson.handsOnActivity.title}". Showing materials (${lesson.handsOnActivity.materials.slice(0, 3).join(", ")}) arranged neatly with clear numbered action callouts.`
+    initialPrompt || `Vibrant educational STEM infographic for "${lesson.lessonTitle}". Highlighting slide takeaways: (${lesson.keyTakeaways?.slice(0, 3).join("; ") || lesson.summary}). Illustrating concept tested in smartboard quiz: "${lesson.quiz?.[0]?.question || ''}".`
   );
   const [style, setStyle] = useState<string>("vibrant-vector");
   const [aspectRatio, setAspectRatio] = useState<"16:9" | "1:1" | "4:3" | "3:4">("16:9");
@@ -19,6 +19,17 @@ export default function NanaBananaPro({ lesson, initialPrompt }: NanaBananaProPr
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [copied, setCopied] = useState<boolean>(false);
   const [zoomModalOpen, setZoomModalOpen] = useState<boolean>(false);
+
+  // Automatically sync prompt when lesson changes (new upload or preloaded selection)
+  useEffect(() => {
+    if (!lesson) return;
+    const takeaways = lesson.keyTakeaways?.slice(0, 3).join("; ") || lesson.summary;
+    const quizQ = lesson.quiz?.[0]?.question || "Core STEM concept review";
+    
+    const syncedPrompt = initialPrompt || `Educational STEM visual guide for "${lesson.lessonTitle}". Highlighting key slide takeaways: [${takeaways}]. Visualizing smartboard quiz challenge: "${quizQ}". Labeled diagram for ${lesson.handsOnActivity?.title || 'hands-on lab'}.`;
+    
+    setPrompt(syncedPrompt);
+  }, [lesson, initialPrompt]);
 
   // Gallery of generated or pre-built visual assets for this lesson
   const [savedVisuals, setSavedVisuals] = useState<Array<{ id: string; url: string; prompt: string; style: string; timestamp: string }>>([
@@ -105,16 +116,18 @@ export default function NanaBananaPro({ lesson, initialPrompt }: NanaBananaProPr
     }
   };
 
-  const handlePresetClick = (presetType: "setup" | "materials" | "principle" | "safety") => {
+  const handlePresetClick = (presetType: "takeaways" | "quiz" | "setup" | "principle") => {
     let p = "";
-    if (presetType === "setup") {
+    if (presetType === "takeaways") {
+      const takeawaysList = lesson.keyTakeaways?.join("; ") || lesson.summary;
+      p = `Infographic summarizing key slide takeaways for "${lesson.lessonTitle}": ${takeawaysList}. Clean educational layout with icon callouts.`;
+    } else if (presetType === "quiz") {
+      const q = lesson.quiz?.[0];
+      p = `Smartboard quiz challenge visual diagram: Question "${q?.question || lesson.lessonTitle}". Showing answer concept "${q?.options?.[q?.correctAnswerIndex] || 'solution'}".`;
+    } else if (presetType === "setup") {
       p = `Step-by-step experiment layout diagram for ${lesson.handsOnActivity.title}. Shows numbered steps (${lesson.handsOnActivity.steps.slice(0, 3).join("; ")}).`;
-    } else if (presetType === "materials") {
-      p = `Organized lab bin materials visual catalog featuring: ${lesson.handsOnActivity.materials.join(", ")}. Clean labeled layout for kids.`;
     } else if (presetType === "principle") {
       p = `Explanatory scientific concept visual showing: ${lesson.handsOnActivity.scientificPrinciple}. Clear arrows and labels.`;
-    } else if (presetType === "safety") {
-      p = `Classroom STEM lab safety rules poster showing safety goggles, organized bin cleanup, and careful chemical handling.`;
     }
     setPrompt(p);
     handleGenerate(p);
@@ -173,31 +186,46 @@ export default function NanaBananaPro({ lesson, initialPrompt }: NanaBananaProPr
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <button
             type="button"
-            onClick={() => handlePresetClick("setup")}
+            onClick={() => handlePresetClick("takeaways")}
             disabled={isGenerating}
             className="p-3.5 bg-amber-50/60 hover:bg-amber-100/80 border border-amber-200/80 rounded-xl text-left transition-all group cursor-pointer disabled:opacity-50"
           >
             <div className="flex items-center gap-2 text-amber-900 font-bold text-xs mb-1">
-              <FlaskConical className="w-4 h-4 text-amber-600 group-hover:scale-110 transition-transform" />
-              <span>Experiment Layout</span>
+              <BookOpen className="w-4 h-4 text-amber-600 group-hover:scale-110 transition-transform" />
+              <span>Key Takeaways Infographic</span>
             </div>
             <p className="text-[11px] text-slate-600 line-clamp-2">
-              Step-by-step equipment layout for {lesson.handsOnActivity.title}
+              Visual summary derived directly from slide key takeaways
             </p>
           </button>
 
           <button
             type="button"
-            onClick={() => handlePresetClick("materials")}
+            onClick={() => handlePresetClick("quiz")}
             disabled={isGenerating}
             className="p-3.5 bg-teal-50/60 hover:bg-teal-100/80 border border-teal-200/80 rounded-xl text-left transition-all group cursor-pointer disabled:opacity-50"
           >
             <div className="flex items-center gap-2 text-teal-900 font-bold text-xs mb-1">
-              <Layers className="w-4 h-4 text-teal-600 group-hover:scale-110 transition-transform" />
-              <span>Lab Bin Materials</span>
+              <HelpCircle className="w-4 h-4 text-teal-600 group-hover:scale-110 transition-transform" />
+              <span>Smartboard Quiz Challenge</span>
             </div>
             <p className="text-[11px] text-slate-600 line-clamp-2">
-              Visual catalog of {lesson.handsOnActivity.materials.length} lab materials
+              Diagram illustrating question concept: "{lesson.quiz?.[0]?.question || 'Quiz Concept'}"
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handlePresetClick("setup")}
+            disabled={isGenerating}
+            className="p-3.5 bg-sky-50/60 hover:bg-sky-100/80 border border-sky-200/80 rounded-xl text-left transition-all group cursor-pointer disabled:opacity-50"
+          >
+            <div className="flex items-center gap-2 text-sky-900 font-bold text-xs mb-1">
+              <FlaskConical className="w-4 h-4 text-sky-600 group-hover:scale-110 transition-transform" />
+              <span>Lab / Coding Setup</span>
+            </div>
+            <p className="text-[11px] text-slate-600 line-clamp-2">
+              Visual layout for {lesson.handsOnActivity.title}
             </p>
           </button>
 
@@ -205,29 +233,14 @@ export default function NanaBananaPro({ lesson, initialPrompt }: NanaBananaProPr
             type="button"
             onClick={() => handlePresetClick("principle")}
             disabled={isGenerating}
-            className="p-3.5 bg-sky-50/60 hover:bg-sky-100/80 border border-sky-200/80 rounded-xl text-left transition-all group cursor-pointer disabled:opacity-50"
-          >
-            <div className="flex items-center gap-2 text-sky-900 font-bold text-xs mb-1">
-              <Sparkles className="w-4 h-4 text-sky-600 group-hover:scale-110 transition-transform" />
-              <span>Scientific Principle</span>
-            </div>
-            <p className="text-[11px] text-slate-600 line-clamp-2">
-              Explanatory scientific diagram with arrows
-            </p>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handlePresetClick("safety")}
-            disabled={isGenerating}
             className="p-3.5 bg-emerald-50/60 hover:bg-emerald-100/80 border border-emerald-200/80 rounded-xl text-left transition-all group cursor-pointer disabled:opacity-50"
           >
             <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs mb-1">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform" />
-              <span>Lab Safety Poster</span>
+              <Sparkles className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform" />
+              <span>Scientific Principle</span>
             </div>
             <p className="text-[11px] text-slate-600 line-clamp-2">
-              Classroom STEM safety rules & goggle check
+              Explanatory scientific/coding concept diagram
             </p>
           </button>
         </div>

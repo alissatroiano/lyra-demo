@@ -1,9 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=JetBrains+Mono:wght@400;600;800&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "DM Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-serif: "Fraunces", Georgia, Cambria, serif;
+  --font-mono: "JetBrains Mono", monospace;
 
   --color-primary: #0f1117;
   --color-secondary: #5a6478;
@@ -20,6 +21,42 @@
 
   --color-gold-brand: #c97d10;
   --color-gold-light: #fef3c7;
+
+  --color-cyber-bg: #0b0f19;
+  --color-cyber-card: #131929;
+}
+
+/* 2026 Liquid Glass & Micro Glow Utilities */
+.liquid-glass-light {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(0, 194, 178, 0.18);
+  box-shadow: 0 8px 32px 0 rgba(0, 194, 178, 0.08);
+}
+
+.liquid-glass-dark {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 194, 178, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.micro-glow-teal {
+  box-shadow: 0 0 18px -3px rgba(0, 194, 178, 0.35);
+}
+
+.micro-glow-amber {
+  box-shadow: 0 0 18px -3px rgba(245, 158, 11, 0.35);
+}
+
+.micro-glow-emerald {
+  box-shadow: 0 0 18px -3px rgba(16, 185, 129, 0.35);
+}
+
+.micro-glow-indigo {
+  box-shadow: 0 0 18px -3px rgba(99, 102, 241, 0.35);
 }
 
 /* Float animations for mascot and interactive cards */
@@ -51,6 +88,16 @@
   animation: pulse-slow 8s ease-in-out infinite;
 }
 
+/* Micro-delay progress scanline animation */
+@keyframes scanline {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+.animate-scanline {
+  animation: scanline 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
 /* Custom prints styling for classroom printables */
 @media print {
   body * {
@@ -72,3 +119,4 @@
     display: none !important;
   }
 }
+
