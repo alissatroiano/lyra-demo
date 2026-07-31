@@ -68,22 +68,31 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const path = 'lessons';
     try {
       const lessonsRef = collection(db, path);
-      // Query user lessons ordered by createdAt descending
+      // Query user lessons by userId without requiring a composite index
       const q = query(
         lessonsRef, 
-        where('userId', '==', auth.currentUser.uid),
-        orderBy('createdAt', 'desc')
+        where('userId', '==', auth.currentUser.uid)
       );
       const querySnapshot = await getDocs(q);
       const lessons: SavedLesson[] = [];
       querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
         lessons.push({
-          id: docSnap.id,
-          ...docSnap.data()
+          ...data,
+          id: docSnap.id // docSnap.id MUST come after ...data so the true Firestore document ID is never overwritten by data.id
         } as SavedLesson);
       });
+
+      // Sort in-memory by createdAt descending
+      lessons.sort((a: any, b: any) => {
+        const timeA = a.createdAt?.seconds || 0;
+        const timeB = b.createdAt?.seconds || 0;
+        return timeB - timeA;
+      });
+
       setSavedLessons(lessons);
     } catch (err: any) {
+      console.error("Error loading lessons from Firestore:", err);
       handleFirestoreError(err, OperationType.LIST, path);
     } finally {
       setDbLoading(false);
@@ -207,10 +216,14 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const lessonPath = `lessons/${lessonId}`;
 
     try {
-      await deleteDoc(doc(db, 'lessons', lessonId));
+      // Optimistically update local state first for instantaneous UI responsiveness
       setSavedLessons(prev => prev.filter(l => l.id !== lessonId));
+      await deleteDoc(doc(db, 'lessons', lessonId));
       await loadLessons();
     } catch (err: any) {
+      console.error("Error deleting lesson from Firestore:", err);
+      // Reload lessons to restore state if deletion failed
+      await loadLessons();
       handleFirestoreError(err, OperationType.DELETE, lessonPath);
       throw err;
     } finally {

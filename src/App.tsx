@@ -21,6 +21,8 @@ import {
   ExternalLink,
   Printer,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   RefreshCw,
   Sliders,
   Check,
@@ -173,6 +175,56 @@ export default function App() {
   const [compilationStep, setCompilationStep] = useState<number>(0);
   const [simulatingBlockStep, setSimulatingBlockStep] = useState<number>(-1);
   const [isSimulatingBlock, setIsSimulatingBlock] = useState<boolean>(false);
+
+  // Helper to derive dynamic progress compilation messages per curriculum
+  const getDynamicCompilationStepText = (
+    step: number, 
+    content: string, 
+    fileName: string | null, 
+    goal: string
+  ): string => {
+    const text = (content + " " + (fileName || "")).toLowerCase();
+
+    if (step === 1) {
+      if (fileName) {
+        const cleanName = fileName.replace(/\.[^/.]+$/, "").replace(/[_]/g, " ").replace(/[-]/g, " ");
+        return `Parsing "${cleanName.length > 25 ? cleanName.slice(0, 25) + '...' : cleanName}" logic pathways`;
+      }
+      return "Parsing curriculum logic & learning objectives";
+    }
+
+    if (step === 2) {
+      if (goal === "presentation") {
+        return "Building visual slide concepts & teaching analogies";
+      }
+      if (text.includes("scratch") || text.includes("code") || text.includes("program") || text.includes("block") || text.includes("algorithm") || text.includes("variable")) {
+        return "Linking Scratch & block-based code logic";
+      }
+      if (text.includes("chem") || text.includes("bio") || text.includes("eco") || text.includes("plant") || text.includes("animal") || text.includes("organ") || text.includes("cell")) {
+        return "Formulating hands-on lab experiments & scientific models";
+      }
+      if (text.includes("rock") || text.includes("space") || text.includes("force") || text.includes("physics") || text.includes("bridge") || text.includes("eng") || text.includes("truss") || text.includes("gravity") || text.includes("motion")) {
+        return "Linking hands-on engineering & physics models";
+      }
+      if (text.includes("math") || text.includes("geom") || text.includes("stat") || text.includes("fraction") || text.includes("number") || text.includes("equation")) {
+        return "Structuring interactive math manipulatives & logic puzzles";
+      }
+      if (fileName) {
+        const cleanName = fileName.replace(/\.[^/.]+$/, "").replace(/[_]/g, " ").replace(/[-]/g, " ");
+        return `Linking active STEM challenges for ${cleanName.length > 20 ? cleanName.slice(0, 20) + '...' : cleanName}`;
+      }
+      return "Linking active STEM challenges & interactive models";
+    }
+
+    if (step === 3) {
+      if (goal === "presentation") {
+        return "Synthesizing presentation slide deck & discussion points";
+      }
+      return "Synthesizing interactive slides, lab guide & smart quiz";
+    }
+
+    return "";
+  };
   
   // Interactive Quiz states
   const [currentQuizIndex, setCurrentQuizIndex] = useState<number>(0);
@@ -187,6 +239,12 @@ export default function App() {
   // Worksheet simulated answers
   const [studentAnswers, setStudentAnswers] = useState<Record<string, string>>({});
   const [showSampleAnswers, setShowSampleAnswers] = useState<boolean>(false);
+
+  // Expandable Intake Panel state
+  const [isUploadExpanded, setIsUploadExpanded] = useState<boolean>(true);
+
+  // Deleting lesson ID state
+  const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
 
   // Interactive Chip parameters state (for easy configuration)
   const [selectedGrade, setSelectedGrade] = useState<string>("K-2nd");
@@ -504,6 +562,10 @@ export default function App() {
       }
 
       setActiveTab("slides");
+      setIsUploadExpanded(false);
+      setTimeout(() => {
+        document.getElementById("workspace-panel")?.scrollIntoView({ behavior: 'smooth' });
+      }, 150);
     } catch (err: any) {
       console.error(err);
       setError(
@@ -709,6 +771,10 @@ export default function App() {
       }
       setIsLoading(false);
       setActiveTab("slides");
+      setIsUploadExpanded(false);
+      setTimeout(() => {
+        document.getElementById("workspace-panel")?.scrollIntoView({ behavior: 'smooth' });
+      }, 150);
     }, 500);
   };
 
@@ -779,6 +845,38 @@ export default function App() {
 
           {/* Nav Actions */}
           <div className="flex items-center gap-1.5 sm:gap-3">
+            {/* Fixed Top Navbar Link: My Lessons Vault */}
+            <button
+              type="button"
+              onClick={() => {
+                if (currentView !== "studio") {
+                  setCurrentView("studio");
+                }
+                setTimeout(() => {
+                  const el = document.getElementById("my-lessons-vault");
+                  if (el) {
+                    el.scrollIntoView({ behavior: "smooth" });
+                  } else if (!user) {
+                    handleSignInAndRedirect();
+                  }
+                }, 100);
+              }}
+              className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[38px] border ${
+                isDarkMode 
+                  ? "bg-slate-800 text-teal-brand border-slate-700 hover:bg-slate-700 hover:border-teal-brand/40" 
+                  : "bg-teal-light/60 text-teal-dark border-teal-brand/30 hover:bg-teal-light hover:border-teal-brand/50"
+              }`}
+              title="View your saved lessons in Firebase Cloud Storage"
+            >
+              <Cloud className="w-3.5 h-3.5 text-teal-brand" />
+              <span>My Lessons</span>
+              {user && savedLessons.length > 0 && (
+                <span className="px-1.5 py-0.2 bg-teal-brand text-slate-950 font-mono text-[9px] font-extrabold rounded-full">
+                  {savedLessons.length}
+                </span>
+              )}
+            </button>
+
             {/* 2026 Cyber STEM Lab Theme Switcher */}
             <button
               type="button"
@@ -878,43 +976,77 @@ export default function App() {
           </div>
 
           {/* Interactive Core Intake Controller (ly-upload-zone) */}
-          <div className="mt-8 bg-white border border-black/[0.12] rounded-2xl p-6 shadow-sm space-y-5" id="intake-panel">
+          <div className="mt-8 bg-white dark:bg-slate-900/90 border border-black/[0.12] dark:border-slate-800 rounded-2xl shadow-sm transition-all overflow-hidden" id="intake-panel">
             
-            {/* Step Header */}
-            <div className="flex justify-between items-center border-b border-black/[0.06] pb-3">
-              <span className="text-[10px] font-bold font-mono tracking-wider text-teal-brand uppercase bg-teal-light px-2.5 py-0.5 rounded-md">
-                1. Upload Curriculum Material
-              </span>
-              <span className="text-xs font-semibold text-secondary font-sans flex items-center gap-1">
-                <Sliders className="w-3.5 h-3.5 text-gold-brand" />
-                Configuration
-              </span>
-            </div>
-
-            {/* Selection of transformation goal with high fidelity toggle buttons */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-teal-dark block font-sans">Upload Option:</label>
-              <div className="p-4 rounded-xl border border-teal-brand bg-teal-light/20 text-teal-dark shadow-3xs flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-teal-brand text-white flex items-center justify-center shrink-0 shadow-3xs">
-                    <Upload className="w-5 h-5" />
-                  </div>
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-bold font-sans">Upload & Generate</p>
-                    <p className="text-[10px] text-secondary leading-normal font-sans">
-                      Seamlessly transforms raw lesson plans into interactive slides, Nana Banana Pro visual diagrams, hands-on activities, and smartboard quizzes.
-                    </p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold font-mono px-2.5 py-1 rounded-full bg-teal-brand text-white shrink-0 uppercase tracking-wide">
-                  Active
+            {/* Step Header (Clickable Expandable Toggle) */}
+            <div 
+              className="flex justify-between items-center p-4 sm:p-5 cursor-pointer select-none border-b border-black/[0.06] dark:border-slate-800 hover:bg-black/[0.02] dark:hover:bg-slate-800/40 transition-colors"
+              onClick={() => setIsUploadExpanded(!isUploadExpanded)}
+            >
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="text-[10px] font-bold font-mono tracking-wider text-teal-brand uppercase bg-teal-light dark:bg-teal-brand/20 border border-teal-brand/20 px-2.5 py-0.5 rounded-md">
+                  1. Upload Curriculum Material
                 </span>
+                {!isUploadExpanded && (uploadedFileName || customContent) && (
+                  <span className="text-xs font-semibold text-teal-dark dark:text-teal-brand truncate max-w-[180px] sm:max-w-xs flex items-center gap-1.5 bg-teal-light/40 dark:bg-teal-brand/10 px-2.5 py-0.5 rounded-full border border-teal-brand/20">
+                    <Check className="w-3 h-3 text-teal-brand shrink-0" />
+                    <span className="truncate">{uploadedFileName || lesson?.lessonTitle || "Curriculum Text Loaded"}</span>
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-xs font-semibold text-secondary dark:text-slate-400 font-sans flex items-center gap-1">
+                  <Sliders className="w-3.5 h-3.5 text-gold-brand" />
+                  <span className="hidden sm:inline">Configuration</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsUploadExpanded(!isUploadExpanded);
+                  }}
+                  className="p-1.5 rounded-lg hover:bg-black/[0.05] dark:hover:bg-slate-800 text-secondary dark:text-slate-300 transition-all cursor-pointer"
+                  aria-label={isUploadExpanded ? "Collapse Upload Section" : "Expand Upload Section"}
+                >
+                  {isUploadExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
               </div>
             </div>
 
+            <AnimatePresence>
+              {isUploadExpanded && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="p-4 sm:p-6 space-y-5"
+                >
+                  {/* Selection of transformation goal with high fidelity toggle buttons */}
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-teal-dark dark:text-teal-brand block font-sans">Upload Option:</label>
+                    <div className="p-4 rounded-xl border border-teal-brand bg-teal-light/20 dark:bg-teal-brand/10 text-teal-dark dark:text-teal-brand shadow-3xs flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-teal-brand text-white flex items-center justify-center shrink-0 shadow-3xs">
+                          <Upload className="w-5 h-5" />
+                        </div>
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-bold font-sans dark:text-slate-100">Upload & Generate</p>
+                          <p className="text-[10px] text-secondary dark:text-slate-300 leading-normal font-sans">
+                            Seamlessly transforms raw lesson plans into interactive slides, Visual Studio visual diagrams, hands-on activities, and smartboard quizzes.
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold font-mono px-2.5 py-1 rounded-full bg-teal-brand text-white shrink-0 uppercase tracking-wide">
+                        Active
+                      </span>
+                    </div>
+                  </div>
+
             {/* PDF / Docx File Dropzone (ly-upload-zone) */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-teal-dark block font-sans">Upload your file (PDF, DOCX, TXT):</label>
+              <label className="text-xs font-bold text-teal-dark dark:text-teal-brand block font-sans">Upload your file (PDF, DOCX, TXT):</label>
               
               <div
                 onDragEnter={handleDrag}
@@ -927,8 +1059,8 @@ export default function App() {
                 }}
                 className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center gap-2.5 ${
                   dragActive 
-                    ? "border-teal-brand bg-teal-light/30" 
-                    : "border-black/[0.12] hover:border-black/[0.22] bg-surface-0/50 hover:bg-surface-0"
+                    ? "border-teal-brand bg-teal-light/30 dark:bg-teal-brand/20" 
+                    : "border-black/[0.12] dark:border-slate-700 hover:border-black/[0.22] dark:hover:border-slate-600 bg-surface-0/50 dark:bg-slate-800/50 hover:bg-surface-0 dark:hover:bg-slate-800"
                 }`}
               >
                 <input
@@ -947,17 +1079,17 @@ export default function App() {
                   <div className="space-y-2">
                     <RefreshCw className="w-8 h-8 text-teal-brand animate-spin mx-auto" />
                     <div>
-                      <p className="text-xs font-bold text-primary font-sans">Reading file securely...</p>
-                      <p className="text-[10px] text-secondary font-sans mt-0.5">Running AI curriculum text parser</p>
+                      <p className="text-xs font-bold text-primary dark:text-slate-100 font-sans">Reading file securely...</p>
+                      <p className="text-[10px] text-secondary dark:text-slate-300 font-sans mt-0.5">Running AI curriculum text parser</p>
                     </div>
                   </div>
                 ) : uploadedFileName ? (
-                  <div className="bg-white px-4 py-3 rounded-xl border border-teal-brand/30 flex items-center gap-3 shadow-3xs max-w-sm mx-auto">
-                    <div className="w-8 h-8 rounded-lg bg-teal-light flex items-center justify-center text-teal-brand shrink-0">
+                  <div className="bg-white dark:bg-slate-800 px-4 py-3 rounded-xl border border-teal-brand/30 flex items-center gap-3 shadow-3xs max-w-sm mx-auto">
+                    <div className="w-8 h-8 rounded-lg bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center text-teal-brand shrink-0">
                       <FileText className="w-4.5 h-4.5" />
                     </div>
                     <div className="text-left overflow-hidden">
-                      <p className="text-xs font-bold text-primary truncate max-w-[180px] font-sans">{uploadedFileName}</p>
+                      <p className="text-xs font-bold text-primary dark:text-slate-100 truncate max-w-[180px] font-sans">{uploadedFileName}</p>
                       <p className="text-[9px] text-teal-brand font-semibold flex items-center gap-1">
                         <Check className="w-3 h-3" /> Ready to parse
                       </p>
@@ -971,7 +1103,7 @@ export default function App() {
                         const input = document.getElementById("file-upload-input") as HTMLInputElement;
                         if (input) input.value = "";
                       }}
-                      className="p-1 text-secondary hover:text-red-600 hover:bg-red-50 rounded-md transition-all shrink-0 ml-2"
+                      className="p-1 text-secondary dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-md transition-all shrink-0 ml-2"
                       title="Clear file"
                     >
                       <X className="w-4 h-4" />
@@ -979,14 +1111,14 @@ export default function App() {
                   </div>
                 ) : (
                   <>
-                    <div className="w-10 h-10 rounded-full bg-teal-light flex items-center justify-center text-teal-brand shrink-0 shadow-3xs">
+                    <div className="w-10 h-10 rounded-full bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center text-teal-brand shrink-0 shadow-3xs">
                       <Upload className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-primary font-sans">
+                      <p className="text-xs font-bold text-primary dark:text-slate-100 font-sans">
                         Drag & drop your file here, or <span className="text-teal-brand underline decoration-teal-brand/30">click to browse</span>
                       </p>
-                      <p className="text-[10px] text-secondary leading-relaxed mt-0.5 font-sans">
+                      <p className="text-[10px] text-secondary dark:text-slate-300 leading-relaxed mt-0.5 font-sans">
                         PDF, DOCX, TXT, MD or Plain Text up to 10MB
                       </p>
                     </div>
@@ -1007,7 +1139,7 @@ export default function App() {
             {/* Raw lesson plan box (Optional paste) */}
             <div className="space-y-1.5">
               <div className="flex justify-between items-center">
-                <label className="text-xs font-bold text-teal-dark font-sans">Curriculum Text Material:</label>
+                <label className="text-xs font-bold text-teal-dark dark:text-teal-brand font-sans">Curriculum Text Material:</label>
                 {customContent && (
                   <button
                     type="button"
@@ -1015,7 +1147,7 @@ export default function App() {
                       setCustomContent("");
                       setUploadedFileName(null);
                     }}
-                    className="text-[10px] text-red-600 hover:underline font-medium"
+                    className="text-[10px] text-red-600 dark:text-red-400 hover:underline font-medium"
                   >
                     Clear Input
                   </button>
@@ -1026,12 +1158,12 @@ export default function App() {
                 onChange={(e) => setCustomContent(e.target.value)}
                 rows={5}
                 placeholder="Paste textbook outlines, Wikipedia references, lecture notes, or standard curriculum text here..."
-                className="w-full text-xs p-3.5 border border-black/[0.12] rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-brand/10 focus:border-teal-brand font-mono bg-surface-0/40 text-primary leading-relaxed"
+                className="w-full text-xs p-3.5 border border-black/[0.12] dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-brand/10 focus:border-teal-brand font-mono bg-surface-0/40 dark:bg-slate-800/80 text-primary dark:text-slate-100 leading-relaxed placeholder:text-slate-400"
               />
 
               {/* Sample preloaded pills styled cleanly */}
               <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                <span className="text-[10px] font-bold text-secondary font-sans">Load Quick Samples:</span>
+                <span className="text-[10px] font-bold text-secondary dark:text-slate-300 font-sans">Load Quick Samples:</span>
                 {PRELOADED_LESSONS.map((preload) => (
                   <button
                     key={preload.id}
@@ -1041,7 +1173,7 @@ export default function App() {
                       setUploadedFileName(`preset_${preload.id}.txt`);
                       handleQuickDemoFill(preload.id);
                     }}
-                    className="text-[10px] font-bold text-teal-dark bg-teal-light/40 hover:bg-teal-light hover:text-teal-brand border border-teal-brand/10 px-2.5 py-0.5 rounded-full transition-all cursor-pointer"
+                    className="text-[10px] font-bold text-teal-dark dark:text-teal-brand bg-teal-light/40 dark:bg-teal-brand/20 hover:bg-teal-light dark:hover:bg-teal-brand/30 hover:text-teal-brand border border-teal-brand/10 dark:border-teal-brand/30 px-2.5 py-0.5 rounded-full transition-all cursor-pointer"
                   >
                     {preload.id === "rocketry" ? "Rocket Physics" : preload.id === "bridges" ? "Bridge Static" : "Electromagnetism"}
                   </button>
@@ -1050,15 +1182,15 @@ export default function App() {
             </div>
 
             {/* Interactive chip context rows (Appends parameters directly) */}
-            <div className="bg-surface-0 border border-black/[0.05] rounded-xl p-4.5 space-y-4">
-              <span className="text-[10px] font-bold font-mono tracking-widest text-teal-brand uppercase block border-b pb-1.5">
+            <div className="bg-surface-0 dark:bg-slate-950/80 border border-black/[0.05] dark:border-slate-800 rounded-xl p-4.5 space-y-4">
+              <span className="text-[10px] font-bold font-mono tracking-widest text-teal-brand uppercase block border-b dark:border-slate-800 pb-1.5">
                 Target Classroom Parameters (Auto-Configurator)
               </span>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Grade / Age Range */}
                 <div className="space-y-1 sm:col-span-2">
-                  <span className="text-[10px] font-bold text-secondary uppercase font-sans">Age Range / Grade Level</span>
+                  <span className="text-[10px] font-bold text-secondary dark:text-slate-300 uppercase font-sans">Age Range / Grade Level</span>
                   <div className="flex flex-wrap gap-1.5 items-center">
                     {["K-2nd", "Elementary (3-5)", "Middle (6-8)", "High School (9-12)", "Custom"].map((val) => (
                       <button
@@ -1067,8 +1199,8 @@ export default function App() {
                         onClick={() => setSelectedGrade(val)}
                         className={`text-[10px] px-2.5 py-1 rounded-md font-sans font-bold transition-all cursor-pointer ${
                           selectedGrade === val 
-                            ? "bg-teal-dark text-white shadow-3xs" 
-                            : "bg-white text-secondary hover:text-teal-dark border border-black/[0.08]"
+                            ? "bg-teal-dark dark:bg-teal-brand text-white dark:text-slate-950 shadow-3xs" 
+                            : "bg-white dark:bg-slate-800 text-secondary dark:text-slate-300 hover:text-teal-dark dark:hover:text-white border border-black/[0.08] dark:border-slate-700"
                         }`}
                       >
                         {val}
@@ -1083,7 +1215,7 @@ export default function App() {
                         placeholder="Type custom age range (e.g. Pre-K, Ages 4-6, Adult Learners)"
                         value={customGradeInput}
                         onChange={(e) => setCustomGradeInput(e.target.value)}
-                        className="text-xs px-3 py-1.5 border border-teal-brand/40 rounded-xl bg-white w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-teal-brand/20 focus:border-teal-brand font-sans text-teal-dark font-medium shadow-3xs"
+                        className="text-xs px-3 py-1.5 border border-teal-brand/40 rounded-xl bg-white dark:bg-slate-800 w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-teal-brand/20 focus:border-teal-brand font-sans text-teal-dark dark:text-teal-brand font-medium shadow-3xs"
                       />
                     </div>
                   )}
@@ -1091,7 +1223,7 @@ export default function App() {
 
                 {/* Tech level */}
                 <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-secondary uppercase font-sans">Technology Available</span>
+                  <span className="text-[10px] font-bold text-secondary dark:text-slate-300 uppercase font-sans">Technology Available</span>
                   <div className="flex flex-wrap gap-1.5">
                     {["Smart Board", "Chromebooks", "Tablets", "Low Tech (Paper Only)"].map((val) => (
                       <button
@@ -1100,8 +1232,8 @@ export default function App() {
                         onClick={() => setSelectedTech(val)}
                         className={`text-[10px] px-2 py-1 rounded-md font-sans font-bold transition-all ${
                           selectedTech === val 
-                            ? "bg-teal-dark text-white" 
-                            : "bg-white text-secondary border border-black/[0.08]"
+                            ? "bg-teal-dark dark:bg-teal-brand text-white dark:text-slate-950" 
+                            : "bg-white dark:bg-slate-800 text-secondary dark:text-slate-300 border border-black/[0.08] dark:border-slate-700"
                         }`}
                       >
                         {val}
@@ -1114,7 +1246,7 @@ export default function App() {
               {/* Preferences editable showcase with adaptive memory */}
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-secondary uppercase font-sans block">
+                  <span className="text-[10px] font-bold text-secondary dark:text-slate-300 uppercase font-sans block">
                     Generated Instruction Directive
                   </span>
                   
@@ -1124,7 +1256,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={handleAutoGenerateFromChips}
-                        className="text-[9px] text-teal-brand hover:text-teal-dark font-sans font-bold flex items-center gap-0.5 cursor-pointer"
+                        className="text-[9px] text-teal-brand hover:text-teal-dark dark:hover:text-teal-light font-sans font-bold flex items-center gap-0.5 cursor-pointer"
                         title="Re-generate instruction text based on the selected chips above"
                       >
                         <RefreshCw className="w-2.5 h-2.5" />
@@ -1137,13 +1269,13 @@ export default function App() {
                         type="button"
                         onClick={handleSavePreferences}
                         disabled={profileSaving}
-                        className="text-[9px] text-teal-brand hover:text-teal-dark font-sans font-bold flex items-center gap-0.5 cursor-pointer disabled:opacity-50"
+                        className="text-[9px] text-teal-brand hover:text-teal-dark dark:hover:text-teal-light font-sans font-bold flex items-center gap-0.5 cursor-pointer disabled:opacity-50"
                         title="Save these instruction preferences to your profile permanently"
                       >
                         {profileSaveSuccess ? (
                           <>
-                            <Check className="w-2.5 h-2.5 text-teal-dark font-bold" />
-                            <span className="text-teal-dark">Saved!</span>
+                            <Check className="w-2.5 h-2.5 text-teal-dark dark:text-teal-brand font-bold" />
+                            <span className="text-teal-dark dark:text-teal-brand">Saved!</span>
                           </>
                         ) : (
                           <>
@@ -1163,7 +1295,7 @@ export default function App() {
                       setCustomPreferences(e.target.value);
                       setIsManuallyEdited(true);
                     }}
-                    className="w-full bg-white p-3 border border-black/[0.08] rounded-xl text-[11px] font-mono text-teal-dark font-medium focus:outline-none focus:ring-2 focus:ring-teal-brand/10 focus:border-teal-brand transition-all resize-y min-h-[70px]"
+                    className="w-full bg-white dark:bg-slate-800 p-3 border border-black/[0.08] dark:border-slate-700 rounded-xl text-[11px] font-mono text-teal-dark dark:text-teal-brand font-medium focus:outline-none focus:ring-2 focus:ring-teal-brand/10 focus:border-teal-brand transition-all resize-y min-h-[70px]"
                     placeholder="Describe specific class constraints, student behaviors, curriculum alignment, or custom styles..."
                   />
                   {isManuallyEdited && (
@@ -1254,7 +1386,9 @@ export default function App() {
                         <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${compilationStep >= 1 ? "bg-teal-brand text-slate-950" : "bg-slate-700 text-slate-400"}`}>
                           01
                         </span>
-                        <span className="flex-1 font-sans">Parsing curriculum logic pathways</span>
+                        <span className="flex-1 font-sans">
+                          {getDynamicCompilationStepText(1, customContent, uploadedFileName, transformationGoal)}
+                        </span>
                         {compilationStep >= 1 && <Check className="w-4 h-4 text-teal-brand animate-pulse" />}
                       </div>
 
@@ -1264,7 +1398,9 @@ export default function App() {
                         <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${compilationStep >= 2 ? "bg-amber-400 text-slate-950" : "bg-slate-700 text-slate-400"}`}>
                           02
                         </span>
-                        <span className="flex-1 font-sans">Linking Scratch blocks & physics models</span>
+                        <span className="flex-1 font-sans">
+                          {getDynamicCompilationStepText(2, customContent, uploadedFileName, transformationGoal)}
+                        </span>
                         {compilationStep >= 2 && <Check className="w-4 h-4 text-amber-400 animate-pulse" />}
                       </div>
 
@@ -1274,13 +1410,15 @@ export default function App() {
                         <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${compilationStep >= 3 ? "bg-emerald-400 text-slate-950" : "bg-slate-700 text-slate-400"}`}>
                           03
                         </span>
-                        <span className="flex-1 font-sans">Synthesizing interactive slides & smart quiz</span>
+                        <span className="flex-1 font-sans">
+                          {getDynamicCompilationStepText(3, customContent, uploadedFileName, transformationGoal)}
+                        </span>
                         {compilationStep >= 3 && <Check className="w-4 h-4 text-emerald-400 animate-pulse" />}
                       </div>
                     </div>
 
                     <p className="text-[10px] text-slate-400 text-center font-sans italic pt-1">
-                      Simulating block execution states and validating pedagogical parameters...
+                      Targeting {selectedGrade === "Custom" ? customGradeInput || "Custom Age" : selectedGrade} • {selectedTech} • {transformationGoal === "gamify" ? "Gamified Adventure" : "Presentation Deck"}...
                     </p>
                   </div>
                 </div>
@@ -1296,6 +1434,9 @@ export default function App() {
                 </div>
               )}
             </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
           </div>
         </header>
@@ -1303,58 +1444,97 @@ export default function App() {
         {/* Cloud Saved Lessons and Active Workspace Column Stack */}
         <section className="px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8 flex-1 w-full">
           
-          {/* Saved Lessons (If authenticated & populated) */}
-          {user && savedLessons.length > 0 && (
-            <div className="bg-surface-0 dark:bg-slate-900/90 border border-black/[0.06] dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5 liquid-glass-light dark:liquid-glass-dark">
+          {/* Cloud Storage Saved Lessons Vault */}
+          {user && (
+            <div className="bg-surface-0 dark:bg-slate-900/90 border border-black/[0.06] dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5 liquid-glass-light dark:liquid-glass-dark" id="my-lessons-vault">
               <div className="flex justify-between items-center border-b border-black/[0.05] dark:border-slate-800 pb-2">
                 <div className="flex items-center gap-2">
-                  <Bookmark className="w-4 h-4 text-gold-brand" />
-                  <span className="font-serif text-base sm:text-lg font-bold text-teal-dark dark:text-teal-brand">Your Saved STEM Lesson Plans</span>
+                  <Cloud className="w-4.5 h-4.5 text-teal-brand" />
+                  <span className="font-serif text-base sm:text-lg font-bold text-teal-dark dark:text-teal-brand">Your Firebase Cloud Storage Vault</span>
+                  <span className="px-2 py-0.5 bg-teal-brand/10 text-teal-brand text-[10px] font-mono font-bold rounded-full">
+                    {savedLessons.length} {savedLessons.length === 1 ? 'Lesson' : 'Lessons'}
+                  </span>
                 </div>
-                <span className="text-[9px] font-mono text-secondary dark:text-slate-400 uppercase tracking-wider hidden sm:inline">Loaded from Cloud Firestore</span>
+                <span className="text-[9px] font-mono text-secondary dark:text-slate-400 uppercase tracking-wider hidden sm:inline">
+                  Connected: {user.email}
+                </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {savedLessons.map((saved) => (
-                  <div 
-                    key={saved.id}
-                    className="p-3.5 rounded-xl border border-black/[0.06] dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-teal-brand/40 transition-all flex justify-between items-center gap-3 shadow-3xs"
-                  >
-                    <div className="overflow-hidden flex-1 space-y-0.5">
-                      <p className="text-xs font-bold text-primary dark:text-slate-100 truncate">{saved.lessonTitle}</p>
-                      <span className="text-[10px] text-secondary dark:text-slate-400 font-sans block">{saved.duration} Block</span>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setLesson(saved);
-                          setActiveTab("slides");
-                        }}
-                        className="px-2.5 py-1.5 bg-teal-light dark:bg-teal-brand/20 text-teal-brand hover:bg-teal-brand hover:text-white dark:hover:text-slate-950 rounded-lg text-[10px] font-bold transition-all shadow-3xs cursor-pointer micro-glow-teal min-h-[34px]"
+              {savedLessons.length === 0 ? (
+                <div className="p-6 text-center space-y-2 bg-white/50 dark:bg-slate-800/40 rounded-xl border border-dashed border-black/[0.08] dark:border-slate-800">
+                  <Cloud className="w-8 h-8 text-teal-brand/50 mx-auto" />
+                  <p className="text-xs font-bold text-primary dark:text-slate-200">No saved lesson plans in cloud storage yet</p>
+                  <p className="text-[11px] text-secondary dark:text-slate-400 max-w-md mx-auto font-sans">
+                    Click <strong className="text-teal-brand">"Save to Cloud"</strong> on any active lesson plan to store it securely in your Firebase account and access it anytime!
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {savedLessons.map((saved) => {
+                    const isCurrentlyActive = lesson.id === saved.id;
+                    return (
+                      <div 
+                        key={saved.id}
+                        className={`p-3.5 rounded-xl border transition-all flex justify-between items-center gap-3 shadow-3xs ${
+                          isCurrentlyActive
+                            ? "border-teal-brand bg-teal-brand/5 dark:bg-teal-brand/10 dark:border-teal-brand/60"
+                            : "border-black/[0.06] dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-teal-brand/40"
+                        }`}
                       >
-                        Load
-                      </button>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          if (confirm(`Delete "${saved.lessonTitle}"?`)) {
-                            try {
-                              await deleteLessonFromCloud(saved.id);
-                            } catch (err: any) {
-                              alert("Failed: " + err.message);
-                            }
-                          }
-                        }}
-                        className="p-1.5 hover:bg-red-50 dark:hover:bg-red-950/40 text-secondary dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-all cursor-pointer min-h-[34px]"
-                        title="Delete Lesson"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                        <div className="overflow-hidden flex-1 space-y-0.5">
+                          <div className="flex items-center gap-1.5">
+                            <p className="text-xs font-bold text-primary dark:text-slate-100 truncate">{saved.lessonTitle}</p>
+                            {isCurrentlyActive && (
+                              <span className="px-1.5 py-0.2 bg-teal-brand text-slate-950 text-[8px] font-mono font-extrabold rounded uppercase shrink-0">Active</span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-secondary dark:text-slate-400 font-sans block truncate">
+                            {saved.duration} Block
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setLesson(saved);
+                              setActiveTab("slides");
+                            }}
+                            className="px-2.5 py-1.5 bg-teal-light dark:bg-teal-brand/20 text-teal-brand hover:bg-teal-brand hover:text-white dark:hover:text-slate-950 rounded-lg text-[10px] font-bold transition-all shadow-3xs cursor-pointer micro-glow-teal min-h-[34px]"
+                          >
+                            Load
+                          </button>
+                          <button
+                            type="button"
+                            disabled={deletingLessonId === saved.id}
+                            onClick={async () => {
+                              if (confirm(`Permanently delete "${saved.lessonTitle}" from your Firebase Cloud Storage?`)) {
+                                try {
+                                  setDeletingLessonId(saved.id);
+                                  await deleteLessonFromCloud(saved.id);
+                                  setSaveStatus("Lesson deleted from cloud");
+                                  setTimeout(() => setSaveStatus(null), 3000);
+                                } catch (err: any) {
+                                  alert("Failed to delete lesson: " + (err?.message || "Unknown error"));
+                                } finally {
+                                  setDeletingLessonId(null);
+                                }
+                              }
+                            }}
+                            className="p-1.5 hover:bg-red-100 dark:hover:bg-red-950/60 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-all cursor-pointer min-h-[34px] disabled:opacity-50"
+                            title="Delete lesson from cloud storage"
+                          >
+                            {deletingLessonId === saved.id ? (
+                              <RefreshCw className="w-4 h-4 animate-spin text-red-500" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 
@@ -1416,7 +1596,7 @@ export default function App() {
               {[
                 { id: "slides", label: "Interactive Slides", icon: Layers },
                 { id: "lab", label: isCodingLesson ? "💻 Coding Blocks & Lab" : "Hands-On Lab", icon: isCodingLesson ? Terminal : Activity },
-                { id: "nana-banana", label: "🍌 Nana Banana Visuals", icon: Palette },
+                { id: "nana-banana", label: "🎨 Visual Studio", icon: Palette },
                 { id: "quiz", label: "Smartboard Quiz", icon: HelpCircle },
                 { id: "media", label: "Media Fixer", icon: Link2Off }
               ].map((tab) => {

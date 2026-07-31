@@ -32,8 +32,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               Transform Plain STEM Lessons into <span className="text-teal-brand underline decoration-amber-400 underline-offset-6">Interactive Visual Adventures</span>
             </h1>
 
-            <p className="text-sm sm:text-base text-slate-600 leading-relaxed font-sans font-normal">
-              Lyra automatically restructures dense science articles, raw textbooks, and outline PDFs into classroom-ready smartboard slides, hands-on engineering labs, Nana Banana Pro visual diagrams, and interactive quizzes.
+            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans font-normal">
+              Lyra automatically restructures dense science articles, raw textbooks, and outline PDFs into classroom-ready smartboard slides, hands-on engineering labs, Visual Studio visual diagrams, and interactive quizzes.
             </p>
 
             <div className="pt-2 flex flex-wrap items-center gap-3">
@@ -104,7 +104,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <div className="bg-black/[0.2] p-5 rounded-2xl border border-white/[0.08] space-y-2">
             <span className="text-[10px] font-mono text-teal-brand block font-bold">STAGE 03</span>
             <h5 className="text-sm font-bold font-sans">Multi-Channel Outputs</h5>
-            <p className="text-xs text-teal-light/80 leading-relaxed font-sans">Instantly yields slides, experimental guides, Nana Banana diagrams, and quiz modules.</p>
+            <p className="text-xs text-teal-light/80 leading-relaxed font-sans">Instantly yields slides, experimental guides, Visual Studio diagrams, and quiz modules.</p>
           </div>
         </div>
       </div>
@@ -113,36 +113,36 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <div className="space-y-6">
         <div className="text-center space-y-1.5">
           <span className="text-[10px] font-bold text-gold-brand uppercase tracking-widest font-sans">ACTIVE CURRICULUM SUITE</span>
-          <h3 className="font-serif text-2xl sm:text-3xl font-bold text-teal-dark">Everything Needed For An Active STEM Classroom</h3>
+          <h3 className="font-serif text-2xl sm:text-3xl font-bold text-teal-dark dark:text-teal-brand">Everything Needed For An Active STEM Classroom</h3>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          <div className="bg-white border border-black/[0.08] rounded-2xl p-6 space-y-3 shadow-3xs hover:border-teal-brand/40 transition-all">
-            <div className="w-10 h-10 rounded-xl bg-teal-light text-teal-brand flex items-center justify-center font-bold">
+          <div className="bg-white dark:bg-slate-900 border border-black/[0.08] dark:border-slate-800 rounded-2xl p-6 space-y-3 shadow-3xs hover:border-teal-brand/40 transition-all">
+            <div className="w-10 h-10 rounded-xl bg-teal-light dark:bg-teal-brand/20 text-teal-brand flex items-center justify-center font-bold">
               <Layers className="w-5 h-5" />
             </div>
-            <h4 className="font-serif font-bold text-slate-800 text-base">Interactive Smartboard Slides</h4>
-            <p className="text-xs text-slate-600 leading-relaxed font-sans">
+            <h4 className="font-serif font-bold text-slate-800 dark:text-slate-100 text-base">Interactive Smartboard Slides</h4>
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
               Visual classroom slide decks with step-by-step teaching analogies, full-screen expansion mode, core takeaways, and instructor speaking notes.
             </p>
           </div>
 
-          <div className="bg-white border border-black/[0.08] rounded-2xl p-6 space-y-3 shadow-3xs hover:border-teal-brand/40 transition-all">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+          <div className="bg-white dark:bg-slate-900 border border-black/[0.08] dark:border-slate-800 rounded-2xl p-6 space-y-3 shadow-3xs hover:border-teal-brand/40 transition-all">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 flex items-center justify-center font-bold">
               <Activity className="w-5 h-5" />
             </div>
-            <h4 className="font-serif font-bold text-slate-800 text-base">Hands-On Engineering Labs</h4>
-            <p className="text-xs text-slate-600 leading-relaxed font-sans">
+            <h4 className="font-serif font-bold text-slate-800 dark:text-slate-100 text-base">Hands-On Engineering Labs</h4>
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
               Step-by-step physical build instructions, material checklists with interactive checkmarks, and scientific principle breakdowns.
             </p>
           </div>
 
-          <div className="bg-white border border-black/[0.08] rounded-2xl p-6 space-y-3 shadow-3xs hover:border-teal-brand/40 transition-all">
-            <div className="w-10 h-10 rounded-xl bg-yellow-100 text-yellow-800 flex items-center justify-center font-bold">
+          <div className="bg-white dark:bg-slate-900 border border-black/[0.08] dark:border-slate-800 rounded-2xl p-6 space-y-3 shadow-3xs hover:border-teal-brand/40 transition-all">
+            <div className="w-10 h-10 rounded-xl bg-yellow-100 dark:bg-yellow-500/20 text-yellow-800 dark:text-yellow-300 flex items-center justify-center font-bold">
               <Palette className="w-5 h-5" />
             </div>
-            <h4 className="font-serif font-bold text-slate-800 text-base">🍌 Nana Banana Pro Visuals</h4>
-            <p className="text-xs text-slate-600 leading-relaxed font-sans">
+            <h4 className="font-serif font-bold text-slate-800 dark:text-slate-100 text-base">🎨 Visual Studio</h4>
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
               Generates rich visual conceptual diagrams for hands-on experiments and lessons with custom art styles and high-yield prompts.
             </p>
           </div>

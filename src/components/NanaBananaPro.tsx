@@ -148,14 +148,14 @@ export default function NanaBananaPro({ lesson, initialPrompt }: NanaBananaProPr
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-xl">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-950 text-amber-400 text-xs font-black rounded-full uppercase tracking-wider shadow-xs">
-              <span className="text-base leading-none">🍌</span>
-              <span>Nana Banana Pro Visual Engine</span>
+              <span className="text-base leading-none">🎨</span>
+              <span>Visual Studio Pro</span>
             </div>
             <h2 className="text-2xl sm:text-3xl font-serif font-extrabold text-slate-950 tracking-tight">
               Create AI Visuals for Labs & Lessons
             </h2>
             <p className="text-xs sm:text-sm text-slate-900/90 leading-relaxed font-medium">
-              Transform hands-on experiments into vibrant, step-by-step visual guides, equipment diagrams, and classroom infographics powered by Nana Banana Pro.
+              Transform hands-on experiments into vibrant, step-by-step visual guides, equipment diagrams, and classroom infographics powered by Visual Studio Pro.
             </p>
           </div>
 
