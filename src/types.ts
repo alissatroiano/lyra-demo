@@ -39,7 +39,16 @@ export interface MediaRecommendation {
   whyItHelps: string;
 }
 
+export interface SavedVisual {
+  id: string;
+  url: string;
+  prompt: string;
+  style: string;
+  timestamp: string;
+}
+
 export interface ProcessedLesson {
+  id?: string;
   lessonTitle: string;
   duration: string;
   summary: string;
@@ -50,6 +59,7 @@ export interface ProcessedLesson {
   quiz: QuizQuestion[];
   mediaRecommendations: MediaRecommendation[];
   extractedStyleNotes?: string;
+  generatedVisuals?: SavedVisual[];
 }
 
 export interface PreloadedLesson {

@@ -32,6 +32,7 @@
         "worksheet": { "type": "object", "description": "Worksheet containing list of questions, options, and keys" },
         "quiz": { "type": "array", "description": "Quiz questions for smartboard team play" },
         "mediaRecommendations": { "type": "array", "description": "Suggested high-yield video/media search phrases" },
+        "generatedVisuals": { "type": "array", "description": "Array of saved generated visuals for this lesson" },
         "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of creation" },
         "updatedAt": { "type": "string", "format": "date-time", "description": "Timestamp of update" }
       },

@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Sparkles, Image as ImageIcon, Download, RefreshCw, Wand2, FlaskConical, Layers, Eye, CheckCircle2, Copy, Check, ZoomIn, HelpCircle, BookOpen } from "lucide-react";
-import { ProcessedLesson } from "../types";
+import { ProcessedLesson, SavedVisual } from "../types";
 
 interface NanaBananaProProps {
   lesson: ProcessedLesson;
+  onUpdateVisuals?: (visuals: SavedVisual[]) => void;
   onTriggerPaidFlow?: () => void;
   initialPrompt?: string;
 }
 
-export default function NanaBananaPro({ lesson, initialPrompt }: NanaBananaProProps) {
+export default function NanaBananaPro({ lesson, onUpdateVisuals, initialPrompt }: NanaBananaProProps) {
   const [prompt, setPrompt] = useState<string>(
     initialPrompt || `Vibrant educational STEM infographic for "${lesson.lessonTitle}". Highlighting slide takeaways: (${lesson.keyTakeaways?.slice(0, 3).join("; ") || lesson.summary}). Illustrating concept tested in smartboard quiz: "${lesson.quiz?.[0]?.question || ''}".`
   );
@@ -20,7 +21,23 @@ export default function NanaBananaPro({ lesson, initialPrompt }: NanaBananaProPr
   const [copied, setCopied] = useState<boolean>(false);
   const [zoomModalOpen, setZoomModalOpen] = useState<boolean>(false);
 
-  // Automatically sync prompt when lesson changes (new upload or preloaded selection)
+  // Gallery of generated or pre-built visual assets for this lesson
+  const [savedVisuals, setSavedVisuals] = useState<SavedVisual[]>(() => {
+    if (lesson?.generatedVisuals && lesson.generatedVisuals.length > 0) {
+      return lesson.generatedVisuals;
+    }
+    return [
+      {
+        id: "preset-1",
+        url: `https://picsum.photos/seed/${encodeURIComponent((lesson?.lessonTitle || 'lesson') + "-lab-1")}/800/450`,
+        prompt: `Laboratory setup illustration for ${lesson?.handsOnActivity?.title || 'hands-on lab'} with labeled equipment`,
+        style: "vibrant-vector",
+        timestamp: "Pre-generated Guide"
+      }
+    ];
+  });
+
+  // Automatically sync prompt and visuals when lesson changes
   useEffect(() => {
     if (!lesson) return;
     const takeaways = lesson.keyTakeaways?.slice(0, 3).join("; ") || lesson.summary;
@@ -29,18 +46,26 @@ export default function NanaBananaPro({ lesson, initialPrompt }: NanaBananaProPr
     const syncedPrompt = initialPrompt || `Educational STEM visual guide for "${lesson.lessonTitle}". Highlighting key slide takeaways: [${takeaways}]. Visualizing smartboard quiz challenge: "${quizQ}". Labeled diagram for ${lesson.handsOnActivity?.title || 'hands-on lab'}.`;
     
     setPrompt(syncedPrompt);
-  }, [lesson, initialPrompt]);
 
-  // Gallery of generated or pre-built visual assets for this lesson
-  const [savedVisuals, setSavedVisuals] = useState<Array<{ id: string; url: string; prompt: string; style: string; timestamp: string }>>([
-    {
-      id: "preset-1",
-      url: `https://picsum.photos/seed/${encodeURIComponent(lesson.lessonTitle + "-lab-1")}/800/450`,
-      prompt: `Laboratory setup illustration for ${lesson.handsOnActivity.title} with labeled equipment`,
-      style: "vibrant-vector",
-      timestamp: "Pre-generated Guide"
+    if (lesson.generatedVisuals && lesson.generatedVisuals.length > 0) {
+      setSavedVisuals(lesson.generatedVisuals);
+    } else {
+      setSavedVisuals([
+        {
+          id: "preset-1",
+          url: `https://picsum.photos/seed/${encodeURIComponent(lesson.lessonTitle + "-lab-1")}/800/450`,
+          prompt: `Laboratory setup illustration for ${lesson.handsOnActivity?.title || 'hands-on lab'} with labeled equipment`,
+          style: "vibrant-vector",
+          timestamp: "Pre-generated Guide"
+        }
+      ]);
     }
-  ]);
+  }, [lesson.lessonTitle, initialPrompt]);
+
+  // Notify parent of visual changes whenever savedVisuals updates
+  useEffect(() => {
+    onUpdateVisuals?.(savedVisuals);
+  }, [savedVisuals]);
 
   const styleOptions = [
     { id: "vibrant-vector", label: "Vibrant Vector Diagram", desc: "Clean educational infographic with bold outlines" },

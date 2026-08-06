@@ -300,17 +300,17 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
 
       {/* Visual Concept Block */}
       {currentSlide.visualConcept && (
-        <div className="bg-slate-50 border border-black/[0.05] rounded-2xl p-5 space-y-3 shadow-3xs" id="visual-concept-card">
-          <div className="flex items-center gap-2.5 text-teal-dark">
-            <div className="w-7 h-7 rounded-lg bg-teal-light flex items-center justify-center text-teal-brand">
+        <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-3xs" id="visual-concept-card">
+          <div className="flex items-center gap-2.5 text-teal-900 dark:text-teal-brand">
+            <div className="w-7 h-7 rounded-lg bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center text-teal-brand shrink-0">
               <Eye className="w-4 h-4" />
             </div>
             <div>
-              <h5 className="text-xs font-bold uppercase font-sans tracking-tight">Smartboard Visual Concept</h5>
-              <p className="text-[9px] text-secondary leading-none">Suggested live illustration or board sketch</p>
+              <h5 className="text-xs font-bold uppercase font-sans tracking-tight text-slate-900 dark:text-slate-100">Smartboard Visual Concept</h5>
+              <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-none">Suggested live illustration or board sketch</p>
             </div>
           </div>
-          <p className="text-xs text-secondary leading-relaxed font-sans bg-white border border-black/[0.04] p-3 rounded-xl italic">
+          <p className="text-xs text-slate-800 dark:text-slate-200 leading-relaxed font-sans bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-xl italic font-medium">
             "{currentSlide.visualConcept}"
           </p>
         </div>
@@ -323,14 +323,14 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-5 space-y-2 shadow-3xs"
+            className="bg-amber-50 dark:bg-amber-950/60 border border-amber-300/90 dark:border-amber-800/90 rounded-2xl p-5 space-y-2.5 shadow-xs"
             id="facilitator-notes-card"
           >
-            <div className="flex items-center gap-2 text-amber-900">
-              <Award className="w-4 h-4 text-amber-600" />
-              <h5 className="text-xs font-bold uppercase font-sans">Lyra's Instructor Script & Pacing Tip</h5>
+            <div className="flex items-center gap-2 text-amber-950 dark:text-amber-300">
+              <Award className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
+              <h5 className="text-xs font-bold uppercase font-sans tracking-wide">Lyra's Instructor Script & Pacing Tip</h5>
             </div>
-            <p className="text-xs text-amber-950/90 leading-relaxed font-sans">
+            <p className="text-xs text-amber-950 dark:text-amber-100 leading-relaxed font-sans font-medium">
               {currentSlide.instructorNotes}
             </p>
           </motion.div>

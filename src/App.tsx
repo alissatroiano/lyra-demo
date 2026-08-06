@@ -958,13 +958,13 @@ export default function App() {
           
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="space-y-2.5 sm:space-y-3 max-w-2xl">
-              <span className="inline-block text-[10px] font-bold tracking-widest text-gold-brand uppercase font-sans">
+              <span className="inline-block text-[10px] font-extrabold tracking-widest text-amber-700 dark:text-amber-400 uppercase font-sans">
                 XPRIZE · Education & Human Potential
               </span>
-              <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-primary dark:text-slate-100 leading-tight">
-                Your AI copilot for <span className="text-teal-dark dark:text-teal-brand underline decoration-teal-brand/40 underline-offset-4">STEM lesson prep</span>
+              <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
+                Your AI copilot for <span className="text-teal-800 dark:text-teal-brand underline decoration-teal-brand/40 underline-offset-4">STEM lesson prep</span>
               </h1>
-              <p className="text-xs sm:text-sm text-secondary dark:text-slate-300 leading-relaxed font-sans font-normal">
+              <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-sans font-normal">
                 Lyra turns long, messy science articles and PDF textbooks into beautiful interactive slide decks, hands-on lab guides, printable worksheets, and broken media link backups instantly.
               </p>
             </div>
@@ -976,28 +976,28 @@ export default function App() {
           </div>
 
           {/* Interactive Core Intake Controller (ly-upload-zone) */}
-          <div className="mt-8 bg-white dark:bg-slate-900/90 border border-black/[0.12] dark:border-slate-800 rounded-2xl shadow-sm transition-all overflow-hidden" id="intake-panel">
+          <div className="mt-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm transition-all overflow-hidden" id="intake-panel">
             
             {/* Step Header (Clickable Expandable Toggle) */}
             <div 
-              className="flex justify-between items-center p-4 sm:p-5 cursor-pointer select-none border-b border-black/[0.06] dark:border-slate-800 hover:bg-black/[0.02] dark:hover:bg-slate-800/40 transition-colors"
+              className="flex justify-between items-center p-4 sm:p-5 cursor-pointer select-none border-b border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
               onClick={() => setIsUploadExpanded(!isUploadExpanded)}
             >
               <div className="flex items-center gap-2.5 flex-wrap">
-                <span className="text-[10px] font-bold font-mono tracking-wider text-teal-brand uppercase bg-teal-light dark:bg-teal-brand/20 border border-teal-brand/20 px-2.5 py-0.5 rounded-md">
+                <span className="text-[10px] font-bold font-mono tracking-wider text-teal-800 dark:text-teal-brand uppercase bg-teal-50 dark:bg-teal-brand/20 border border-teal-200 dark:border-teal-brand/20 px-2.5 py-0.5 rounded-md">
                   1. Upload Curriculum Material
                 </span>
                 {!isUploadExpanded && (uploadedFileName || customContent) && (
-                  <span className="text-xs font-semibold text-teal-dark dark:text-teal-brand truncate max-w-[180px] sm:max-w-xs flex items-center gap-1.5 bg-teal-light/40 dark:bg-teal-brand/10 px-2.5 py-0.5 rounded-full border border-teal-brand/20">
-                    <Check className="w-3 h-3 text-teal-brand shrink-0" />
+                  <span className="text-xs font-semibold text-teal-900 dark:text-teal-brand truncate max-w-[180px] sm:max-w-xs flex items-center gap-1.5 bg-teal-50 dark:bg-teal-brand/10 px-2.5 py-0.5 rounded-full border border-teal-200 dark:border-teal-brand/20">
+                    <Check className="w-3 h-3 text-teal-600 dark:text-teal-brand shrink-0" />
                     <span className="truncate">{uploadedFileName || lesson?.lessonTitle || "Curriculum Text Loaded"}</span>
                   </span>
                 )}
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-xs font-semibold text-secondary dark:text-slate-400 font-sans flex items-center gap-1">
-                  <Sliders className="w-3.5 h-3.5 text-gold-brand" />
+                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 font-sans flex items-center gap-1">
+                  <Sliders className="w-3.5 h-3.5 text-amber-600 dark:text-gold-brand" />
                   <span className="hidden sm:inline">Configuration</span>
                 </span>
                 <button
@@ -1006,7 +1006,7 @@ export default function App() {
                     e.stopPropagation();
                     setIsUploadExpanded(!isUploadExpanded);
                   }}
-                  className="p-1.5 rounded-lg hover:bg-black/[0.05] dark:hover:bg-slate-800 text-secondary dark:text-slate-300 transition-all cursor-pointer"
+                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all cursor-pointer"
                   aria-label={isUploadExpanded ? "Collapse Upload Section" : "Expand Upload Section"}
                 >
                   {isUploadExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -1307,30 +1307,30 @@ export default function App() {
 
                 {/* Lyra's Memory Profile & AI Insights */}
                 {user ? (
-                  <div className="bg-teal-light/10 border border-teal-brand/15 rounded-xl p-3 space-y-1.5 animate-fadeIn">
+                  <div className="bg-teal-50/60 dark:bg-teal-brand/10 border border-teal-brand/20 dark:border-teal-brand/30 rounded-xl p-3 space-y-1.5 animate-fadeIn">
                     <div className="flex items-center gap-1.5">
-                      <Brain className="w-3.5 h-3.5 text-teal-brand animate-pulse" />
-                      <span className="text-[9px] font-bold text-teal-dark uppercase tracking-wider font-sans">
+                      <Brain className="w-3.5 h-3.5 text-teal-700 dark:text-teal-brand animate-pulse" />
+                      <span className="text-[9px] font-bold text-teal-900 dark:text-teal-brand uppercase tracking-wider font-sans">
                         Lyra's Memory of You
                       </span>
                     </div>
                     {profile?.instructorNotes ? (
                       <div className="space-y-1">
-                        <p className="text-[10px] text-secondary font-sans leading-relaxed">
-                          "I've learned that you focus on: <span className="font-semibold text-teal-dark">{profile.instructorNotes}</span>"
+                        <p className="text-[10px] text-slate-800 dark:text-slate-300 font-sans leading-relaxed">
+                          "I've learned that you focus on: <span className="font-semibold text-teal-900 dark:text-teal-brand">{profile.instructorNotes}</span>"
                         </p>
-                        <span className="text-[8px] text-teal-brand font-medium block">
+                        <span className="text-[8px] text-teal-700 dark:text-teal-brand font-medium block">
                           💡 Lyra automatically synthesizes these pedagogical preferences into new plans.
                         </span>
                       </div>
                     ) : (
-                      <p className="text-[9px] text-secondary/70 italic font-sans leading-normal">
+                      <p className="text-[9px] text-slate-600 dark:text-slate-400 italic font-sans leading-normal">
                         Generate a lesson to activate. Lyra will observe your input patterns and custom instructions to learn your style.
                       </p>
                     )}
                   </div>
                 ) : (
-                  <div className="bg-amber-50/40 border border-amber-200/50 rounded-xl p-2.5 text-[9px] text-amber-950 leading-normal font-sans">
+                  <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl p-2.5 text-[9px] text-amber-950 dark:text-amber-200 leading-normal font-sans font-medium">
                     🔒 <span className="font-bold">Sign In</span> to enable Lyra's adaptive memory. Lyra will save your instructions and learn your pedagogical style across sessions!
                   </div>
                 )}
@@ -1539,7 +1539,7 @@ export default function App() {
           )}
 
           {/* Active Lesson Meta Display */}
-          <div className="bg-white dark:bg-slate-900/90 border border-black/[0.12] dark:border-slate-800 rounded-2xl p-4 sm:p-6 shadow-xs relative overflow-hidden liquid-glass-light dark:liquid-glass-dark" id="workspace-panel">
+          <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-6 shadow-xs relative overflow-hidden liquid-glass-light dark:liquid-glass-dark" id="workspace-panel">
             <div className="absolute top-0 right-0 w-36 h-36 bg-gradient-to-bl from-teal-light/20 to-transparent rounded-full blur-2xl pointer-events-none" />
             
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-black/[0.06] dark:border-slate-800 pb-4 mb-4 z-10 relative">
@@ -1981,7 +1981,15 @@ export default function App() {
                     transition={{ duration: 0.25 }}
                     className="space-y-6 animate-fade-in"
                   >
-                    <NanaBananaPro lesson={lesson} />
+                    <NanaBananaPro 
+                      lesson={lesson} 
+                      onUpdateVisuals={(updatedVisuals) => {
+                        setLesson(prev => ({
+                          ...prev,
+                          generatedVisuals: updatedVisuals
+                        }));
+                      }} 
+                    />
                   </motion.div>
                 )}
 

@@ -61,7 +61,8 @@ service cloud.firestore {
         && (!data.keys().hasAny(['handsOnActivity']) || (data.handsOnActivity is map))
         && (!data.keys().hasAny(['worksheet']) || (data.worksheet is map))
         && (!data.keys().hasAny(['quiz']) || (data.quiz is list && data.quiz.size() <= 50))
-        && (!data.keys().hasAny(['mediaRecommendations']) || (data.mediaRecommendations is list && data.mediaRecommendations.size() <= 20));
+        && (!data.keys().hasAny(['mediaRecommendations']) || (data.mediaRecommendations is list && data.mediaRecommendations.size() <= 20))
+        && (!data.keys().hasAny(['generatedVisuals']) || (data.generatedVisuals is list && data.generatedVisuals.size() <= 50));
     }
 
     // 2. User Profiles Collection Rules

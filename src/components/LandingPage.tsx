@@ -147,22 +147,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </p>
           </div>
 
-          <div className="bg-white border border-black/[0.08] rounded-2xl p-6 space-y-3 shadow-3xs hover:border-teal-brand/40 transition-all">
-            <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-800 flex items-center justify-center font-bold">
+          <div className="bg-white dark:bg-slate-900 border border-black/[0.08] dark:border-slate-800 rounded-2xl p-6 space-y-3 shadow-3xs hover:border-teal-brand/40 transition-all">
+            <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 flex items-center justify-center font-bold">
               <HelpCircle className="w-5 h-5" />
             </div>
-            <h4 className="font-serif font-bold text-slate-800 text-base">Smartboard Trivia Quizzes</h4>
-            <p className="text-xs text-slate-600 leading-relaxed font-sans">
+            <h4 className="font-serif font-bold text-slate-800 dark:text-slate-100 text-base">Smartboard Trivia Quizzes</h4>
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
               Gamified classroom quizzes with instant score tracking, correct answer explanations, and team participation modes.
             </p>
           </div>
 
-          <div className="bg-white border border-black/[0.08] rounded-2xl p-6 space-y-3 shadow-3xs hover:border-teal-brand/40 transition-all sm:col-span-2 lg:col-span-2">
-            <div className="w-10 h-10 rounded-xl bg-red-100 text-red-800 flex items-center justify-center font-bold">
+          <div className="bg-white dark:bg-slate-900 border border-black/[0.08] dark:border-slate-800 rounded-2xl p-6 space-y-3 shadow-3xs hover:border-teal-brand/40 transition-all sm:col-span-2 lg:col-span-2">
+            <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/60 text-red-800 dark:text-red-300 flex items-center justify-center font-bold">
               <Link2Off className="w-5 h-5" />
             </div>
-            <h4 className="font-serif font-bold text-slate-800 text-base">Google SafeSearch Media Recovery</h4>
-            <p className="text-xs text-slate-600 leading-relaxed font-sans">
+            <h4 className="font-serif font-bold text-slate-800 dark:text-slate-100 text-base">Google SafeSearch Media Recovery</h4>
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
               Detects dead links in outdated lesson plans and instantly provides grounded, explicit-content-filtered Google SafeSearch video demonstrations.
             </p>
           </div>

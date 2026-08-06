@@ -190,6 +190,7 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       worksheet: lessonData.worksheet || { title: '', instructions: [], questions: [] },
       quiz: lessonData.quiz || [],
       mediaRecommendations: lessonData.mediaRecommendations || [],
+      generatedVisuals: lessonData.generatedVisuals || [],
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     };
