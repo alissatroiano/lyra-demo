@@ -18,18 +18,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   return (
     <main className="px-6 sm:px-8 py-8 space-y-12 animate-fade-in flex-1 max-w-7xl mx-auto w-full">
       {/* Landing Hero Section */}
-      <header className="py-10 px-6 sm:px-10 relative overflow-hidden bg-gradient-to-b from-teal-light/30 via-teal-light/10 to-transparent rounded-3xl border border-teal-brand/15 shadow-3xs">
+      <header className="py-10 px-6 sm:px-10 relative overflow-hidden bg-gradient-to-b from-teal-light/30 via-teal-light/10 to-transparent dark:from-slate-900/90 dark:via-slate-900/40 dark:to-transparent rounded-3xl border border-teal-brand/15 dark:border-slate-800 shadow-3xs">
         <div className="absolute top-0 right-0 w-64 h-64 bg-teal-brand/10 rounded-full blur-3xl pointer-events-none" />
         
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 relative z-10">
           <div className="space-y-4 max-w-xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-100/80 border border-amber-300 text-amber-900 rounded-full text-[10px] font-bold uppercase tracking-wider font-sans">
-              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-100/80 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800/80 text-amber-900 dark:text-amber-200 rounded-full text-[10px] font-bold uppercase tracking-wider font-sans">
+              <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
               <span>XPRIZE · Education & Human Potential</span>
             </div>
 
-            <h1 className="font-serif text-3.5xl sm:text-5xl font-bold tracking-tight text-teal-dark leading-tight">
-              Transform Plain STEM Lessons into <span className="text-teal-brand underline decoration-amber-400 underline-offset-6">Interactive Visual Adventures</span>
+            <h1 className="font-serif text-3.5xl sm:text-5xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
+              Transform Plain STEM Lessons into <span className="text-teal-700 dark:text-teal-brand underline decoration-amber-400 dark:decoration-amber-500 underline-offset-6">Interactive Visual Adventures</span>
             </h1>
 
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans font-normal">
@@ -41,7 +41,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <button
                   type="button"
                   onClick={onLaunchStudio}
-                  className="px-6 py-3.5 bg-teal-dark hover:bg-slate-900 text-white rounded-2xl text-xs sm:text-sm font-extrabold transition-all shadow-md hover:shadow-lg flex items-center gap-2.5 cursor-pointer border border-teal-brand/30 group"
+                  className="px-6 py-3.5 bg-teal-800 dark:bg-teal-600 hover:bg-slate-900 dark:hover:bg-teal-500 text-white rounded-2xl text-xs sm:text-sm font-extrabold transition-all shadow-md hover:shadow-lg flex items-center gap-2.5 cursor-pointer border border-teal-brand/30 group"
                 >
                   <Sparkles className="w-4 h-4 text-amber-300 group-hover:rotate-12 transition-transform" />
                   <span>Enter Instructor Studio</span>
@@ -62,7 +62,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <button
                 type="button"
                 onClick={() => document.getElementById("pricing-section")?.scrollIntoView({ behavior: "smooth" })}
-                className="px-5 py-3.5 bg-white hover:bg-surface-0 text-slate-800 rounded-2xl text-xs sm:text-sm font-bold transition-all border border-black/[0.1] shadow-3xs cursor-pointer flex items-center gap-2"
+                className="px-5 py-3.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-2xl text-xs sm:text-sm font-bold transition-all border border-slate-200 dark:border-slate-700 shadow-3xs cursor-pointer flex items-center gap-2"
               >
                 <span>View Pricing Plans</span>
               </button>
@@ -70,10 +70,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           {/* Mascot Illustration */}
-          <div className="self-center md:self-auto shrink-0 bg-white/80 border border-teal-brand/20 rounded-3xl p-6 shadow-md animate-float relative">
+          <div className="self-center md:self-auto shrink-0 bg-white/80 dark:bg-slate-900/90 border border-teal-brand/20 dark:border-slate-800 rounded-3xl p-6 shadow-md animate-float relative">
             <RobotBunnyMascot className="w-32 h-32 sm:w-36 sm:h-36" />
             <div className="mt-3 text-center">
-              <span className="text-[10px] font-extrabold font-mono text-teal-dark bg-teal-light/60 px-2.5 py-1 rounded-full uppercase tracking-wide">
+              <span className="text-[10px] font-extrabold font-mono text-teal-900 dark:text-teal-brand bg-teal-light/60 dark:bg-teal-brand/20 px-2.5 py-1 rounded-full uppercase tracking-wide">
                 Lyra AI Co-Teacher
               </span>
             </div>
@@ -170,29 +170,29 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </div>
 
       {/* Proven Pedagogical Metrics */}
-      <div className="bg-surface-0/60 border border-black/[0.06] rounded-3xl p-8 space-y-6" id="metrics-section">
+      <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 space-y-6" id="metrics-section">
         <div className="text-center space-y-1.5">
-          <span className="text-[10px] font-bold text-gold-brand uppercase tracking-widest font-sans">PROVEN PEDAGOGICAL METRICS</span>
-          <h3 className="font-serif text-2xl font-bold text-teal-dark">Curriculum Efficiency Accomplished</h3>
+          <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest font-sans">PROVEN PEDAGOGICAL METRICS</span>
+          <h3 className="font-serif text-2xl font-bold text-slate-900 dark:text-slate-100">Curriculum Efficiency Accomplished</h3>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 text-center">
-          <div className="bg-white border border-black/[0.05] p-6 rounded-2xl space-y-1 shadow-3xs">
-            <span className="font-serif text-4xl font-bold text-teal-brand block leading-none">14,200+</span>
-            <span className="text-[10px] font-bold text-teal-dark uppercase font-sans tracking-wide">Instructor Hours Saved</span>
-            <p className="text-xs text-secondary font-sans leading-normal">Unpaid prep time reduced to zero.</p>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl space-y-1 shadow-3xs">
+            <span className="font-serif text-4xl font-bold text-teal-600 dark:text-teal-brand block leading-none">14,200+</span>
+            <span className="text-[10px] font-bold text-teal-900 dark:text-teal-brand uppercase font-sans tracking-wide">Instructor Hours Saved</span>
+            <p className="text-xs text-slate-600 dark:text-slate-300 font-sans leading-normal">Unpaid prep time reduced to zero.</p>
           </div>
 
-          <div className="bg-white border border-black/[0.05] p-6 rounded-2xl space-y-1 shadow-3xs">
-            <span className="font-serif text-4xl font-bold text-teal-brand block leading-none">250+</span>
-            <span className="text-[10px] font-bold text-teal-dark uppercase font-sans tracking-wide">Schools & Camps</span>
-            <p className="text-xs text-secondary font-sans leading-normal">Active deployments across regions.</p>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl space-y-1 shadow-3xs">
+            <span className="font-serif text-4xl font-bold text-teal-600 dark:text-teal-brand block leading-none">250+</span>
+            <span className="text-[10px] font-bold text-teal-900 dark:text-teal-brand uppercase font-sans tracking-wide">Schools & Camps</span>
+            <p className="text-xs text-slate-600 dark:text-slate-300 font-sans leading-normal">Active deployments across regions.</p>
           </div>
 
-          <div className="bg-white border border-black/[0.05] p-6 rounded-2xl space-y-1 shadow-3xs">
-            <span className="font-serif text-4xl font-bold text-teal-brand block leading-none">$0</span>
-            <span className="text-[10px] font-bold text-teal-dark uppercase font-sans tracking-wide">District Friction</span>
-            <p className="text-xs text-secondary font-sans leading-normal">Fully offline/cloud hybrid compatible.</p>
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl space-y-1 shadow-3xs">
+            <span className="font-serif text-4xl font-bold text-teal-600 dark:text-teal-brand block leading-none">$0</span>
+            <span className="text-[10px] font-bold text-teal-900 dark:text-teal-brand uppercase font-sans tracking-wide">District Friction</span>
+            <p className="text-xs text-slate-600 dark:text-slate-300 font-sans leading-normal">Fully offline/cloud hybrid compatible.</p>
           </div>
         </div>
       </div>
@@ -200,33 +200,33 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* Pricing Section */}
       <div className="pt-4 space-y-8" id="pricing-section">
         <div className="text-center space-y-2">
-          <span className="text-[10px] font-bold text-gold-brand uppercase tracking-widest font-sans bg-amber-100/60 px-3 py-1 rounded-full border border-amber-200">
+          <span className="text-[10px] font-bold text-amber-800 dark:text-amber-200 uppercase tracking-widest font-sans bg-amber-100/60 dark:bg-amber-950/60 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-800">
             STEM & STEAM EDUCATOR PLANS
           </span>
-          <h3 className="font-serif text-3xl font-bold text-teal-dark">Simple, Transparent Pricing</h3>
-          <p className="text-xs sm:text-sm text-slate-600 max-w-lg mx-auto font-sans">
+          <h3 className="font-serif text-3xl font-bold text-slate-900 dark:text-slate-100">Simple, Transparent Pricing</h3>
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-lg mx-auto font-sans">
             Transparent plans built for teachers, camps, and afterschool directors. Upgrade or cancel anytime.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
           {/* Plan 1: STEM Educator Pro - $19.99 */}
-          <div className="bg-white border-2 border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6 flex flex-col justify-between shadow-sm hover:border-teal-brand transition-all relative">
+          <div className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 flex flex-col justify-between shadow-sm hover:border-teal-brand transition-all relative">
             <div className="space-y-4">
               <div className="space-y-1">
-                <span className="text-[10px] font-mono font-bold text-teal-dark uppercase tracking-wider bg-teal-50 px-2.5 py-1 rounded-md border border-teal-200 inline-block">
+                <span className="text-[10px] font-mono font-bold text-teal-900 dark:text-teal-brand uppercase tracking-wider bg-teal-50 dark:bg-teal-brand/20 px-2.5 py-1 rounded-md border border-teal-200 dark:border-teal-brand/30 inline-block">
                   INDIVIDUAL TEACHER
                 </span>
-                <h4 className="font-serif text-2xl font-bold text-slate-900">STEM Educator Pro</h4>
-                <p className="text-xs text-slate-500 font-sans">Designed for single STEM/STEAM classroom teachers & lab instructors.</p>
+                <h4 className="font-serif text-2xl font-bold text-slate-900 dark:text-slate-100">STEM Educator Pro</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">Designed for single STEM/STEAM classroom teachers & lab instructors.</p>
               </div>
 
               <div className="flex items-baseline gap-1.5 pt-2">
-                <span className="font-serif text-4xl font-bold text-teal-dark">$19.99</span>
-                <span className="text-xs text-slate-500 font-sans font-medium">/ month</span>
+                <span className="font-serif text-4xl font-bold text-teal-900 dark:text-teal-brand">$19.99</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-sans font-medium">/ month</span>
               </div>
 
-              <div className="border-t border-slate-100 pt-4 space-y-2.5 text-xs text-slate-700 font-sans">
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2.5 text-xs text-slate-700 dark:text-slate-300 font-sans">
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-teal-brand shrink-0" />
                   <span>Unlimited AI lesson transformations</span>
@@ -267,7 +267,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   onSelectPlan();
                 }
               }}
-              className="w-full py-3.5 bg-teal-dark hover:bg-slate-900 text-white rounded-xl text-xs font-extrabold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3.5 bg-teal-800 dark:bg-teal-600 hover:bg-slate-900 dark:hover:bg-teal-500 text-white rounded-xl text-xs font-extrabold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>Get Educator Pro ($19.99/mo)</span>
               <ArrowRight className="w-4 h-4 text-amber-300" />
@@ -337,35 +337,35 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </div>
 
       {/* Infrastructure & Stack - MOVED ALL THE WAY TO THE BOTTOM */}
-      <div className="border-t border-black/[0.08] pt-10 space-y-6" id="stack-section">
+      <div className="border-t border-slate-200 dark:border-slate-800 pt-10 space-y-6" id="stack-section">
         <div className="text-center space-y-1.5">
-          <span className="text-[10px] font-bold text-gold-brand uppercase tracking-widest font-sans">SECURE, SCALABLE FOUNDATION</span>
-          <h3 className="font-serif text-2xl font-bold text-teal-dark">Modern Stack & Platform Standards</h3>
+          <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest font-sans">SECURE, SCALABLE FOUNDATION</span>
+          <h3 className="font-serif text-2xl font-bold text-slate-900 dark:text-slate-100">Modern Stack & Platform Standards</h3>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-          <div className="bg-surface-0 p-4 rounded-xl text-center space-y-1.5 border border-black/[0.04] shadow-3xs">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-xl text-center space-y-1.5 border border-slate-200 dark:border-slate-800 shadow-3xs">
             <Sparkles className="w-5 h-5 text-teal-brand mx-auto" />
-            <h6 className="text-[10px] font-bold text-teal-dark uppercase font-sans">Gemini 1.5 Flash</h6>
-            <p className="text-[9px] text-secondary font-sans leading-normal">Smart curriculum restructuring.</p>
+            <h6 className="text-[10px] font-bold text-teal-900 dark:text-teal-brand uppercase font-sans">Gemini 1.5 Flash</h6>
+            <p className="text-[9px] text-slate-600 dark:text-slate-300 font-sans leading-normal">Smart curriculum restructuring.</p>
           </div>
 
-          <div className="bg-surface-0 p-4 rounded-xl text-center space-y-1.5 border border-black/[0.04] shadow-3xs">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-xl text-center space-y-1.5 border border-slate-200 dark:border-slate-800 shadow-3xs">
             <Database className="w-5 h-5 text-teal-brand mx-auto" />
-            <h6 className="text-[10px] font-bold text-teal-dark uppercase font-sans">Cloud Firestore</h6>
-            <p className="text-[9px] text-secondary font-sans leading-normal">Durable persistent state storage.</p>
+            <h6 className="text-[10px] font-bold text-teal-900 dark:text-teal-brand uppercase font-sans">Cloud Firestore</h6>
+            <p className="text-[9px] text-slate-600 dark:text-slate-300 font-sans leading-normal">Durable persistent state storage.</p>
           </div>
 
-          <div className="bg-surface-0 p-4 rounded-xl text-center space-y-1.5 border border-black/[0.04] shadow-3xs">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-xl text-center space-y-1.5 border border-slate-200 dark:border-slate-800 shadow-3xs">
             <FileCode className="w-5 h-5 text-teal-brand mx-auto" />
-            <h6 className="text-[10px] font-bold text-teal-dark uppercase font-sans">TypeScript React</h6>
-            <p className="text-[9px] text-secondary font-sans leading-normal">Statically typed components.</p>
+            <h6 className="text-[10px] font-bold text-teal-900 dark:text-teal-brand uppercase font-sans">TypeScript React</h6>
+            <p className="text-[9px] text-slate-600 dark:text-slate-300 font-sans leading-normal">Statically typed components.</p>
           </div>
 
-          <div className="bg-surface-0 p-4 rounded-xl text-center space-y-1.5 border border-black/[0.04] shadow-3xs">
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-xl text-center space-y-1.5 border border-slate-200 dark:border-slate-800 shadow-3xs">
             <BookOpen className="w-5 h-5 text-teal-brand mx-auto" />
-            <h6 className="text-[10px] font-bold text-teal-dark uppercase font-sans">Tailwind v4</h6>
-            <p className="text-[9px] text-secondary font-sans leading-normal">Responsive design utility tokens.</p>
+            <h6 className="text-[10px] font-bold text-teal-900 dark:text-teal-brand uppercase font-sans">Tailwind v4</h6>
+            <p className="text-[9px] text-slate-600 dark:text-slate-300 font-sans leading-normal">Responsive design utility tokens.</p>
           </div>
         </div>
       </div>
