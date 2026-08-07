@@ -181,11 +181,30 @@ export default function App() {
     step: number, 
     content: string, 
     fileName: string | null, 
-    goal: string
+    goal: string,
+    tech?: string
   ): string => {
-    const text = (content + " " + (fileName || "")).toLowerCase();
+    const text = (content + " " + (fileName || "") + " " + (tech || "")).toLowerCase();
+
+    // Check specific STEM domain topics
+    const isMinecraft = text.includes("minecraft") || text.includes("command block") || text.includes("redstone") || text.includes("pixel") || text.includes("creeper");
+    const isScratchJr = text.includes("scratchjr") || text.includes("scratch jr");
+    const isScratch = text.includes("scratch") || text.includes("sprite");
+    const isRobotics = text.includes("lego") || text.includes("spike") || text.includes("ev3") || text.includes("mindstorm") || text.includes("robot") || text.includes("sensor");
+    const isEngineering = text.includes("catapult") || text.includes("bridge") || text.includes("tower") || text.includes("physics") || text.includes("gravity") || text.includes("projectile") || text.includes("force") || text.includes("truss") || text.includes("mechanic");
+    const isScience = text.includes("chem") || text.includes("bio") || text.includes("cell") || text.includes("plant") || text.includes("eco") || text.includes("organ") || text.includes("molecule");
+    const isMath = text.includes("math") || text.includes("fraction") || text.includes("geometry") || text.includes("equation") || text.includes("number") || text.includes("algebra");
+    const isCS = text.includes("code") || text.includes("program") || text.includes("algorithm") || text.includes("variable") || text.includes("python") || text.includes("javascript");
 
     if (step === 1) {
+      if (isMinecraft) return "Parsing Minecraft 3D coordinates & command block logic";
+      if (isScratchJr) return "Parsing ScratchJr block trigger sequences & early childhood logic";
+      if (isScratch) return "Parsing Scratch block scripts, variables & sprite events";
+      if (isRobotics) return "Parsing Robotics sensor loops, motor actuators & hardware logic";
+      if (isEngineering) return "Parsing physical engineering mechanics, forces & structural stress";
+      if (isScience) return "Parsing biological structures, chemical reactions & lab safety";
+      if (isMath) return "Parsing mathematical concepts, spatial geometry & equation logic";
+      if (isCS) return "Parsing computer science algorithms, conditionals & flow control";
       if (fileName) {
         const cleanName = fileName.replace(/\.[^/.]+$/, "").replace(/[_]/g, " ").replace(/[-]/g, " ");
         return `Parsing "${cleanName.length > 25 ? cleanName.slice(0, 25) + '...' : cleanName}" logic pathways`;
@@ -197,18 +216,14 @@ export default function App() {
       if (goal === "presentation") {
         return "Building visual slide concepts & teaching analogies";
       }
-      if (text.includes("scratch") || text.includes("code") || text.includes("program") || text.includes("block") || text.includes("algorithm") || text.includes("variable")) {
-        return "Linking Scratch & block-based code logic";
-      }
-      if (text.includes("chem") || text.includes("bio") || text.includes("eco") || text.includes("plant") || text.includes("animal") || text.includes("organ") || text.includes("cell")) {
-        return "Formulating hands-on lab experiments & scientific models";
-      }
-      if (text.includes("rock") || text.includes("space") || text.includes("force") || text.includes("physics") || text.includes("bridge") || text.includes("eng") || text.includes("truss") || text.includes("gravity") || text.includes("motion")) {
-        return "Linking hands-on engineering & physics models";
-      }
-      if (text.includes("math") || text.includes("geom") || text.includes("stat") || text.includes("fraction") || text.includes("number") || text.includes("equation")) {
-        return "Structuring interactive math manipulatives & logic puzzles";
-      }
+      if (isMinecraft) return "Linking Minecraft command blocks, /tp selectors & spatial routing";
+      if (isScratchJr) return "Linking ScratchJr start buttons, motion blocks & visual loops";
+      if (isScratch) return "Linking Scratch costume loops, broadcast signals & variables";
+      if (isRobotics) return "Linking LEGO robotics motor speeds, ultrasonic sensors & gears";
+      if (isEngineering) return "Linking catapult trajectory angles, tension physics & prototype build steps";
+      if (isScience) return "Formulating hands-on lab experiments, molecular models & observation steps";
+      if (isMath) return "Structuring interactive math manipulatives, visual proofs & puzzle steps";
+      if (isCS) return "Linking computer science blocks, conditionals & variable loops";
       if (fileName) {
         const cleanName = fileName.replace(/\.[^/.]+$/, "").replace(/[_]/g, " ").replace(/[-]/g, " ");
         return `Linking active STEM challenges for ${cleanName.length > 20 ? cleanName.slice(0, 20) + '...' : cleanName}`;
@@ -220,6 +235,11 @@ export default function App() {
       if (goal === "presentation") {
         return "Synthesizing presentation slide deck & discussion points";
       }
+      if (isMinecraft) return "Synthesizing Minecraft quest guide, slide deck & smart quiz";
+      if (isScratchJr) return "Synthesizing ScratchJr story cards, slide deck & smart quiz";
+      if (isScratch) return "Synthesizing Scratch block-stack guides, slide deck & smart quiz";
+      if (isRobotics) return "Synthesizing Robotics lab challenge, slide deck & smart quiz";
+      if (isEngineering) return "Synthesizing hands-on engineering lab, slide deck & smart quiz";
       return "Synthesizing interactive slides, lab guide & smart quiz";
     }
 
@@ -240,8 +260,10 @@ export default function App() {
   const [studentAnswers, setStudentAnswers] = useState<Record<string, string>>({});
   const [showSampleAnswers, setShowSampleAnswers] = useState<boolean>(false);
 
-  // Expandable Intake Panel state
+  // Expandable Panel states
   const [isUploadExpanded, setIsUploadExpanded] = useState<boolean>(true);
+  const [isVaultExpanded, setIsVaultExpanded] = useState<boolean>(true);
+  const [isCurriculumSuiteExpanded, setIsCurriculumSuiteExpanded] = useState<boolean>(true);
 
   // Deleting lesson ID state
   const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
@@ -1387,7 +1409,7 @@ export default function App() {
                           01
                         </span>
                         <span className="flex-1 font-sans">
-                          {getDynamicCompilationStepText(1, customContent, uploadedFileName, transformationGoal)}
+                          {getDynamicCompilationStepText(1, customContent, uploadedFileName, transformationGoal, selectedTech)}
                         </span>
                         {compilationStep >= 1 && <Check className="w-4 h-4 text-teal-brand animate-pulse" />}
                       </div>
@@ -1399,7 +1421,7 @@ export default function App() {
                           02
                         </span>
                         <span className="flex-1 font-sans">
-                          {getDynamicCompilationStepText(2, customContent, uploadedFileName, transformationGoal)}
+                          {getDynamicCompilationStepText(2, customContent, uploadedFileName, transformationGoal, selectedTech)}
                         </span>
                         {compilationStep >= 2 && <Check className="w-4 h-4 text-amber-400 animate-pulse" />}
                       </div>
@@ -1411,7 +1433,7 @@ export default function App() {
                           03
                         </span>
                         <span className="flex-1 font-sans">
-                          {getDynamicCompilationStepText(3, customContent, uploadedFileName, transformationGoal)}
+                          {getDynamicCompilationStepText(3, customContent, uploadedFileName, transformationGoal, selectedTech)}
                         </span>
                         {compilationStep >= 3 && <Check className="w-4 h-4 text-emerald-400 animate-pulse" />}
                       </div>
@@ -1446,103 +1468,135 @@ export default function App() {
           
           {/* Cloud Storage Saved Lessons Vault */}
           {user && (
-            <div className="bg-surface-0 dark:bg-slate-900/90 border border-black/[0.06] dark:border-slate-800 rounded-2xl p-4 sm:p-5 space-y-3.5 liquid-glass-light dark:liquid-glass-dark" id="my-lessons-vault">
-              <div className="flex justify-between items-center border-b border-black/[0.05] dark:border-slate-800 pb-2">
-                <div className="flex items-center gap-2">
-                  <Cloud className="w-4.5 h-4.5 text-teal-brand" />
+            <div className="bg-surface-0 dark:bg-slate-900/90 border border-black/[0.06] dark:border-slate-800 rounded-2xl shadow-sm transition-all overflow-hidden w-full liquid-glass-light dark:liquid-glass-dark" id="my-lessons-vault">
+              <div 
+                className="flex justify-between items-center p-4 sm:p-5 cursor-pointer select-none border-b border-black/[0.05] dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                onClick={() => setIsVaultExpanded(!isVaultExpanded)}
+              >
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <Cloud className="w-5 h-5 text-teal-brand" />
                   <span className="font-serif text-base sm:text-lg font-bold text-teal-dark dark:text-teal-brand">Your Firebase Cloud Storage Vault</span>
-                  <span className="px-2 py-0.5 bg-teal-brand/10 text-teal-brand text-[10px] font-mono font-bold rounded-full">
+                  <span className="px-2.5 py-0.5 bg-teal-brand/10 text-teal-brand text-xs font-mono font-bold rounded-full border border-teal-brand/20">
                     {savedLessons.length} {savedLessons.length === 1 ? 'Lesson' : 'Lessons'}
                   </span>
                 </div>
-                <span className="text-[9px] font-mono text-secondary dark:text-slate-400 uppercase tracking-wider hidden sm:inline">
-                  Connected: {user.email}
-                </span>
+
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-[10px] font-mono text-secondary dark:text-slate-400 uppercase tracking-wider hidden sm:inline">
+                    Connected: {user.email}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsVaultExpanded(!isVaultExpanded);
+                    }}
+                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all cursor-pointer"
+                    aria-label={isVaultExpanded ? "Collapse Vault Section" : "Expand Vault Section"}
+                  >
+                    {isVaultExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
 
-              {savedLessons.length === 0 ? (
-                <div className="p-6 text-center space-y-2 bg-white/50 dark:bg-slate-800/40 rounded-xl border border-dashed border-black/[0.08] dark:border-slate-800">
-                  <Cloud className="w-8 h-8 text-teal-brand/50 mx-auto" />
-                  <p className="text-xs font-bold text-primary dark:text-slate-200">No saved lesson plans in cloud storage yet</p>
-                  <p className="text-[11px] text-secondary dark:text-slate-400 max-w-md mx-auto font-sans">
-                    Click <strong className="text-teal-brand">"Save to Cloud"</strong> on any active lesson plan to store it securely in your Firebase account and access it anytime!
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {savedLessons.map((saved) => {
-                    const isCurrentlyActive = lesson.id === saved.id;
-                    return (
-                      <div 
-                        key={saved.id}
-                        className={`p-3.5 rounded-xl border transition-all flex justify-between items-center gap-3 shadow-3xs ${
-                          isCurrentlyActive
-                            ? "border-teal-brand bg-teal-brand/5 dark:bg-teal-brand/10 dark:border-teal-brand/60"
-                            : "border-black/[0.06] dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-teal-brand/40"
-                        }`}
-                      >
-                        <div className="overflow-hidden flex-1 space-y-0.5">
-                          <div className="flex items-center gap-1.5">
-                            <p className="text-xs font-bold text-primary dark:text-slate-100 truncate">{saved.lessonTitle}</p>
-                            {isCurrentlyActive && (
-                              <span className="px-1.5 py-0.2 bg-teal-brand text-slate-950 text-[8px] font-mono font-extrabold rounded uppercase shrink-0">Active</span>
-                            )}
-                          </div>
-                          <span className="text-[10px] text-secondary dark:text-slate-400 font-sans block truncate">
-                            {saved.duration} Block
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setLesson(saved);
-                              setActiveTab("slides");
-                            }}
-                            className="px-2.5 py-1.5 bg-teal-light dark:bg-teal-brand/20 text-teal-brand hover:bg-teal-brand hover:text-white dark:hover:text-slate-950 rounded-lg text-[10px] font-bold transition-all shadow-3xs cursor-pointer micro-glow-teal min-h-[34px]"
-                          >
-                            Load
-                          </button>
-                          <button
-                            type="button"
-                            disabled={deletingLessonId === saved.id}
-                            onClick={async () => {
-                              if (confirm(`Permanently delete "${saved.lessonTitle}" from your Firebase Cloud Storage?`)) {
-                                try {
-                                  setDeletingLessonId(saved.id);
-                                  await deleteLessonFromCloud(saved.id);
-                                  setSaveStatus("Lesson deleted from cloud");
-                                  setTimeout(() => setSaveStatus(null), 3000);
-                                } catch (err: any) {
-                                  alert("Failed to delete lesson: " + (err?.message || "Unknown error"));
-                                } finally {
-                                  setDeletingLessonId(null);
-                                }
-                              }
-                            }}
-                            className="p-1.5 hover:bg-red-100 dark:hover:bg-red-950/60 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-all cursor-pointer min-h-[34px] disabled:opacity-50"
-                            title="Delete lesson from cloud storage"
-                          >
-                            {deletingLessonId === saved.id ? (
-                              <RefreshCw className="w-4 h-4 animate-spin text-red-500" />
-                            ) : (
-                              <Trash2 className="w-4 h-4" />
-                            )}
-                          </button>
-                        </div>
+              <AnimatePresence>
+                {isVaultExpanded && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="p-4 sm:p-5 space-y-3.5"
+                  >
+                    {savedLessons.length === 0 ? (
+                      <div className="p-6 text-center space-y-2 bg-white/50 dark:bg-slate-800/40 rounded-xl border border-dashed border-black/[0.08] dark:border-slate-800">
+                        <Cloud className="w-8 h-8 text-teal-brand/50 mx-auto" />
+                        <p className="text-xs font-bold text-primary dark:text-slate-200">No saved lesson plans in cloud storage yet</p>
+                        <p className="text-[11px] text-secondary dark:text-slate-400 max-w-md mx-auto font-sans">
+                          Click <strong className="text-teal-brand">"Save to Cloud"</strong> on any active lesson plan to store it securely in your Firebase account and access it anytime!
+                        </p>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {savedLessons.map((saved) => {
+                          const isCurrentlyActive = lesson.id === saved.id;
+                          return (
+                            <div 
+                              key={saved.id}
+                              className={`p-3.5 rounded-xl border transition-all flex justify-between items-center gap-3 shadow-3xs ${
+                                isCurrentlyActive
+                                  ? "border-teal-brand bg-teal-brand/5 dark:bg-teal-brand/10 dark:border-teal-brand/60"
+                                  : "border-black/[0.06] dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-teal-brand/40"
+                              }`}
+                            >
+                              <div className="overflow-hidden flex-1 space-y-0.5">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-xs font-bold text-primary dark:text-slate-100 truncate">{saved.lessonTitle}</p>
+                                  {isCurrentlyActive && (
+                                    <span className="px-1.5 py-0.2 bg-teal-brand text-slate-950 text-[8px] font-mono font-extrabold rounded uppercase shrink-0">Active</span>
+                                  )}
+                                </div>
+                                <span className="text-[10px] text-secondary dark:text-slate-400 font-sans block truncate">
+                                  {saved.duration} Block
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setLesson(saved);
+                                    setActiveTab("slides");
+                                  }}
+                                  className="px-2.5 py-1.5 bg-teal-light dark:bg-teal-brand/20 text-teal-brand hover:bg-teal-brand hover:text-white dark:hover:text-slate-950 rounded-lg text-[10px] font-bold transition-all shadow-3xs cursor-pointer micro-glow-teal min-h-[34px]"
+                                >
+                                  Load
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={deletingLessonId === saved.id}
+                                  onClick={async () => {
+                                    if (confirm(`Permanently delete "${saved.lessonTitle}" from your Firebase Cloud Storage?`)) {
+                                      try {
+                                        setDeletingLessonId(saved.id);
+                                        await deleteLessonFromCloud(saved.id);
+                                        setSaveStatus("Lesson deleted from cloud");
+                                        setTimeout(() => setSaveStatus(null), 3000);
+                                      } catch (err: any) {
+                                        alert("Failed to delete lesson: " + (err?.message || "Unknown error"));
+                                      } finally {
+                                        setDeletingLessonId(null);
+                                      }
+                                    }
+                                  }}
+                                  className="p-1.5 hover:bg-red-100 dark:hover:bg-red-950/60 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-all cursor-pointer min-h-[34px] disabled:opacity-50"
+                                  title="Delete lesson from cloud storage"
+                                >
+                                  {deletingLessonId === saved.id ? (
+                                    <RefreshCw className="w-4 h-4 animate-spin text-red-500" />
+                                  ) : (
+                                    <Trash2 className="w-4 h-4" />
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
 
-          {/* Active Lesson Meta Display */}
-          <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800/90 rounded-2xl p-4 sm:p-6 shadow-xs relative overflow-hidden liquid-glass-light dark:liquid-glass-dark" id="workspace-panel">
+          {/* Active Lesson Meta Display & Curriculum Suite */}
+          <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800/90 rounded-2xl shadow-xs relative overflow-hidden w-full liquid-glass-light dark:liquid-glass-dark" id="workspace-panel">
             <div className="absolute top-0 right-0 w-36 h-36 bg-gradient-to-bl from-teal-light/20 to-transparent rounded-full blur-2xl pointer-events-none" />
             
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-black/[0.06] dark:border-slate-800 pb-4 mb-4 z-10 relative">
+            <div 
+              className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 cursor-pointer select-none border-b border-black/[0.06] dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-colors z-10 relative"
+              onClick={() => setIsCurriculumSuiteExpanded(!isCurriculumSuiteExpanded)}
+            >
               <div className="space-y-1 max-w-3xl">
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] font-mono font-bold tracking-wider text-teal-brand bg-teal-light dark:bg-teal-brand/20 border border-teal-brand/20 px-2.5 py-0.5 rounded-full uppercase micro-glow-teal">
@@ -1561,12 +1615,15 @@ export default function App() {
                 </p>
               </div>
 
-              {/* Cloud Save Actions */}
-              <div className="shrink-0 flex flex-col items-stretch md:items-end gap-1 w-full md:w-auto">
+              {/* Cloud Save Actions & Collapse Toggle */}
+              <div className="shrink-0 flex items-center gap-3 self-start md:self-center">
                 {user ? (
                   <button
                     type="button"
-                    onClick={handleSaveToCloud}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSaveToCloud();
+                    }}
                     disabled={dbLoading}
                     className="px-4.5 py-2.5 bg-teal-dark dark:bg-teal-brand dark:text-slate-950 hover:bg-opacity-95 text-white rounded-xl text-xs font-extrabold shadow-3xs flex items-center justify-center gap-2 transition-all cursor-pointer micro-glow-teal min-h-[42px]"
                   >
@@ -1576,7 +1633,10 @@ export default function App() {
                 ) : (
                   <button
                     type="button"
-                    onClick={signInWithGoogle}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      signInWithGoogle();
+                    }}
                     className="px-3.5 py-2 bg-white dark:bg-slate-800 hover:bg-surface-0 text-secondary dark:text-slate-200 border border-black/[0.08] dark:border-slate-700 rounded-xl text-xs font-bold shadow-3xs flex items-center justify-center gap-2 transition-all cursor-pointer min-h-[42px]"
                   >
                     <LogIn className="w-3.5 h-3.5 text-teal-brand" />
@@ -1584,12 +1644,33 @@ export default function App() {
                   </button>
                 )}
                 {saveStatus && (
-                  <span className="text-[10px] font-bold text-teal-brand text-right font-sans flex items-center justify-end gap-1 mt-0.5">
+                  <span className="text-[10px] font-bold text-teal-brand font-sans flex items-center gap-1">
                     <Check className="w-3.5 h-3.5" /> {saveStatus}
                   </span>
                 )}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsCurriculumSuiteExpanded(!isCurriculumSuiteExpanded);
+                  }}
+                  className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-all cursor-pointer border border-slate-200 dark:border-slate-700"
+                  aria-label={isCurriculumSuiteExpanded ? "Collapse Active Curriculum Suite" : "Expand Active Curriculum Suite"}
+                >
+                  {isCurriculumSuiteExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                </button>
               </div>
             </div>
+
+            <AnimatePresence>
+              {isCurriculumSuiteExpanded && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="p-4 sm:p-6 space-y-6"
+                >
 
             {/* Touch-Friendly Mobile Scrollable Resource Pills Tabs */}
             <div className="flex border border-black/[0.06] dark:border-slate-800 overflow-x-auto no-scrollbar scroll-smooth gap-1.5 bg-surface-0 dark:bg-slate-950/80 p-1.5 rounded-2xl mb-6 font-sans w-full">
@@ -2249,8 +2330,10 @@ export default function App() {
 
               </AnimatePresence>
             </div>
-
-          </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
 
           {/* Pro Educator Subscription Access Status Card */}
           <div className="border-t border-black/[0.08] pt-8 mt-6">

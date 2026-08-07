@@ -8,7 +8,6 @@ import {
   HelpCircle, 
   Play, 
   Pause,
-  Award,
   Layers,
   Presentation,
   Maximize2,
@@ -30,7 +29,6 @@ interface InteractiveSlideshowProps {
 export default function InteractiveSlideshow({ slides }: InteractiveSlideshowProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [showNotes, setShowNotes] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [slideTimer, setSlideTimer] = useState<NodeJS.Timeout | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -132,19 +130,6 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
           >
             {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
             <span>{isFullscreen ? "Exit Full Screen" : "Full Screen"}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowNotes(!showNotes)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold font-sans transition-all flex items-center gap-1.5 border cursor-pointer ${
-              showNotes 
-                ? "bg-teal-brand text-slate-950 border-teal-brand font-bold micro-glow-teal" 
-                : "bg-white dark:bg-slate-800 border-black/[0.08] dark:border-slate-700 text-secondary dark:text-slate-300 hover:bg-surface-0"
-            }`}
-          >
-            <Eye className="w-3.5 h-3.5" />
-            <span>{showNotes ? "Hide Teacher Notes" : "Show Teacher Notes"}</span>
           </button>
 
           <button
@@ -257,13 +242,6 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
                   </motion.div>
                 ))}
               </div>
-
-              {isFullscreen && showNotes && currentSlide.instructorNotes && (
-                <div className="pt-4 border-t border-white/10 text-amber-200 text-sm font-sans bg-black/40 p-4 rounded-xl border border-amber-400/20">
-                  <span className="font-bold text-amber-400 block text-xs uppercase mb-0.5">Teacher Tip:</span>
-                  {currentSlide.instructorNotes}
-                </div>
-              )}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -315,27 +293,6 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
           </p>
         </div>
       )}
-
-      {/* Facilitator Notes (Collapsible or toggleable) */}
-      <AnimatePresence>
-        {showNotes && currentSlide.instructorNotes && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="bg-amber-50 dark:bg-amber-950/60 border border-amber-300/90 dark:border-amber-800/90 rounded-2xl p-5 space-y-2.5 shadow-xs"
-            id="facilitator-notes-card"
-          >
-            <div className="flex items-center gap-2 text-amber-950 dark:text-amber-300">
-              <Award className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0" />
-              <h5 className="text-xs font-bold uppercase font-sans tracking-wide">Lyra's Instructor Script & Pacing Tip</h5>
-            </div>
-            <p className="text-xs text-amber-950 dark:text-amber-100 leading-relaxed font-sans font-medium">
-              {currentSlide.instructorNotes}
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
