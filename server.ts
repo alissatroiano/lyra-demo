@@ -529,9 +529,12 @@ app.post("/api/generate-image", async (req, res) => {
         }
       });
     }
-    parts.push({ text: prompt });
+    // Ensure text legibility, correct spelling, and clean typography in generated images
+    const textQualityInstruction = " RENDER ACCURATE TEXT: Ensure all written text, headings, speech bubbles, labels, and captions in the generated image are rendered in 100% correct, perfectly spelled English typography without typos, stuttered words, or garbled characters.";
+    const finalPrompt = prompt.includes("spelled") ? prompt : `${prompt}.${textQualityInstruction}`;
+    parts.push({ text: finalPrompt });
 
-    console.log(`Starting image generation with gemini-3.1-flash-image, prompt: "${prompt}"`);
+    console.log(`Starting image generation with gemini-3.1-flash-image, prompt: "${finalPrompt}"`);
 
     const response = await ai.models.generateContent({
       model: "gemini-3.1-flash-image",

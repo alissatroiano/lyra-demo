@@ -13,6 +13,14 @@ export default function NanaBananaPro({ lesson, onUpdateVisuals, initialPrompt }
   const [prompt, setPrompt] = useState<string>(
     initialPrompt || `Vibrant educational STEM infographic for "${lesson.lessonTitle}". Highlighting slide takeaways: (${lesson.keyTakeaways?.slice(0, 3).join("; ") || lesson.summary}). Illustrating concept tested in smartboard quiz: "${lesson.quiz?.[0]?.question || ''}".`
   );
+
+  // Exact text content override fields to ensure zero typos in rendered images
+  const [headingText, setHeadingText] = useState<string>(lesson.lessonTitle || "COMMAND BLOCK DETECTIVES: EDUCATIONAL STEM VISUAL GUIDE");
+  const [speechBubble1, setSpeechBubble1] = useState<string>("Command blocks connect to input a command block.");
+  const [speechBubble2, setSpeechBubble2] = useState<string>("Instantaneously appearing at a different location.");
+  const [footerCaption, setFooterCaption] = useState<string>("Precise 3D map addresses · Locate any block or player");
+  const [showTextEditor, setShowTextEditor] = useState<boolean>(true);
+
   const [style, setStyle] = useState<string>("vibrant-vector");
   const [aspectRatio, setAspectRatio] = useState<"16:9" | "1:1" | "4:3" | "3:4">("16:9");
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
@@ -46,6 +54,14 @@ export default function NanaBananaPro({ lesson, onUpdateVisuals, initialPrompt }
     const syncedPrompt = initialPrompt || `Educational STEM visual guide for "${lesson.lessonTitle}". Highlighting key slide takeaways: [${takeaways}]. Visualizing smartboard quiz challenge: "${quizQ}". Labeled diagram for ${lesson.handsOnActivity?.title || 'hands-on lab'}.`;
     
     setPrompt(syncedPrompt);
+    setHeadingText(lesson.lessonTitle || "COMMAND BLOCK DETECTIVES: EDUCATIONAL STEM VISUAL GUIDE");
+
+    if (lesson.handsOnActivity?.steps && lesson.handsOnActivity.steps.length > 0) {
+      setSpeechBubble1(`Step 1: ${lesson.handsOnActivity.steps[0]}`);
+      if (lesson.handsOnActivity.steps.length > 1) {
+        setSpeechBubble2(`Step 2: ${lesson.handsOnActivity.steps[1]}`);
+      }
+    }
 
     if (lesson.generatedVisuals && lesson.generatedVisuals.length > 0) {
       setSavedVisuals(lesson.generatedVisuals);
@@ -81,7 +97,18 @@ export default function NanaBananaPro({ lesson, onUpdateVisuals, initialPrompt }
     setIsGenerating(true);
     setErrorMessage(null);
 
-    const fullEnhancedPrompt = `[Nana Banana Pro Visual Engine - Style: ${style}] ${targetPrompt}. High-yield, child-friendly educational STEM visual, vibrant colors, clear step-by-step markers, high resolution.`;
+    // Build strict prompt that mandates exact, verbatim, spell-checked text rendering
+    const textDirectives = `
+CRITICAL TYPOGRAPHY & SPELLING INSTRUCTIONS FOR IMAGE RENDER:
+- Ensure ALL rendered text, headings, speech bubbles, and captions are printed in 100% correct, perfectly spelled, crystal-clear English.
+- VERBATIM TITLE TO PRINT: "${headingText}"
+${speechBubble1 ? `- SPEECH BUBBLE / CALLOUT 1 TEXT: "${speechBubble1}"` : ''}
+${speechBubble2 ? `- SPEECH BUBBLE / CALLOUT 2 TEXT: "${speechBubble2}"` : ''}
+${footerCaption ? `- CAPTION / FOOTER TEXT: "${footerCaption}"` : ''}
+- Double-check every single word for correct spelling (e.g. "connect", "instantaneously", "location", "coordinates", "command"). Zero typos, zero stuttered words, zero garbled letters allowed.
+`;
+
+    const fullEnhancedPrompt = `[Nana Banana Pro Visual Engine - Style: ${style}] ${targetPrompt}. ${textDirectives} High-yield, child-friendly educational STEM visual, vibrant colors, clear step-by-step markers, high resolution.`;
 
     try {
       const response = await fetch("/api/generate-image", {
@@ -145,14 +172,14 @@ export default function NanaBananaPro({ lesson, onUpdateVisuals, initialPrompt }
     let p = "";
     if (presetType === "takeaways") {
       const takeawaysList = lesson.keyTakeaways?.join("; ") || lesson.summary;
-      p = `Infographic summarizing key slide takeaways for "${lesson.lessonTitle}": ${takeawaysList}. Clean educational layout with icon callouts.`;
+      p = `Infographic summarizing key slide takeaways for "${lesson.lessonTitle}": ${takeawaysList}. Clean educational layout with icon callouts and 100% correctly spelled text.`;
     } else if (presetType === "quiz") {
       const q = lesson.quiz?.[0];
-      p = `Smartboard quiz challenge visual diagram: Question "${q?.question || lesson.lessonTitle}". Showing answer concept "${q?.options?.[q?.correctAnswerIndex] || 'solution'}".`;
+      p = `Smartboard quiz challenge visual diagram: Question "${q?.question || lesson.lessonTitle}". Showing answer concept "${q?.options?.[q?.correctAnswerIndex] || 'solution'}". Clear speech bubbles with accurate spelling.`;
     } else if (presetType === "setup") {
-      p = `Step-by-step experiment layout diagram for ${lesson.handsOnActivity.title}. Shows numbered steps (${lesson.handsOnActivity.steps.slice(0, 3).join("; ")}).`;
+      p = `Step-by-step experiment layout diagram for ${lesson.handsOnActivity.title}. Shows numbered steps (${lesson.handsOnActivity.steps.slice(0, 3).join("; ")}). High-contrast labels and clear English text.`;
     } else if (presetType === "principle") {
-      p = `Explanatory scientific concept visual showing: ${lesson.handsOnActivity.scientificPrinciple}. Clear arrows and labels.`;
+      p = `Explanatory scientific concept visual showing: ${lesson.handsOnActivity.scientificPrinciple}. Clear arrows, labeled blocks, and correctly spelled text.`;
     }
     setPrompt(p);
     handleGenerate(p);
@@ -326,6 +353,83 @@ export default function NanaBananaPro({ lesson, onUpdateVisuals, initialPrompt }
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Text Content & Spelling Verification Section */}
+            <div className="bg-amber-50/70 border border-amber-200/90 rounded-xl p-3.5 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-extrabold text-amber-950 flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Exact Text & Label Verification</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowTextEditor(!showTextEditor)}
+                  className="text-[10px] font-bold text-amber-800 hover:underline cursor-pointer"
+                >
+                  {showTextEditor ? "Hide Fields" : "Edit Text Labels"}
+                </button>
+              </div>
+
+              <p className="text-[10px] text-amber-900/80 leading-normal font-sans">
+                Specify exact verbatim text for Nana Banana Pro to print on the visual guide, eliminating typos or garbled letters:
+              </p>
+
+              {showTextEditor && (
+                <div className="space-y-2 pt-1 border-t border-amber-200/60">
+                  <div>
+                    <label className="text-[9px] font-bold text-amber-950 uppercase tracking-wider block mb-0.5">
+                      Main Banner / Title
+                    </label>
+                    <input
+                      type="text"
+                      value={headingText}
+                      onChange={(e) => setHeadingText(e.target.value)}
+                      placeholder="e.g. COMMAND BLOCK DETECTIVES: EDUCATIONAL STEM VISUAL GUIDE"
+                      className="w-full p-2 bg-white border border-amber-300 rounded-lg text-xs text-slate-800 font-medium focus:ring-1 focus:ring-amber-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[9px] font-bold text-amber-950 uppercase tracking-wider block mb-0.5">
+                      Speech Bubble / Callout 1
+                    </label>
+                    <input
+                      type="text"
+                      value={speechBubble1}
+                      onChange={(e) => setSpeechBubble1(e.target.value)}
+                      placeholder="e.g. Command blocks connect to input a command block."
+                      className="w-full p-2 bg-white border border-amber-300 rounded-lg text-xs text-slate-800 font-medium focus:ring-1 focus:ring-amber-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[9px] font-bold text-amber-950 uppercase tracking-wider block mb-0.5">
+                      Speech Bubble / Callout 2
+                    </label>
+                    <input
+                      type="text"
+                      value={speechBubble2}
+                      onChange={(e) => setSpeechBubble2(e.target.value)}
+                      placeholder="e.g. Instantaneously appearing at a different location."
+                      className="w-full p-2 bg-white border border-amber-300 rounded-lg text-xs text-slate-800 font-medium focus:ring-1 focus:ring-amber-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-[9px] font-bold text-amber-950 uppercase tracking-wider block mb-0.5">
+                      Caption / Footer Text
+                    </label>
+                    <input
+                      type="text"
+                      value={footerCaption}
+                      onChange={(e) => setFooterCaption(e.target.value)}
+                      placeholder="e.g. Precise 3D map addresses · Locate any block or player"
+                      className="w-full p-2 bg-white border border-amber-300 rounded-lg text-xs text-slate-800 font-medium focus:ring-1 focus:ring-amber-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Aspect Ratio */}
