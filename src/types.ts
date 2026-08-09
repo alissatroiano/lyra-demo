@@ -47,6 +47,8 @@ export interface FeasibilityAlternative {
 
 export interface FeasibilityAudit {
   status: string;
+  identifiedSoftwarePlatform?: string;
+  softwareGoalCompatibility?: string;
   originalSolutionEvaluation: string;
   potentialFailurePoints: string[];
   recommendedAlternatives: FeasibilityAlternative[];

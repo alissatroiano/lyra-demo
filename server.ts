@@ -150,16 +150,28 @@ Core requirements for your response:
 1. CONDENSE: Turn walls of text into clean, high-impact key takeaways.
 2. ENGAGE: Design an elegant slide deck outline where each slide has a clear visual concept, bulleted core insights, and teacher tips (notes on how to explain it).
 3. ALIGNED DEMONSTRATION & LAB: Create an exciting, safe, and highly visual hands-on activity or experiment that DIRECTLY mirrors and reinforces the core key Takeaways from the Interactive Slides and the assessment questions from the Smartboard Quiz.
-4. CATEGORY & SOFTWARE / CIRCUITRY SPECIFICATION:
-   - If the lesson involves software/coding (e.g. Scratch JR, Minecraft Education, Scratch 3.0, EduBlocks, Thunkable, Code.org, Python, Micro:bit, or custom "Other" software), explicitly identify the software platform and frame the handsOnActivity as a CODING LAB & BLOCK SEQUENCE.
+
+4. PRIMARY SOFTWARE IDENTIFICATION & GOAL ALIGNMENT (CRITICAL - DO NOT CONFUSE PLATFORMS):
+   - FIRST AND FOREMOST: Identify the exact software platform or gaming engine used in the lesson (e.g., 'Scratch 3.0', 'Scratch JR', 'Minecraft Education', 'Roblox Studio', 'EduBlocks', 'Thunkable', 'Code.org', 'Python', 'Micro:bit').
+   - NEVER CONFUSE SCRATCH AND MINECRAFT EDUCATION:
+     * Scratch is a 2D sprite/costume/stage environment with green flag events, broadcast messages, and sprite motion.
+     * Minecraft Education is a 3D voxel sandbox with MakeCode agent blocks, redstone circuits, and /tp commands.
+     * If the lesson mentions Scratch, sprites, costumes, backdrops, green flag, or Scratch JR, produce a Scratch / Scratch JR lesson plan. DO NOT mention or substitute Minecraft!
+     * If the lesson mentions Minecraft, blocks, agent, redstone, Steve, or Minecraft Education, produce a Minecraft Education lesson plan.
+   - CHECK GOAL COMPATIBILITY: Verify whether the lesson plan goals natively work with the identified software limits.
+     * Example: Scratch JR lacks variables and string input. If a Scratch JR lesson plan requests score variables, note this feature mismatch in 'feasibilityAudit' and adapt the goal to Scratch JR page triggers or upgrade to Scratch 3.0.
+     * Example: 2D frame-by-frame sprite animation does not natively exist in 3D Minecraft without custom texture packs; specify MakeCode agent loops or NPC dialogue trees instead, or recommend Scratch 3.0.
+   - Set 'handsOnActivity.softwarePlatform' to the exact software identified.
+
+5. CATEGORY & CIRCUITRY SPECIFICATION:
    - If the lesson involves Circuitry, Electronics, or Hardware (e.g. DC Motors, LED Lights, Copper Tape/Wire, Batteries, Breadboards, Alligator Clips, Sensors, Switches), specify exact components, polarity, and circuit configuration.
-   - If "Other" software or custom supplies are specified, use the Category (e.g., Circuitry, Software, Engineering) and keywords from the lesson plan to create, find real data on, and perfect the most relevant and REALISTIC solution.
-5. REAL-WORLD FEASIBILITY AUDIT & ALTERNATIVE SOLUTIONS:
-   - Always evaluate whether the uploaded or requested setup will actually work in real life! (e.g., check battery voltages vs motor requirements, check if Scratch Jr lacks certain block types like variables, check if copper tape circuits short out without resistors, check physical stress limits).
-   - If the instructor's setup is flawed, risky, missing critical parts, or unreliable, provide a grounded 'feasibilityAudit' with realistic, tested alternatives and proactive troubleshooting tips for the teacher.
-6. ASSESS: Generate an interactive, child-friendly worksheet and a multi-question quiz.
-7. RESOLVE: Provide suggestions to resolve potentially broken links in the original document by suggesting precise YouTube/Google search queries and explaining why they are suitable.
-8. ADAPT & OBSERVE: Identify the teacher's style, preferences, and classroom parameters from their custom instructions and inputs, and output a concise, actionable one-sentence 'extractedStyleNotes'.
+
+6. REAL-WORLD FEASIBILITY AUDIT & ALTERNATIVE SOLUTIONS:
+   - Always evaluate whether the uploaded or requested setup will actually work in real life!
+   - In 'feasibilityAudit', explicitly state 'identifiedSoftwarePlatform' and 'softwareGoalCompatibility', and if the instructor's setup is flawed, risky, or incompatible, provide grounded 'recommendedAlternatives' and proactive troubleshooting tips for the teacher.
+
+7. ASSESS, RESOLVE, & ADAPT:
+   - Generate an interactive worksheet, multi-question quiz, media recommendations with broken link replacements, and extracted teacher style notes.
 
 You must output a highly structured JSON object matching the defined responseSchema strictly. Do not deviate.`;
 
@@ -272,7 +284,15 @@ Please convert this into a comprehensive, highly interactive lesson plan with sl
               properties: {
                 status: {
                   type: Type.STRING,
-                  description: "E.g. 'Feasible & Grounded Solution', 'Resistor & Battery Voltage Fix Required', 'Scratch Jr Block Alternative Provided'.",
+                  description: "E.g. 'Feasible & Grounded Solution', 'Scratch 3.0 Sprite Logic Verified', 'Scratch Jr Block Alternative Provided'.",
+                },
+                identifiedSoftwarePlatform: {
+                  type: Type.STRING,
+                  description: "Primary identified software platform, e.g. 'Scratch 3.0', 'Scratch JR', 'Minecraft Education', 'Roblox Studio', 'EduBlocks', 'Thunkable', 'Code.org', 'Python', 'Micro:bit'.",
+                },
+                softwareGoalCompatibility: {
+                  type: Type.STRING,
+                  description: "Evaluation of whether the lesson goals natively work with the identified software limits (e.g., '100% Native Scratch 3.0 Block Compatibility', 'Incompatible: Scratch JR lacks variables -> Adapted to Page Triggers').",
                 },
                 originalSolutionEvaluation: {
                   type: Type.STRING,

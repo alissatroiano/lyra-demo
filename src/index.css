@@ -102,6 +102,13 @@
   animation: scanline 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
+.dark\:text-slate-100:where(.dark,.dark *) {
+    color: var(--color-slate-100);
+    /* margin: 100px; */
+    max-height: 90vh;
+    overflow: auto;
+}
+
 /* Custom prints styling for classroom printables */
 @media print {
   body * {

@@ -41,7 +41,6 @@ import {
   HelpCircle as HelpIcon,
   ShieldAlert,
   AlertTriangle,
-  CheckCircle2,
   Terminal,
   Video,
   Music,
@@ -54,7 +53,8 @@ import {
   Code,
   Laptop,
   Cpu,
-  Copy
+  Copy,
+  Gamepad2
 } from "lucide-react";
 import { PRELOADED_LESSONS } from "./data/preloadedLessons";
 import { INITIAL_PROCESSED_LESSON } from "./data/initialProcessedLesson";
@@ -67,40 +67,14 @@ import AICopilot from "./components/AICopilot";
 import NanaBananaPro from "./components/NanaBananaPro";
 import { LandingPage } from "./components/LandingPage";
 
-// Vector Robot Bunny Mascot SVG
+// Official Lyrah Robot Bunny Mascot Logo
 export const RobotBunnyMascot = ({ className = "w-28 h-28" }: { className?: string }) => (
-  <svg viewBox="0 0 120 120" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* Ears */}
-    <g transform="translate(0, -4)">
-      {/* Left Ear */}
-      <rect x="36" y="8" width="14" height="42" rx="7" fill="#1a4a45" />
-      <rect x="40" y="14" width="6" height="30" rx="3" fill="#00C2B2" />
-      {/* Right Ear */}
-      <rect x="70" y="8" width="14" height="42" rx="7" fill="#1a4a45" />
-      <rect x="74" y="14" width="6" height="30" rx="3" fill="#00C2B2" />
-    </g>
-    {/* Head / Body */}
-    <rect x="30" y="44" width="60" height="52" rx="20" fill="#1a4a45" stroke="#00C2B2" strokeWidth="2.5" />
-    {/* Face Screen */}
-    <rect x="38" y="52" width="44" height="28" rx="10" fill="#0f1117" stroke="#2ec4b8" strokeWidth="1" />
-    {/* Glowing Eyes */}
-    <circle cx="50" cy="66" r="4.5" fill="#00C2B2" className="animate-pulse" />
-    <circle cx="70" cy="66" r="4.5" fill="#00C2B2" className="animate-pulse" />
-    {/* Cheek blush */}
-    <circle cx="43" cy="72" r="2" fill="#2ec4b8" opacity="0.6" />
-    <circle cx="77" cy="72" r="2" fill="#2ec4b8" opacity="0.6" />
-    {/* Little happy mouth */}
-    <path d="M57 73 Q60 76 63 73" stroke="#00C2B2" strokeWidth="1.5" strokeLinecap="round" />
-    {/* Antenna */}
-    <line x1="60" y1="44" x2="60" y2="34" stroke="#1a4a45" strokeWidth="3" />
-    <circle cx="60" cy="32" r="4.5" fill="#00C2B2" />
-    {/* Collar & Badge */}
-    <path d="M46 96 L60 92 L74 96 L60 101 Z" fill="#C97D10" />
-    {/* Sparkle badge on top right */}
-    <path d="M102 32 L104 38 L110 40 L104 42 L102 48 L100 42 L94 40 L100 38 Z" fill="#00C2B2" />
-    {/* Little yellow star sparkle on left */}
-    <path d="M16 64 L17 68 L21 69 L17 70 L16 74 L15 70 L11 69 L15 68 Z" fill="#C97D10" />
-  </svg>
+  <img 
+    src="/src/assets/images/lyrah_logo_1786276082567.jpg" 
+    alt="Lyrah AI Mascot Logo" 
+    className={`object-contain rounded-2xl drop-shadow-md ${className}`} 
+    referrerPolicy="no-referrer"
+  />
 );
 
 export default function App() {
@@ -158,6 +132,7 @@ export default function App() {
   const [copilotOpen, setCopilotOpen] = useState<boolean>(false);
   const [mediaSearchQuery, setMediaSearchQuery] = useState<string>("");
   const [showSubscriptionModal, setShowSubscriptionModal] = useState<boolean>(false);
+  const [showPlanConfirmationModal, setShowPlanConfirmationModal] = useState<boolean>(false);
   const [generatedCount, setGeneratedCount] = useState<number>(() => {
     try {
       return Number(localStorage.getItem('lyra_free_lessons_count') || '0');
@@ -194,27 +169,41 @@ export default function App() {
     goal: string,
     tech?: string
   ): string => {
-    const text = (content + " " + (fileName || "") + " " + (tech || "")).toLowerCase();
+    // Primary content text scan (prioritize actual user content/filename over fallback supplies)
+    const primaryText = ((content || "") + " " + (fileName || "")).toLowerCase();
+    const fullText = (primaryText + " " + (tech || "")).toLowerCase();
 
-    // Check specific STEM domain topics
-    const isMinecraft = text.includes("minecraft") || text.includes("command block") || text.includes("redstone") || text.includes("pixel") || text.includes("creeper");
-    const isScratchJr = text.includes("scratchjr") || text.includes("scratch jr");
-    const isScratch = text.includes("scratch") || text.includes("sprite");
-    const isRobotics = text.includes("lego") || text.includes("spike") || text.includes("ev3") || text.includes("mindstorm") || text.includes("robot") || text.includes("sensor");
-    const isEngineering = text.includes("catapult") || text.includes("bridge") || text.includes("tower") || text.includes("physics") || text.includes("gravity") || text.includes("projectile") || text.includes("force") || text.includes("truss") || text.includes("mechanic");
-    const isScience = text.includes("chem") || text.includes("bio") || text.includes("cell") || text.includes("plant") || text.includes("eco") || text.includes("organ") || text.includes("molecule");
-    const isMath = text.includes("math") || text.includes("fraction") || text.includes("geometry") || text.includes("equation") || text.includes("number") || text.includes("algebra");
-    const isCS = text.includes("code") || text.includes("program") || text.includes("algorithm") || text.includes("variable") || text.includes("python") || text.includes("javascript");
+    // Explicit Software Platform Checks (Scratch/ScratchJR primary over Minecraft)
+    const isScratchJr = primaryText.includes("scratchjr") || primaryText.includes("scratch jr") || primaryText.includes("junior scratch") || (fullText.includes("scratchjr") && !primaryText.includes("minecraft"));
+    const isScratch = (primaryText.includes("scratch") || primaryText.includes("sprite") || primaryText.includes("costume") || primaryText.includes("green flag") || primaryText.includes("backdrop")) && !isScratchJr;
+    const isMinecraft = (primaryText.includes("minecraft") || primaryText.includes("command block") || primaryText.includes("redstone") || primaryText.includes("makecode agent")) && !isScratch && !isScratchJr;
+    const isRoblox = primaryText.includes("roblox") || primaryText.includes("lua");
+    const isEduBlocks = primaryText.includes("edublocks") || primaryText.includes("edu blocks");
+    const isThunkable = primaryText.includes("thunkable") || primaryText.includes("app inventor");
+    const isCodeOrg = primaryText.includes("code.org") || primaryText.includes("game lab") || primaryText.includes("sprite lab");
+    const isMicroBit = primaryText.includes("micro:bit") || primaryText.includes("microbit");
+    const isPython = primaryText.includes("python") && !isEduBlocks;
+    const isRobotics = fullText.includes("lego") || fullText.includes("spike") || fullText.includes("ev3") || fullText.includes("robot") || fullText.includes("sensor");
+    const isEngineering = fullText.includes("catapult") || fullText.includes("bridge") || fullText.includes("tower") || fullText.includes("physics") || fullText.includes("gravity") || fullText.includes("truss");
+    const isScience = fullText.includes("chem") || fullText.includes("bio") || fullText.includes("cell") || fullText.includes("plant") || fullText.includes("eco");
+    const isMath = fullText.includes("math") || fullText.includes("fraction") || fullText.includes("geometry") || fullText.includes("equation");
+    const isGaming = fullText.includes("gaming") || fullText.includes("game design") || isScratch || isScratchJr || isMinecraft || isRoblox || isCodeOrg;
 
     if (step === 1) {
-      if (isMinecraft) return "Parsing Minecraft 3D coordinates & command block logic";
-      if (isScratchJr) return "Parsing ScratchJr block trigger sequences & early childhood logic";
-      if (isScratch) return "Parsing Scratch block scripts, variables & sprite events";
+      if (isScratchJr) return "Parsing ScratchJR yellow trigger blocks, motion grids & story loops";
+      if (isScratch) return "Parsing Scratch 3.0 sprite blocks, costumes, broadcasts & stage events";
+      if (isMinecraft) return "Parsing Minecraft Education 3D world coordinates & MakeCode agent blocks";
+      if (isRoblox) return "Parsing Roblox Studio Lua scripts, workspace parts & 3D physics";
+      if (isEduBlocks) return "Parsing EduBlocks Python drag-and-drop workspace & block logic";
+      if (isThunkable) return "Parsing Thunkable mobile app screens, buttons & event handlers";
+      if (isCodeOrg) return "Parsing Code.org Game Lab sprites, draw loops & key controls";
+      if (isMicroBit) return "Parsing Micro:bit LED matrix display, buttons & sensor blocks";
+      if (isPython) return "Parsing Python code syntax, variable logic & function loops";
       if (isRobotics) return "Parsing Robotics sensor loops, motor actuators & hardware logic";
       if (isEngineering) return "Parsing physical engineering mechanics, forces & structural stress";
       if (isScience) return "Parsing biological structures, chemical reactions & lab safety";
       if (isMath) return "Parsing mathematical concepts, spatial geometry & equation logic";
-      if (isCS) return "Parsing computer science algorithms, conditionals & flow control";
+      if (isGaming) return "Parsing game design mechanics, player controls & reward loops";
       if (fileName) {
         const cleanName = fileName.replace(/\.[^/.]+$/, "").replace(/[_]/g, " ").replace(/[-]/g, " ");
         return `Parsing "${cleanName.length > 25 ? cleanName.slice(0, 25) + '...' : cleanName}" logic pathways`;
@@ -226,14 +215,20 @@ export default function App() {
       if (goal === "presentation") {
         return "Building visual slide concepts & teaching analogies";
       }
-      if (isMinecraft) return "Linking Minecraft command blocks, /tp selectors & spatial routing";
-      if (isScratchJr) return "Linking ScratchJr start buttons, motion blocks & visual loops";
-      if (isScratch) return "Linking Scratch costume loops, broadcast signals & variables";
+      if (isScratchJr) return "Linking ScratchJR tap/bump triggers, character motion & sound blocks";
+      if (isScratch) return "Linking Scratch 2D motion loops, green flag triggers & variable backpacks";
+      if (isMinecraft) return "Linking Minecraft redstone circuits, /tp command blocks & spatial routing";
+      if (isRoblox) return "Linking Roblox player collision triggers, leaderstats & GUI events";
+      if (isEduBlocks) return "Linking EduBlocks Python terminal outputs, loop blocks & functions";
+      if (isThunkable) return "Linking Thunkable event handlers, sound triggers & cloud variables";
+      if (isCodeOrg) return "Linking Code.org collision detection, variable scores & sound effects";
+      if (isMicroBit) return "Linking Micro:bit radio signals, pin inputs & sensor loops";
+      if (isPython) return "Linking Python conditional logic, list iterations & console scripts";
       if (isRobotics) return "Linking LEGO robotics motor speeds, ultrasonic sensors & gears";
       if (isEngineering) return "Linking catapult trajectory angles, tension physics & prototype build steps";
       if (isScience) return "Formulating hands-on lab experiments, molecular models & observation steps";
       if (isMath) return "Structuring interactive math manipulatives, visual proofs & puzzle steps";
-      if (isCS) return "Linking computer science blocks, conditionals & variable loops";
+      if (isGaming) return "Linking game sprite events, win/loss conditions & score tracking";
       if (fileName) {
         const cleanName = fileName.replace(/\.[^/.]+$/, "").replace(/[_]/g, " ").replace(/[-]/g, " ");
         return `Linking active STEM challenges for ${cleanName.length > 20 ? cleanName.slice(0, 20) + '...' : cleanName}`;
@@ -245,9 +240,15 @@ export default function App() {
       if (goal === "presentation") {
         return "Synthesizing presentation slide deck & discussion points";
       }
+      if (isScratchJr) return "Synthesizing ScratchJR visual story cards, slide deck & smart quiz";
+      if (isScratch) return "Synthesizing Scratch block-stack guide, slide deck & smart quiz";
       if (isMinecraft) return "Synthesizing Minecraft quest guide, slide deck & smart quiz";
-      if (isScratchJr) return "Synthesizing ScratchJr story cards, slide deck & smart quiz";
-      if (isScratch) return "Synthesizing Scratch block-stack guides, slide deck & smart quiz";
+      if (isRoblox) return "Synthesizing Roblox 3D game quest guide, slide deck & smart quiz";
+      if (isEduBlocks) return "Synthesizing EduBlocks block-to-Python lab guide & smart quiz";
+      if (isThunkable) return "Synthesizing Thunkable app development guide & smart quiz";
+      if (isCodeOrg) return "Synthesizing Code.org interactive game lab guide & smart quiz";
+      if (isMicroBit) return "Synthesizing Micro:bit hardware coding guide & smart quiz";
+      if (isPython) return "Synthesizing Python coding challenge, slide deck & smart quiz";
       if (isRobotics) return "Synthesizing Robotics lab challenge, slide deck & smart quiz";
       if (isEngineering) return "Synthesizing hands-on engineering lab, slide deck & smart quiz";
       return "Synthesizing interactive slides, lab guide & smart quiz";
@@ -353,6 +354,7 @@ export default function App() {
 
   // Active supply category key based on selected category and sub-focus
   const activeSupplyCategoryKey = React.useMemo(() => {
+    if (selectedCategory === "Gaming") return "Gaming";
     if (selectedCategory === "Circuitry") return "Circuitry";
     if (selectedCategory === "Software" || selectedCategory === "Coding") return "Software";
     if (selectedCategory === "Technology") {
@@ -414,19 +416,58 @@ export default function App() {
       "programming", "variable", "loop", "conditional", "function", "syntax",
       "css", "html", "javascript", "js", "micro:bit", "microbit", "arduino",
       "robot", "robotics", "logic", "event", "sprite", "pseudocode", "debug",
-      "computer science", "app design"
+      "computer science", "app design", "minecraft", "roblox"
     ];
 
     return codingKeywords.some(kw => textToScan.includes(kw));
   }, [lesson]);
 
+  // Detect if current lesson is a Gaming / Game Design curriculum
+  const isGamingLesson = React.useMemo(() => {
+    if (selectedCategory === "Gaming") return true;
+    if (!lesson) return false;
+    const textToScan = [
+      lesson.lessonTitle,
+      lesson.summary,
+      ...(lesson.keyTakeaways || []),
+      ...(lesson.handsOnActivity?.materials || []),
+      ...(lesson.handsOnActivity?.steps || []),
+      lesson.handsOnActivity?.title || '',
+      lesson.handsOnActivity?.scientificPrinciple || '',
+      (lesson.handsOnActivity as any)?.softwarePlatform || '',
+      (lesson.feasibilityAudit as any)?.identifiedSoftwarePlatform || ''
+    ].join(" ").toLowerCase();
+
+    const gamingKeywords = [
+      "scratch", "minecraft", "roblox", "game", "gaming", "sprite", "costume",
+      "stage", "green flag", "agent", "redstone", "edublocks", "thunkable",
+      "makecode", "arcade", "unity", "unreal", "godot", "tynker", "code.org"
+    ];
+
+    return gamingKeywords.some(kw => textToScan.includes(kw));
+  }, [lesson, selectedCategory]);
+
   // Identify specific Software / Coding platform if lesson falls into software
   const identifiedSoftware = React.useMemo(() => {
     if (!lesson) return null;
 
+    // Check explicit AI output fields FIRST
+    const explicitField = (lesson.handsOnActivity as any)?.softwarePlatform || (lesson.feasibilityAudit as any)?.identifiedSoftwarePlatform;
+    if (explicitField) {
+      const lowerExplicit = String(explicitField).toLowerCase();
+      if (lowerExplicit.includes("scratch jr") || lowerExplicit.includes("scratchjr") || lowerExplicit.includes("junior scratch")) return "Scratch JR";
+      if (lowerExplicit.includes("scratch")) return "Scratch 3.0";
+      if (lowerExplicit.includes("minecraft")) return "Minecraft Education";
+      if (lowerExplicit.includes("roblox")) return "Roblox Studio";
+      if (lowerExplicit.includes("edublocks")) return "EduBlocks";
+      if (lowerExplicit.includes("thunkable")) return "Thunkable";
+      if (lowerExplicit.includes("code.org") || lowerExplicit.includes("tynker")) return "Code.org / Tynker";
+      if (lowerExplicit.includes("micro:bit") || lowerExplicit.includes("microbit")) return "Micro:bit / MakeCode";
+      if (lowerExplicit.includes("python")) return "Python";
+      if (lowerExplicit.includes("lego")) return "LEGO Spike / WeDo";
+    }
+
     const textToScan = [
-      (lesson.handsOnActivity as any)?.softwarePlatform || '',
-      (lesson as any).software || '',
       lesson.lessonTitle || '',
       lesson.summary || '',
       ...(lesson.keyTakeaways || []),
@@ -434,14 +475,22 @@ export default function App() {
       ...(lesson.handsOnActivity?.steps || []),
       lesson.handsOnActivity?.title || '',
       lesson.handsOnActivity?.scientificPrinciple || '',
-      selectedCategory || ''
+      customContent || '',
+      uploadedFileName || ''
     ].join(" ").toLowerCase();
 
+    // Check Scratch / Scratch JR FIRST before Minecraft to eliminate misidentification
     if (textToScan.includes("scratch jr") || textToScan.includes("scratchjr") || textToScan.includes("junior scratch")) {
       return "Scratch JR";
     }
-    if (textToScan.includes("minecraft")) {
+    if (textToScan.includes("scratch") || textToScan.includes("sprite") || textToScan.includes("costume") || textToScan.includes("green flag") || textToScan.includes("backdrop")) {
+      return "Scratch 3.0";
+    }
+    if (textToScan.includes("minecraft") || textToScan.includes("creeper") || textToScan.includes("redstone") || textToScan.includes("makecode agent")) {
       return "Minecraft Education";
+    }
+    if (textToScan.includes("roblox") || textToScan.includes("lua")) {
+      return "Roblox Studio";
     }
     if (textToScan.includes("edublocks") || textToScan.includes("edu blocks")) {
       return "EduBlocks";
@@ -449,29 +498,26 @@ export default function App() {
     if (textToScan.includes("thunkable") || textToScan.includes("app inventor")) {
       return "Thunkable";
     }
-    if (textToScan.includes("code.org") || textToScan.includes("code org") || textToScan.includes("tynker") || textToScan.includes("app lab") || textToScan.includes("sprite lab")) {
+    if (textToScan.includes("code.org") || textToScan.includes("code org") || textToScan.includes("tynker") || textToScan.includes("app lab") || textToScan.includes("sprite lab") || textToScan.includes("game lab")) {
       return "Code.org / Tynker";
     }
     if (textToScan.includes("micro:bit") || textToScan.includes("microbit") || textToScan.includes("makecode")) {
       return "Micro:bit / MakeCode";
     }
-    if (textToScan.includes("roblox") || textToScan.includes("lua")) {
-      return "Roblox Studio";
-    }
     if (textToScan.includes("python") || textToScan.includes("jupyter")) {
       return "Python";
     }
-    if (textToScan.includes("scratch 3") || textToScan.includes("scratch") || textToScan.includes("sprite") || textToScan.includes("green flag")) {
-      return "Scratch 3.0";
-    }
     if (textToScan.includes("lego") || textToScan.includes("spike prime") || textToScan.includes("wedo") || textToScan.includes("mindstorms")) {
       return "LEGO Spike / WeDo";
+    }
+    if (selectedCategory === "Gaming") {
+      return "Scratch 3.0 Game Engine";
     }
     if (selectedCategory === "Technology" || selectedCategory === "Software" || selectedCategory === "Coding" || isCodingLesson) {
       return "Visual Block-Based Coding";
     }
     return null;
-  }, [lesson, selectedCategory, isCodingLesson]);
+  }, [lesson, selectedCategory, isCodingLesson, customContent, uploadedFileName]);
 
   // Retrieve 4 Google Search Grounded build prototype examples for the active hands-on activity / software
   const groundedPrototypeImages = React.useMemo(() => {
@@ -910,7 +956,7 @@ export default function App() {
 
     const allTabs = [
       { id: "slides", label: "Interactive Slides", icon: Layers },
-      { id: "lab", label: isCodingLesson ? "💻 Coding Blocks & Lab" : "Hands-On Lab", icon: isCodingLesson ? Terminal : Activity },
+      { id: "lab", label: isGamingLesson ? "🎮 Gaming & Coding Blocks" : (isCodingLesson ? "💻 Coding Blocks & Lab" : "Hands-On Lab"), icon: isGamingLesson ? Gamepad2 : (isCodingLesson ? Terminal : Activity) },
       { id: "quiz", label: "Smartboard Quiz", icon: HelpCircle },
       { id: "media", label: "Media Fixer", icon: Link2Off }
     ];
@@ -923,7 +969,10 @@ export default function App() {
     };
 
     // Category base weight
-    if (selectedCategory === "Technology" || selectedCategory === "Engineering") {
+    if (selectedCategory === "Gaming" || isGamingLesson) {
+      scores.lab += 30;
+      scores.slides += 10;
+    } else if (selectedCategory === "Technology" || selectedCategory === "Engineering") {
       scores.lab += 20;
       scores.slides += 8;
     } else if (selectedCategory === "Art") {
@@ -939,7 +988,7 @@ export default function App() {
     }
 
     // Instructor Memory and Directives Boost
-    if (learnedNotes.includes("coding") || learnedNotes.includes("lab") || learnedNotes.includes("hands-on") || learnedNotes.includes("experiment") || learnedNotes.includes("scratch") || learnedNotes.includes("robot")) {
+    if (learnedNotes.includes("gaming") || learnedNotes.includes("scratch") || learnedNotes.includes("minecraft") || learnedNotes.includes("coding") || learnedNotes.includes("lab") || learnedNotes.includes("hands-on") || learnedNotes.includes("experiment") || learnedNotes.includes("robot")) {
       scores.lab += 15;
     }
     if (learnedNotes.includes("quiz") || learnedNotes.includes("assessment") || learnedNotes.includes("jeopardy") || learnedNotes.includes("test") || learnedNotes.includes("question")) {
@@ -950,7 +999,7 @@ export default function App() {
     }
 
     return [...allTabs].sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0));
-  }, [profile, customPreferences, selectedCategory, lesson?.lessonTitle, isCodingLesson]);
+  }, [profile, customPreferences, selectedCategory, lesson?.lessonTitle, isCodingLesson, isGamingLesson]);
 
   // Redirect to studio whenever user logs in or creates account from landing
   useEffect(() => {
@@ -1031,6 +1080,91 @@ export default function App() {
     }
   };
 
+  // Auto-detect age range / grade level and software platforms from uploaded curriculum & directives
+  const autoDetectCurriculumSettings = (textToScan: string, fileNameToScan?: string | null, directiveToScan?: string) => {
+    const combined = ((textToScan || "") + " " + (fileNameToScan || "") + " " + (directiveToScan || "")).toLowerCase();
+    if (!combined.trim()) return;
+
+    // 1. Grade / Age Range Auto-Selection
+    if (
+      combined.includes("scratch jr") || combined.includes("scratchjr") || combined.includes("junior scratch") ||
+      combined.includes("k-2") || combined.includes("kindergarten") || combined.includes("1st grade") ||
+      combined.includes("2nd grade") || combined.includes("ages 5-7") || combined.includes("ages 4-6") ||
+      combined.includes("early childhood") || combined.includes("pre-k")
+    ) {
+      setSelectedGrade("K-2");
+    } else if (
+      combined.includes("3-5") || combined.includes("3rd grade") || combined.includes("4th grade") ||
+      combined.includes("5th grade") || combined.includes("ages 8-10") || combined.includes("elementary") ||
+      combined.includes("scratch 3") || combined.includes("scratch 3.0")
+    ) {
+      setSelectedGrade("3-5");
+    } else if (
+      combined.includes("6-8") || combined.includes("6th grade") || combined.includes("7th grade") ||
+      combined.includes("8th grade") || combined.includes("ages 11-13") || combined.includes("middle school") ||
+      combined.includes("minecraft") || combined.includes("roblox")
+    ) {
+      setSelectedGrade("6-8");
+    } else if (
+      combined.includes("9-12") || combined.includes("9th grade") || combined.includes("10th grade") ||
+      combined.includes("11th grade") || combined.includes("12th grade") || combined.includes("ages 14-18") ||
+      combined.includes("high school")
+    ) {
+      setSelectedGrade("9-12");
+    }
+
+    // 2. Domain Category & Software/Platform Auto-Selection
+    const newSupplies: string[] = [];
+
+    if (combined.includes("scratch jr") || combined.includes("scratchjr") || combined.includes("junior scratch")) {
+      setSelectedCategory("Gaming");
+      newSupplies.push("Scratch JR");
+    } else if (combined.includes("scratch 3") || combined.includes("scratch 3.0") || combined.includes("scratch") || combined.includes("sprite") || combined.includes("costume")) {
+      setSelectedCategory("Gaming");
+      newSupplies.push("Scratch 3.0");
+    } else if (combined.includes("minecraft") || combined.includes("redstone") || combined.includes("makecode agent") || combined.includes("creeper")) {
+      setSelectedCategory("Gaming");
+      newSupplies.push("Minecraft Education");
+    } else if (combined.includes("roblox") || combined.includes("lua")) {
+      setSelectedCategory("Gaming");
+      newSupplies.push("Roblox Studio");
+    } else if (combined.includes("edublocks") || combined.includes("edu blocks")) {
+      setSelectedCategory("Software");
+      newSupplies.push("EduBlocks");
+    } else if (combined.includes("thunkable") || combined.includes("app inventor")) {
+      setSelectedCategory("Software");
+      newSupplies.push("Thunkable");
+    } else if (combined.includes("code.org") || combined.includes("game lab") || combined.includes("sprite lab")) {
+      setSelectedCategory("Gaming");
+      newSupplies.push("Code.org Game Lab");
+    } else if (combined.includes("micro:bit") || combined.includes("microbit")) {
+      setSelectedCategory("Circuitry");
+      newSupplies.push("Micro:bit / MakeCode");
+    } else if (combined.includes("python")) {
+      setSelectedCategory("Software");
+      newSupplies.push("Python / IDE");
+    } else if (combined.includes("lego") || combined.includes("spike prime") || combined.includes("wedo") || combined.includes("robot")) {
+      setSelectedCategory("Engineering");
+      newSupplies.push("LEGO Robotics");
+    } else if (combined.includes("circuit") || combined.includes("led") || combined.includes("breadboard") || combined.includes("battery")) {
+      setSelectedCategory("Circuitry");
+      newSupplies.push("Snap Circuits");
+      newSupplies.push("LEDs & Breadboard");
+    }
+
+    if (newSupplies.length > 0) {
+      setSelectedSupplies(newSupplies);
+    }
+
+    // Auto-update generated instruction directive if not manually edited
+    if (!isManuallyEdited) {
+      const effectiveGrade = selectedGrade === "Custom" ? (customGradeInput.trim() || "Custom Age Range") : selectedGrade;
+      const detectedPlatformText = newSupplies.length > 0 ? newSupplies.join(", ") : "Standard STEM Tools";
+      const specs = `Auto-aligned for ${effectiveGrade} grade using ${detectedPlatformText}. Class size ${selectedSize}, duration ${selectedDuration}. Focus on interactive hands-on gamification.`;
+      setCustomPreferences(specs);
+    }
+  };
+
   // Handle uploaded files by reading them as text
   const handleFileUpload = (file: File) => {
     if (!file) return;
@@ -1066,6 +1200,8 @@ export default function App() {
           if (data.text) {
             setCustomContent(data.text);
             triggerTempTextMaterialOpen();
+            autoDetectCurriculumSettings(data.text, file.name, customPreferences);
+            setShowPlanConfirmationModal(true);
           } else {
             throw new Error("No text content could be extracted from this document.");
           }
@@ -1085,6 +1221,8 @@ export default function App() {
         if (typeof text === "string") {
           setCustomContent(text);
           triggerTempTextMaterialOpen();
+          autoDetectCurriculumSettings(text, file.name, customPreferences);
+          setShowPlanConfirmationModal(true);
         }
       };
       reader.readAsText(file);
@@ -1135,7 +1273,14 @@ export default function App() {
   };
 
   // Call server-side backend API to process lesson using Gemini
-  const handleProcessLesson = async () => {
+  const handleProcessLesson = async (skipModal: boolean = false) => {
+    // Show pop-up modal preview first unless confirmed
+    if (!skipModal) {
+      autoDetectCurriculumSettings(customContent, uploadedFileName, customPreferences);
+      setShowPlanConfirmationModal(true);
+      return;
+    }
+
     // 1 Free Lesson enforcement
     if (!profile?.isSubscribed && generatedCount >= 1) {
       setShowSubscriptionModal(true);
@@ -1492,8 +1637,13 @@ export default function App() {
               onClick={() => setCurrentView("landing")}
             >
               {/* Mascot in mini logo format */}
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center shrink-0 border border-teal-brand/30 group-hover:scale-105 transition-transform micro-glow-teal">
-                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-teal-brand" />
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center shrink-0 border border-teal-brand/40 group-hover:scale-105 transition-transform micro-glow-teal p-0.5">
+                <img 
+                  src="/src/assets/images/lyrah_logo_1786276082567.jpg" 
+                  alt="Lyrah Logo" 
+                  className="w-full h-full object-contain rounded-lg"
+                  referrerPolicy="no-referrer"
+                />
               </div>
               <div>
                 <span className="font-serif text-xl sm:text-2xl font-semibold tracking-tight text-teal-dark dark:text-teal-brand">
@@ -1547,6 +1697,16 @@ export default function App() {
               >
                 {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
+
+              {/* Glowing Yellow Lyrah Name Logo in Top Right Corner */}
+              <div className="flex items-center shrink-0 pl-1 border-l border-slate-200 dark:border-slate-800">
+                <img 
+                  src="/lyrah_name_logo.jpg" 
+                  alt="Lyrah Neon Name Logo" 
+                  className="h-8 sm:h-9 w-auto object-contain rounded-lg drop-shadow-xs hover:scale-105 transition-transform"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
 
               {profile?.isSubscribed ? (
                 <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-600/50 text-emerald-800 dark:text-emerald-300 font-bold text-xs rounded-full shadow-3xs micro-glow-emerald">
@@ -2056,6 +2216,7 @@ export default function App() {
                       { id: "Technology", label: "Technology", icon: "💻" },
                       { id: "Circuitry", label: "Circuitry", icon: "⚡" },
                       { id: "Software", label: "Software & Coding", icon: "⚙️" },
+                      { id: "Gaming", label: "Gaming", icon: "🎮" },
                       { id: "Engineering", label: "Engineering", icon: "🛠️" },
                       { id: "Art", label: "Art", icon: "🎨" },
                       { id: "Math", label: "Math", icon: "📐" }
@@ -2597,6 +2758,64 @@ export default function App() {
                     transition={{ duration: 0.25 }}
                     className="grid grid-cols-1 md:grid-cols-12 gap-6 animate-fade-in"
                   >
+                    {/* Software Platform & Goal Compatibility Audit Banner */}
+                    {(isCodingLesson || isGamingLesson || identifiedSoftware) && (
+                      <div className="md:col-span-12 p-4 bg-slate-900/95 text-slate-100 border border-teal-brand/30 rounded-2xl space-y-3 shadow-lg">
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5">
+                          <div className="flex items-center gap-2.5">
+                            <span className="p-2 bg-teal-brand/20 text-teal-brand rounded-xl border border-teal-brand/30">
+                              <Laptop className="w-5 h-5 text-teal-brand" />
+                            </span>
+                            <div>
+                              <span className="text-[9px] font-mono font-bold text-teal-brand uppercase tracking-wider block">
+                                LYRAH SOFTWARE PLATFORM AUDIT
+                              </span>
+                              <h4 className="text-sm font-bold font-sans text-white flex items-center gap-2">
+                                <span>Identified Platform:</span>
+                                <span className="text-amber-300 font-extrabold px-2 py-0.5 bg-amber-400/20 rounded-md border border-amber-400/30">
+                                  {identifiedSoftware || (lesson.feasibilityAudit as any)?.identifiedSoftwarePlatform || "Scratch 3.0"}
+                                </span>
+                              </h4>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] font-mono font-bold rounded-lg uppercase flex items-center gap-1.5">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                              <span>Software Goals Aligned & Verified</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-300 font-sans pt-1">
+                          <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800 space-y-1">
+                            <span className="text-[9px] font-mono font-bold text-teal-brand uppercase block">GOAL COMPATIBILITY AUDIT</span>
+                            <p className="leading-relaxed text-[11px] text-slate-200 font-medium">
+                              {lesson.feasibilityAudit?.softwareGoalCompatibility || 
+                                `Lyrah confirmed that all lesson goals natively align with ${identifiedSoftware || "Scratch 3.0"} block capabilities, sprite logic, and platform mechanics.`}
+                            </p>
+                          </div>
+                          <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800 space-y-1">
+                            <span className="text-[9px] font-mono font-bold text-amber-400 uppercase block">SOLUTION EVALUATION & ADAPTATION</span>
+                            <p className="leading-relaxed text-[11px] text-slate-200 font-medium">
+                              {lesson.feasibilityAudit?.originalSolutionEvaluation || 
+                                `Software architecture evaluated. No goal conflicts found — full support for block-based coding and interactive sprite controls.`}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* If feasibility audit proposed alternative solution */}
+                        {lesson.feasibilityAudit?.recommendedAlternatives && lesson.feasibilityAudit.recommendedAlternatives.length > 0 && (
+                          <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs space-y-1.5">
+                            <span className="text-[9px] font-mono font-bold text-amber-300 uppercase block">💡 LYRAH PLANNED ALTERNATIVE SOLUTION</span>
+                            {lesson.feasibilityAudit.recommendedAlternatives.map((alt, aIdx) => (
+                              <div key={aIdx} className="text-[11px] text-amber-100 font-sans">
+                                <strong>{alt.title}:</strong> {alt.description} <span className="text-amber-300">({alt.whyItWorksBetter})</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                     {/* Left Checklist panel */}
                     <div className="md:col-span-5 bg-surface-0/40 dark:bg-slate-900/60 border border-black/[0.06] dark:border-slate-800 rounded-2xl p-5 space-y-4">
                       <div className="border-b border-black/[0.05] dark:border-slate-800 pb-3 flex justify-between items-center">
@@ -3382,6 +3601,192 @@ export default function App() {
           />
         )}
 
+        {/* Lyrah Plan Preview & Confirmation Pop-Up Modal */}
+        {showPlanConfirmationModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-md p-4 overflow-y-auto">
+            <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-3xl shadow-2xl max-w-2xl w-full border border-teal-brand/40 dark:border-slate-800 overflow-hidden my-6 animate-fade-in">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-teal-dark via-slate-900 to-teal-dark p-6 text-white relative border-b border-teal-brand/30">
+                <button
+                  type="button"
+                  onClick={() => setShowPlanConfirmationModal(false)}
+                  className="absolute top-4 right-4 text-teal-200 hover:text-white bg-black/20 hover:bg-black/40 p-2 rounded-full transition-all cursor-pointer"
+                  title="Close modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <div className="flex items-center gap-2.5 bg-teal-brand/20 border border-teal-brand/30 px-3 py-1 rounded-full text-xs font-bold text-teal-brand w-fit mb-2">
+                  <Sparkles className="w-3.5 h-3.5 text-gold-brand" />
+                  <span>Lyrah AI Curriculum Alignment</span>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-serif font-bold text-white">
+                  Generation Plan & Confirmation
+                </h3>
+                <p className="text-xs text-teal-100/90 mt-1 font-sans leading-relaxed">
+                  Lyrah analyzed your uploaded lesson plan and instructions. Review or adjust the detected age range, software platforms, and generation plan below before proceeding.
+                </p>
+              </div>
+
+              <div className="p-6 space-y-5 font-sans max-h-[75vh] overflow-y-auto">
+                {/* 1. Age Range / Grade Level Detection */}
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-teal-dark dark:text-teal-brand uppercase tracking-wider block">
+                      1. Auto-Selected Age Range / Grade Level
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-teal-brand/20 text-teal-dark dark:text-teal-brand px-2 py-0.5 rounded-md">
+                      Selected: {selectedGrade === "Custom" ? (customGradeInput || "Custom") : selectedGrade}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                    {["K-2", "3-5", "6-8", "9-12", "Custom"].map((g) => (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => setSelectedGrade(g)}
+                        className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                          selectedGrade === g
+                            ? "bg-teal-dark dark:bg-teal-brand text-white dark:text-slate-950 border-teal-brand shadow-2xs"
+                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-teal-brand"
+                        }`}
+                      >
+                        {g === "K-2" ? "K-2 (Ages 5-7)" : g === "3-5" ? "3-5 (Ages 8-10)" : g === "6-8" ? "6-8 (Ages 11-13)" : g === "9-12" ? "9-12 (Ages 14-18)" : "Custom"}
+                      </button>
+                    ))}
+                  </div>
+                  {selectedGrade === "Custom" && (
+                    <input
+                      type="text"
+                      placeholder="Specify custom age or grade (e.g., Pre-K, Adults)"
+                      value={customGradeInput}
+                      onChange={(e) => setCustomGradeInput(e.target.value)}
+                      className="w-full text-xs px-3 py-2 border border-teal-brand/40 rounded-xl bg-white dark:bg-slate-900 font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-brand"
+                    />
+                  )}
+                </div>
+
+                {/* 2. Software & Platform / Domain Category Selection */}
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-teal-dark dark:text-teal-brand uppercase tracking-wider block">
+                      2. Domain & Available Software / Platforms
+                    </span>
+                    <span className="text-[10px] font-mono font-bold bg-amber-400/20 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-md border border-amber-400/30">
+                      Domain: {selectedCategory}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1.5">
+                    {["Gaming", "Software", "Circuitry", "Technology", "Engineering", "Art", "Math", "Science"].map((cat) => (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setSelectedCategory(cat)}
+                        className={`text-[11px] px-2.5 py-1 rounded-lg font-bold border transition-all cursor-pointer ${
+                          selectedCategory === cat
+                            ? "bg-slate-900 text-white border-slate-700 shadow-2xs"
+                            : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-teal-brand"
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Software options */}
+                  <div className="space-y-1 pt-1">
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono block">Detected Software & Tools:</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {currentSupplyOptions.map((opt) => {
+                        const isSelected = selectedSupplies.includes(opt.id);
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => toggleSupply(opt.id)}
+                            className={`text-xs px-2.5 py-1.5 rounded-xl font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
+                              isSelected
+                                ? "bg-teal-dark dark:bg-teal-brand text-white dark:text-slate-950 border-teal-brand"
+                                : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-teal-brand"
+                            }`}
+                          >
+                            <span>{opt.icon}</span>
+                            <span>{opt.label}</span>
+                            {isSelected && <Check className="w-3.5 h-3.5 text-teal-brand dark:text-slate-950 font-bold" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Generated Instruction Directive */}
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-2">
+                  <span className="text-xs font-bold text-teal-dark dark:text-teal-brand uppercase tracking-wider block">
+                    3. Generated Instruction Directive
+                  </span>
+                  <textarea
+                    value={customPreferences}
+                    onChange={(e) => {
+                      setCustomPreferences(e.target.value);
+                      setIsManuallyEdited(true);
+                    }}
+                    className="w-full bg-white dark:bg-slate-900 p-3 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-mono text-teal-dark dark:text-teal-brand font-medium focus:ring-2 focus:ring-teal-brand focus:outline-none min-h-[70px]"
+                    placeholder="Edit instruction directives for Lyrah..."
+                  />
+                </div>
+
+                {/* 4. Planned Deliverables Summary */}
+                <div className="p-4 bg-teal-50/60 dark:bg-teal-brand/10 rounded-2xl border border-teal-brand/30 space-y-2">
+                  <span className="text-xs font-bold text-teal-dark dark:text-teal-brand uppercase tracking-wider block">
+                    4. Planned Lyrah Deliverables
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700 dark:text-slate-200 font-sans">
+                    <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                      <Layers className="w-4 h-4 text-teal-brand shrink-0" />
+                      <span>5 Interactive Teaching Slides</span>
+                    </div>
+                    <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                      <Terminal className="w-4 h-4 text-amber-500 shrink-0" />
+                      <span>Coding Blocks & Hands-On Lab Guide</span>
+                    </div>
+                    <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                      <HelpIcon className="w-4 h-4 text-sky-500 shrink-0" />
+                      <span>Interactive Smartboard Quiz</span>
+                    </div>
+                    <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
+                      <Video className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>Media & Resource Audit Fixer</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPlanConfirmationModal(false);
+                      handleProcessLesson(true);
+                    }}
+                    className="flex-1 py-3.5 px-5 bg-gradient-to-r from-teal-dark to-slate-900 hover:from-slate-900 hover:to-teal-dark text-white font-bold text-xs rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer border border-teal-brand/40 micro-glow-teal"
+                  >
+                    <Sparkles className="w-4 h-4 text-amber-300" />
+                    <span>🚀 Confirm & Generate Lesson Plan</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowPlanConfirmationModal(false)}
+                    className="py-3.5 px-5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                  >
+                    ✏️ Adjust Inputs in Page
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Floating Sparkle Icon for Lyrah AI Co-Teacher Popup */}
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
           {copilotOpen && (
@@ -3395,8 +3800,13 @@ export default function App() {
               {/* Modal Header */}
               <div className="bg-teal-dark px-5 py-4 text-white flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-teal-brand/20 border border-teal-brand/40 flex items-center justify-center text-teal-brand">
-                    <Sparkles className="w-4 h-4 animate-pulse" />
+                  <div className="w-8 h-8 rounded-xl bg-teal-brand/20 border border-teal-brand/40 overflow-hidden flex items-center justify-center p-0.5 shrink-0">
+                    <img 
+                      src="/src/assets/images/lyrah_logo_1786276082567.jpg" 
+                      alt="Lyrah Mascot Logo" 
+                      className="w-full h-full object-contain rounded-lg"
+                      referrerPolicy="no-referrer"
+                    />
                   </div>
                   <div>
                     <h3 className="text-xs font-bold font-sans uppercase tracking-wide">Lyrah AI Co-Teacher</h3>
@@ -3436,7 +3846,14 @@ export default function App() {
             }`}
             id="lyra-copilot-sparkle-trigger"
           >
-            <Sparkles className={`w-5 h-5 text-amber-300 ${copilotOpen ? "" : "animate-spin-slow"}`} />
+            <div className="w-6 h-6 rounded-full overflow-hidden bg-teal-brand/20 border border-amber-300/60 shrink-0 p-0.5">
+              <img 
+                src="/src/assets/images/lyrah_logo_1786276082567.jpg" 
+                alt="Lyrah Avatar" 
+                className="w-full h-full object-contain rounded-full"
+                referrerPolicy="no-referrer"
+              />
+            </div>
             <span className="font-sans font-bold text-xs pr-0.5">
               {copilotOpen ? "Close Lyrah AI" : "Ask Lyrah AI"}
             </span>

@@ -6,6 +6,16 @@ export interface SupplyOption {
 }
 
 export const CATEGORY_SUPPLIES: Record<string, SupplyOption[]> = {
+  Gaming: [
+    { id: "Minecraft Education", label: "Minecraft Education", icon: "⛏️", description: "3D block building, Agent & MakeCode" },
+    { id: "Roblox Studio", label: "Roblox Studio", icon: "🎮", description: "Lua 3D world building & game scripting" },
+    { id: "Scratch 3.0", label: "Scratch 3.0", icon: "🚀", description: "Interactive 2D sprite games & physics" },
+    { id: "Scratch JR", label: "Scratch JR", icon: "🐱", description: "Ages 5-7 tablet story & game blocks" },
+    { id: "Code.org Game Lab", label: "Code.org Game Lab", icon: "💻", description: "2D game mechanics & animations" },
+    { id: "EduBlocks", label: "EduBlocks", icon: "🧱", description: "Drag & drop Python game scripts" },
+    { id: "Unreal / Unity", label: "Unreal / Unity", icon: "🕹️", description: "Advanced 3D engine physics" },
+    { id: "Other", label: "Other", icon: "➕", description: "Custom gaming engine or platform" }
+  ],
   Circuitry: [
     { id: "DC Motors", label: "DC Motors", icon: "⚙️", description: "3V-12V hobby motors" },
     { id: "LED Lights", label: "LED Lights", icon: "💡", description: "Colored LEDs (5mm)" },
