@@ -1,0 +1,60 @@
+name: Deploy to Cloud Run
+
+# Deploys on every push to main. Secrets live in GitHub (Settings > Secrets and
+# variables > Actions); runtime secrets are passed to Cloud Run, never baked
+# into the image.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  SERVICE: lyrah
+  REGION: us-east1
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  deploy:
+    needs: verify
+    runs-on: ubuntu-latest
+    # Workload Identity Federation needs this; remove if using a JSON key.
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          # Preferred: keyless. Set these two repo secrets and delete credentials_json.
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          # Fallback if you have not set up WIF yet — paste the whole service
+          # account JSON into the GCP_SA_KEY secret and swap the two lines above
+          # for this one:
+          # credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy
+        run: |
+          gcloud run deploy "$SERVICE" \
+            --source . \
+            --region "$REGION" \
+            --project "${{ secrets.GCP_PROJECT_ID }}" \
+            --allow-unauthenticated \
+            --set-env-vars "NODE_ENV=production,APP_URL=${{ secrets.APP_URL }}" \
+            --set-secrets "GEMINI_API_KEY=GEMINI_API_KEY:latest,STRIPE_SECRET_KEY=STRIPE_SECRET_KEY:latest,STRIPE_WEBHOOK_SECRET=STRIPE_WEBHOOK_SECRET:latest,STRIPE_PROD_KEY_1=STRIPE_PROD_KEY_1:latest,STRIPE_PROD_KEY_2=STRIPE_PROD_KEY_2:latest"

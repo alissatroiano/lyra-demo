@@ -1,6 +1,7 @@
 import React from "react";
 import { Sparkles, ArrowRight, Layers, Activity, Palette, HelpCircle, Link2Off, Check, Database, FileCode, BookOpen, LogIn } from "lucide-react";
 import { RobotBunnyMascot } from "../App";
+import { LyraMark } from "./LyraMark";
 
 interface LandingPageProps {
   onLaunchStudio: () => void;
@@ -18,7 +19,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   return (
     <main className="px-6 sm:px-8 py-8 space-y-12 animate-fade-in flex-1 max-w-7xl mx-auto w-full">
       {/* Landing Hero Section */}
-      <header className="py-10 px-6 sm:px-10 relative overflow-hidden bg-gradient-to-b from-teal-light/30 via-teal-light/10 to-transparent dark:from-slate-900/90 dark:via-slate-900/40 dark:to-transparent rounded-3xl border border-teal-brand/15 dark:border-slate-800 shadow-3xs">
+      <header className="star-field chart-grid py-10 px-6 sm:px-10 relative overflow-hidden bg-gradient-to-b from-teal-light/30 via-teal-light/10 to-transparent dark:from-cyber-bg dark:via-cyber-bg/60 dark:to-transparent rounded-3xl border border-teal-brand/15 dark:border-slate-800 shadow-3xs">
         <div className="absolute top-0 right-0 w-64 h-64 bg-teal-brand/10 rounded-full blur-3xl pointer-events-none" />
         
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 relative z-10">
@@ -69,10 +70,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
           </div>
 
-          {/* Mascot Illustration */}
-          <div className="self-center md:self-auto shrink-0 bg-white/80 dark:bg-slate-900/90 border border-teal-brand/20 dark:border-slate-800 rounded-3xl p-6 shadow-md animate-float relative">
-            <RobotBunnyMascot className="w-32 h-32 sm:w-36 sm:h-36" />
-            <div className="mt-3 text-center">
+          {/* Mascot, plotted against the constellation the product is named for */}
+          <div className="self-center md:self-auto shrink-0 bg-white/80 dark:bg-cyber-card/90 border border-teal-brand/20 dark:border-slate-800 rounded-3xl p-6 shadow-md relative">
+            <LyraMark className="absolute inset-0 w-full h-full p-3 opacity-25 dark:opacity-40 pointer-events-none" />
+            <div className="relative animate-float">
+              <RobotBunnyMascot className="w-32 h-32 sm:w-36 sm:h-36" />
+            </div>
+            <div className="mt-3 text-center relative">
               <span className="text-[10px] font-extrabold font-mono text-teal-900 dark:text-teal-brand bg-teal-light/60 dark:bg-teal-brand/20 px-2.5 py-1 rounded-full uppercase tracking-wide">
                 Lyrah AI Co-Teacher
               </span>
