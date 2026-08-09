@@ -424,7 +424,7 @@ export default function VideoLab({ lesson, onTriggerPaidFlow }: VideoLabProps) {
                   </span>
                   <a
                     href={activeVideoUrl}
-                    download={`lyra_stem_${Date.now()}.mp4`}
+                    download={`pyxias_stem_${Date.now()}.mp4`}
                     className="text-[10px] font-bold text-teal-dark hover:text-teal-brand flex items-center gap-1"
                   >
                     <Download className="w-3.5 h-3.5" />

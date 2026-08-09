@@ -1,12 +1,12 @@
-# Lyrah - AI STEM Lesson Engine
+# Pyxias - AI STEM Lesson Engine
 
-Lyrah is a professional, high-performance web application designed for K-12 educators, afterschool instructors, and STEM coordinators. It translates dense, wordy curricula or textbooks into fully interactive visual slideshows, active classroom science labs, printable homework/worksheets with automatic teacher answer keys, and smart board trivia games—all while dynamically rectifying broken external media links using Google Gemini models.
+Pyxias is a professional, high-performance web application designed for K-12 educators, afterschool instructors, and STEM coordinators. It translates dense, wordy curricula or textbooks into fully interactive visual slideshows, active classroom science labs, printable homework/worksheets with automatic teacher answer keys, and smart board trivia games—all while dynamically rectifying broken external media links using Google Gemini models.
 
 ---
 
 ## 🏆 XPRIZE Challenge Showcase & Business Feasibility
 
-This project is submitted to the **XPRIZE Challenge: Education & Human Potential**. Lyrah aims to resolve a deep, systemic friction point in modern primary education: the hours of unpaid, stressful administrative prep-work that teachers endure to turn dry text into interactive, engaging classroom sessions.
+This project is submitted to the **XPRIZE Challenge: Education & Human Potential**. Pyxias aims to resolve a deep, systemic friction point in modern primary education: the hours of unpaid, stressful administrative prep-work that teachers endure to turn dry text into interactive, engaging classroom sessions.
 
 ### 📊 Economic Impact & Time-Savings
 - **5.2 Hours Saved/Week:** Saves instructors an average of 5.2 hours of unpaid lesson preparation time weekly.
@@ -36,7 +36,7 @@ This project is submitted to the **XPRIZE Challenge: Education & Human Potential
 
 ## 🚀 Technical Architecture
 
-Lyrah is built as a highly performant full-stack Node.js application running on **Cloud Run** and powered by **Google Gemini 3.5 Flash** via the `@google/genai` SDK:
+Pyxias is built as a highly performant full-stack Node.js application running on **Cloud Run** and powered by **Google Gemini 3.5 Flash** via the `@google/genai` SDK:
 
 - **Frontend:** React 18+ styled with modern **Tailwind CSS** and animated with **Motion** for smooth state transitions.
 - **Backend:** Fast, lightweight **Express** server that proxies prompts safely to the Gemini API, maintaining total API key protection.

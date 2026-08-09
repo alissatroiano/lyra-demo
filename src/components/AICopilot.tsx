@@ -57,10 +57,10 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   const ROLES_SYSTEM_INSTRUCTIONS: Record<string, string> = {
-    "Pedagogical Advisor": "You are Lyrah, an expert Pedagogical Advisor. Help instructors structure, pace, and scaffold their STEM/STEAM lessons. Advise on classroom management and physical engagement. SVG Diagram Rule: Only create or output raw inline SVG diagrams (<svg>...</svg>) if the demo path or user prompt visibly depends on text-generated vector visuals. Otherwise, answer using clear, structured text and Markdown.",
-    "Science Explainer": "You are Lyrah, a Science Explainer. Explain complex scientific or technical topics using extremely clear, simple analogies and visual metaphors suitable for children ages 6-14. SVG Diagram Rule: Only create or output raw inline SVG diagrams if the demo path visibly depends on generated text.",
-    "Scratch Block Translator": "You are Lyrah, a Scratch Block Translator. Deconstruct digital or block-based concepts (like Scratch, ScratchJr, or Code.org) into simple physical movements, text workflows, and engaging household metaphors (e.g., Scratch 'triggering blocks' are like 'magic start buttons'). SVG Diagram Rule: Only create SVG diagrams if explicitly requested or if the demo path visibly depends on text-generated vector visuals.",
-    "Gamification Designer": "You are Lyrah, a Gamification Designer. Suggest narrative quests, rewards, and gameplay elements to turn engineering and coding activities into interactive team missions. SVG Diagram Rule: Only create SVG diagrams if the demo path visibly depends on generated text."
+    "Pedagogical Advisor": "You are Pyxias, an expert Pedagogical Advisor. Help instructors structure, pace, and scaffold their STEM/STEAM lessons. Advise on classroom management and physical engagement. SVG Diagram Rule: Only create or output raw inline SVG diagrams (<svg>...</svg>) if the demo path or user prompt visibly depends on text-generated vector visuals. Otherwise, answer using clear, structured text and Markdown.",
+    "Science Explainer": "You are Pyxias, a Science Explainer. Explain complex scientific or technical topics using extremely clear, simple analogies and visual metaphors suitable for children ages 6-14. SVG Diagram Rule: Only create or output raw inline SVG diagrams if the demo path visibly depends on generated text.",
+    "Scratch Block Translator": "You are Pyxias, a Scratch Block Translator. Deconstruct digital or block-based concepts (like Scratch, ScratchJr, or Code.org) into simple physical movements, text workflows, and engaging household metaphors (e.g., Scratch 'triggering blocks' are like 'magic start buttons'). SVG Diagram Rule: Only create SVG diagrams if explicitly requested or if the demo path visibly depends on text-generated vector visuals.",
+    "Gamification Designer": "You are Pyxias, a Gamification Designer. Suggest narrative quests, rewards, and gameplay elements to turn engineering and coding activities into interactive team missions. SVG Diagram Rule: Only create SVG diagrams if the demo path visibly depends on generated text."
   };
 
   // Initial greeting
@@ -70,7 +70,7 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
         {
           id: "welcome",
           role: "assistant",
-          content: `Hi! I'm **Lyrah**, your AI teaching copilot! 🌟\n\nI'm fully grounded in your lesson: **${lesson.lessonTitle}** (${lesson.duration}).\n\nHow can I help you co-teach today? Choose a preset helper prompt below or type your own question!`,
+          content: `Hi! I'm **Pyxias**, your AI teaching copilot! 🌟\n\nI'm fully grounded in your lesson: **${lesson.lessonTitle}** (${lesson.duration}).\n\nHow can I help you co-teach today? Choose a preset helper prompt below or type your own question!`,
           timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
         }
       ]);
@@ -128,7 +128,7 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || data.details || "Failed to get response from Lyrah.");
+        throw new Error(data.error || data.details || "Failed to get response from Pyxias.");
       }
 
       let citations: string[] = [];
@@ -455,7 +455,7 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
       {/* LEFT NAVIGATION SUBTABS COLUMN */}
       <div className="xl:col-span-3 flex flex-row xl:flex-col gap-2.5 bg-surface-0 border border-black/[0.05] rounded-2xl p-4 xl:p-4.5 overflow-x-auto shrink-0">
         <div className="hidden xl:block border-b border-black/[0.05] pb-3 mb-2.5">
-          <span className="text-[10px] font-bold text-teal-brand uppercase tracking-wider font-mono">Lyrah Copilot Hub</span>
+          <span className="text-[10px] font-bold text-teal-brand uppercase tracking-wider font-mono">Pyxias Copilot Hub</span>
           <h4 className="text-xs font-bold text-teal-dark font-sans">AI Assistant Suite</h4>
         </div>
 
@@ -636,7 +636,7 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
                   <div className="w-8 h-8 rounded-full bg-teal-light flex items-center justify-center text-teal-brand shrink-0 font-bold text-xs animate-pulse">
                     ...
                   </div>
-                  <span className="text-[11px] text-secondary font-mono animate-pulse">Lyrah is thinking...</span>
+                  <span className="text-[11px] text-secondary font-mono animate-pulse">Pyxias is thinking...</span>
                 </div>
               )}
               {chatError && (
@@ -696,7 +696,7 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                placeholder={`Ask Lyrah in her role as "${chatRole}"...`}
+                placeholder={`Ask Pyxias in her role as "${chatRole}"...`}
                 className="flex-1 text-xs p-3.5 border border-black/[0.08] rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-brand/15 focus:border-teal-brand bg-surface-0 font-sans text-primary leading-normal"
                 disabled={isChatLoading}
               />
@@ -806,7 +806,7 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
                       </span>
                       <a
                         href={`data:image/png;base64,${generatedImage}`}
-                        download={`lyra_asset_${Date.now()}.png`}
+                        download={`pyxias_asset_${Date.now()}.png`}
                         className="text-[10px] font-bold text-secondary hover:text-teal-dark flex items-center gap-1"
                       >
                         <Download className="w-3.5 h-3.5" />
@@ -854,7 +854,7 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
               <Mic className="w-5 h-5 text-teal-brand" />
               <div>
                 <h4 className="text-sm font-bold text-teal-dark font-sans leading-none">Voice Classroom Line</h4>
-                <p className="text-[10px] text-secondary font-sans mt-1">Talk out loud with Lyrah in real-time over our Gemini Live API bridge</p>
+                <p className="text-[10px] text-secondary font-sans mt-1">Talk out loud with Pyxias in real-time over our Gemini Live API bridge</p>
               </div>
             </div>
 
@@ -896,7 +896,7 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
                     ) : (
                       <>
                         <Phone className="w-8 h-8" />
-                        <span className="text-[9px] font-mono font-bold uppercase">Call Lyrah</span>
+                        <span className="text-[9px] font-mono font-bold uppercase">Call Pyxias</span>
                       </>
                     )}
                   </button>
@@ -904,12 +904,12 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
 
                 <div className="space-y-2">
                   <h4 className="text-sm font-bold text-primary font-sans uppercase tracking-wider font-mono">
-                    {voiceStatus === "connected" ? "🎙️ Lyrah is Listening..." : voiceStatus === "dialing" ? "📡 Connecting to Gemini..." : "📞 Line Available"}
+                    {voiceStatus === "connected" ? "🎙️ Pyxias is Listening..." : voiceStatus === "dialing" ? "📡 Connecting to Gemini..." : "📞 Line Available"}
                   </h4>
                   <p className="text-xs text-secondary leading-relaxed font-sans font-normal">
                     {voiceStatus === "connected" 
-                      ? "Say anything! Your microphone streams at 16kHz to Lyrah, and she replies instantly with her sweet Zephyr voice. Give it 2-3 seconds to load." 
-                      : "Need quick scaffolding on-the-fly? Start a phone conversation with Lyrah. No typing required."}
+                      ? "Say anything! Your microphone streams at 16kHz to Pyxias, and she replies instantly with her sweet Zephyr voice. Give it 2-3 seconds to load." 
+                      : "Need quick scaffolding on-the-fly? Start a phone conversation with Pyxias. No typing required."}
                   </p>
                 </div>
 

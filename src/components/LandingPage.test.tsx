@@ -14,13 +14,13 @@ vi.mock('../App', () => ({
 const noop = () => {};
 
 describe('LandingPage', () => {
-  it('renders the Lyrah brand copy', () => {
+  it('renders the Pyxias brand copy', () => {
     render(
       <LandingPage onLaunchStudio={noop} onSelectPlan={noop} user={null} onSignIn={noop} />,
     );
 
-    expect(screen.getByText(/Lyrah automatically restructures/i)).toBeInTheDocument();
-    expect(screen.getByText(/Lyrah AI Co-Teacher/i)).toBeInTheDocument();
+    expect(screen.getByText(/Pyxias automatically restructures/i)).toBeInTheDocument();
+    expect(screen.getByText(/Pyxias AI Co-Teacher/i)).toBeInTheDocument();
   });
 
   it('prompts signed-out visitors to sign in rather than entering the studio', async () => {

@@ -394,7 +394,7 @@ export default function SoundStudio({ lesson, onTriggerPaidFlow }: SoundStudioPr
                     {/* Download */}
                     <a
                       href={activeSong.audioUrl}
-                      download={`lyra_sound_${Date.now()}.wav`}
+                      download={`pyxias_sound_${Date.now()}.wav`}
                       className="p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-all shrink-0 ml-auto"
                       title="Download Song"
                     >

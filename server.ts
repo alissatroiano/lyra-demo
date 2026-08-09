@@ -143,7 +143,7 @@ app.post("/api/process-lesson", async (req, res) => {
   }
 
   try {
-    const systemInstruction = `You are Lyrah, an expert STEM Curriculum Developer and Instructional Designer. 
+    const systemInstruction = `You are Pyxias, an expert STEM Curriculum Developer and Instructional Designer. 
 Your job is to take raw, verbose, long, or wordy lesson plans (or simple descriptions of topics/materials) and transform them into an IMMERSIVE, highly interactive, and visually engaging educational lesson experience for Afterschool STEM Instructors and children (ages 6-14).
 
 Core requirements for your response:
@@ -592,7 +592,7 @@ app.post("/api/chat", async (req, res) => {
       tools.push({ googleSearch: {} });
     }
 
-    const baseSysInst = systemInstruction || "You are Lyrah, a friendly, energetic, encouraging, and innovative AI teaching copilot.";
+    const baseSysInst = systemInstruction || "You are Pyxias, a friendly, energetic, encouraging, and innovative AI teaching copilot.";
     const fullSystemInstruction = `${baseSysInst}\n\n[SVG Diagram Rule]: Only generate or output raw inline SVG diagrams (<svg>...</svg>) if the user query or active demo path visibly depends on text-generated vector visuals. Otherwise, stick to clean Markdown text formatting and structured explanations.`;
 
     const config: any = {
@@ -825,7 +825,7 @@ async function setupServer() {
           speechConfig: {
             voiceConfig: { prebuiltVoiceConfig: { voiceName: "Zephyr" } },
           },
-          systemInstruction: "You are Lyrah, a supportive, energetic, and child-centric AI teaching co-pilot. Respond directly, conversationally, and concisely as if you are talking live with an instructor in a classroom. Give brief 1-2 sentence replies.",
+          systemInstruction: "You are Pyxias, a supportive, energetic, and child-centric AI teaching co-pilot. Respond directly, conversationally, and concisely as if you are talking live with an instructor in a classroom. Give brief 1-2 sentence replies.",
         },
         callbacks: {
           onmessage: (message: LiveServerMessage) => {
