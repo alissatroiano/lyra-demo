@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+lenv/
+.env.example
+lyrah/
