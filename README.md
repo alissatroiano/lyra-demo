@@ -18,8 +18,9 @@ This project is submitted to the **XPRIZE Challenge: Education & Human Potential
 - **The Curriculum Gap:** While school districts have extensive core textbooks, hands-on extracurricular programs operate on highly fluid, self-made outlines, creating an intense, continuous demand for rapid material adaptation tools.
 
 ### 💰 Scalable SaaS Revenue Model
-- **Creator Pro ($15/month):** For independent educators and homeschool pods. Includes unlimited AI curriculum transformations, interactive game configurations, and classroom sharing links.
-- **Enterprise Core ($120/month):** For multi-site afterschool franchises, school districts, and community organizations. Includes team collaborations, custom school-branded printable formats, and bulk licensing of smart board games.
+- **Educator Pro ($9.99/month):** For independent educators and homeschool pods. Unlimited AI curriculum transformations, interactive game configurations, and classroom sharing links.
+- **Camp Director Pro ($49.99):** For multi-site afterschool franchises, summer camps, and community organizations running several instructors. Team collaboration, custom school-branded printables, and bulk licensing of smart board games.
+- **Summer Special:** A seasonal offer for camp season. Promo codes are managed in Stripe, so offers can change mid-term without a redeploy.
 - **B2B Integration Partners:** Direct API licensing for educational publishers to dynamically turn static textbooks into interactive, student-ready smart board activities.
 
 ---
