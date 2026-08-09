@@ -33,7 +33,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </h1>
 
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans font-normal">
-              Lyra automatically restructures dense science articles, raw textbooks, and outline PDFs into classroom-ready smartboard slides, hands-on engineering labs, Nana Banana Pro visual diagrams, and interactive quizzes.
+              Lyrah automatically restructures dense science articles, raw textbooks, and outline PDFs into classroom-ready smartboard slides, hands-on engineering labs, Nana Banana Pro visual diagrams, and interactive quizzes.
             </p>
 
             <div className="pt-2 flex flex-wrap items-center gap-3">
@@ -74,17 +74,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <RobotBunnyMascot className="w-32 h-32 sm:w-36 sm:h-36" />
             <div className="mt-3 text-center">
               <span className="text-[10px] font-extrabold font-mono text-teal-900 dark:text-teal-brand bg-teal-light/60 dark:bg-teal-brand/20 px-2.5 py-1 rounded-full uppercase tracking-wide">
-                Lyra AI Co-Teacher
+                Lyrah AI Co-Teacher
               </span>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Pipeline: How Lyra Transforms Lessons */}
+      {/* Pipeline: How Lyrah Transforms Lessons */}
       <div className="bg-teal-dark text-white rounded-3xl p-8 space-y-6 shadow-sm relative overflow-hidden" id="pipeline-section">
         <div className="text-center space-y-1.5">
-          <span className="text-[10px] font-mono font-bold text-teal-brand uppercase tracking-widest">HOW LYRA TRANSFORMS LESSONS</span>
+          <span className="text-[10px] font-mono font-bold text-teal-brand uppercase tracking-widest">HOW LYRAH TRANSFORMS LESSONS</span>
           <h3 className="font-serif text-2xl font-bold text-teal-light">The Interactive Pipeline</h3>
         </div>
 
@@ -287,7 +287,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   ANNUAL PASS
                 </span>
                 <h4 className="font-serif text-2xl font-bold text-slate-900 dark:text-slate-100">Educator Yearly</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">Full annual access to all Lyra STEM AI co-teacher tools ($8.25/mo).</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">Full annual access to all Lyrah STEM AI co-teacher tools ($8.25/mo).</p>
               </div>
 
               <div className="flex items-baseline gap-1.5 pt-2">

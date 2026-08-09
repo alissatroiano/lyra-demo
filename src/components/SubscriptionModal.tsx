@@ -39,7 +39,7 @@ export default function SubscriptionModal({
         body: JSON.stringify({
           uid: user.uid,
           email: user.email,
-          plan: selectedPlan === "yearly" ? "Lyra Educator Pro (Annual)" : "Lyra Educator Pro (Monthly)",
+          plan: selectedPlan === "yearly" ? "Lyrah Educator Pro (Annual)" : "Lyrah Educator Pro (Monthly)",
           cardName,
           cardNumber,
           expDate,
@@ -79,7 +79,7 @@ export default function SubscriptionModal({
           <div className="flex items-center justify-between mb-3 pr-8">
             <div className="flex items-center gap-2.5 bg-teal-brand/20 border border-teal-brand/30 px-3 py-1 rounded-full text-xs font-bold text-teal-brand">
               <Sparkles className="w-3.5 h-3.5 text-gold-brand" />
-              <span>Lyra Pro Membership</span>
+              <span>Lyrah Pro Membership</span>
             </div>
             <div className="flex items-center gap-1.5 text-[10px] text-teal-200 bg-black/20 px-2.5 py-1 rounded-md font-mono">
               <Lock className="w-3 h-3 text-teal-brand" />
@@ -88,7 +88,7 @@ export default function SubscriptionModal({
           </div>
 
           <h2 className="text-2xl sm:text-3xl font-serif font-bold tracking-tight">
-            Unlock Full Access to Lyra
+            Unlock Full Access to Lyrah
           </h2>
           <p className="text-xs sm:text-sm text-teal-100/90 mt-2 font-sans leading-relaxed">
             Please sign in and activate your educator subscription to build interactive STEM lesson decks, worksheets, smartboard quizzes, and AI co-teacher tools.
@@ -105,7 +105,7 @@ export default function SubscriptionModal({
               <div>
                 <h3 className="font-serif font-bold text-amber-950 dark:text-amber-200 text-lg">Step 1: Sign In First</h3>
                 <p className="text-xs text-amber-900/90 dark:text-amber-300 mt-1 max-w-md mx-auto">
-                  You must be logged in to connect your Stripe subscription to your Lyra account.
+                  You must be logged in to connect your Stripe subscription to your Lyrah account.
                 </p>
               </div>
               <button

@@ -40,6 +40,8 @@ import {
   Briefcase,
   HelpCircle as HelpIcon,
   ShieldAlert,
+  AlertTriangle,
+  CheckCircle2,
   Terminal,
   Video,
   Music,
@@ -56,6 +58,7 @@ import {
 } from "lucide-react";
 import { PRELOADED_LESSONS } from "./data/preloadedLessons";
 import { INITIAL_PROCESSED_LESSON } from "./data/initialProcessedLesson";
+import { CATEGORY_SUPPLIES } from "./data/categorySupplies";
 import { ProcessedLesson, PreloadedLesson } from "./types";
 import { useFirebase } from "./context/FirebaseContext";
 import SubscriptionModal from "./components/SubscriptionModal";
@@ -348,6 +351,38 @@ export default function App() {
     });
   };
 
+  // Active supply category key based on selected category and sub-focus
+  const activeSupplyCategoryKey = React.useMemo(() => {
+    if (selectedCategory === "Circuitry") return "Circuitry";
+    if (selectedCategory === "Software" || selectedCategory === "Coding") return "Software";
+    if (selectedCategory === "Technology") {
+      if (selectedTechSubTypes.includes("Circuitry")) return "Circuitry";
+      if (selectedTechSubTypes.includes("Software")) return "Software";
+      if (selectedTechSubTypes.includes("Hardware")) return "Hardware";
+      return "Software";
+    }
+    if (selectedCategory === "Engineering") return "Engineering";
+    if (selectedCategory === "Art") return "Art";
+    if (selectedCategory === "Math") return "Math";
+    return "Science";
+  }, [selectedCategory, selectedTechSubTypes]);
+
+  // Available options for current category domain
+  const currentSupplyOptions = React.useMemo(() => {
+    return CATEGORY_SUPPLIES[activeSupplyCategoryKey] || CATEGORY_SUPPLIES["Science"];
+  }, [activeSupplyCategoryKey]);
+
+  // When active category key changes, supply initial default choices if switching domains
+  const prevCategoryKeyRef = React.useRef(activeSupplyCategoryKey);
+  React.useEffect(() => {
+    if (prevCategoryKeyRef.current !== activeSupplyCategoryKey) {
+      prevCategoryKeyRef.current = activeSupplyCategoryKey;
+      const available = CATEGORY_SUPPLIES[activeSupplyCategoryKey] || CATEGORY_SUPPLIES["Science"];
+      const defaultInit = available.slice(0, 3).map(s => s.id);
+      setSelectedSupplies(defaultInit);
+    }
+  }, [activeSupplyCategoryKey]);
+
   // Prototype Carousel & Zoom Modal States for Google Search Grounded build examples
   const [prototypeCarouselIndex, setPrototypeCarouselIndex] = useState<number>(0);
   const [zoomedPrototypeImage, setZoomedPrototypeImage] = useState<{ url: string; title: string; caption: string; searchUrl: string } | null>(null);
@@ -355,11 +390,11 @@ export default function App() {
   // Helper to format supply selections into a clean comma-separated string
   const getFormattedSupplies = React.useCallback(() => {
     const list = selectedSupplies
-      .map(s => s === "Other" ? (customSuppliesInput.trim() || "Custom Supplies") : s)
+      .map(s => s === "Other" ? (customSuppliesInput.trim() || "Custom Tools / Software") : s)
       .filter(Boolean);
-    const techSpecs = selectedCategory === "Technology" ? ` [Tech Focus: ${selectedTechSubTypes.join(", ")}]` : "";
-    return (list.length > 0 ? list.join(", ") : "Standard Classroom Supplies") + techSpecs;
-  }, [selectedSupplies, customSuppliesInput, selectedCategory, selectedTechSubTypes]);
+    const domainLabel = ` [Category Domain: ${activeSupplyCategoryKey}]`;
+    return (list.length > 0 ? list.join(", ") : "Standard Classroom Supplies") + domainLabel;
+  }, [selectedSupplies, customSuppliesInput, activeSupplyCategoryKey]);
 
   // Detect if current lesson is a coding / computer science / Scratch / Python curriculum
   const isCodingLesson = React.useMemo(() => {
@@ -1175,7 +1210,7 @@ export default function App() {
             data.extractedStyleNotes
           );
         } catch (saveNotesErr) {
-          console.error("Autosaving Lyra's extracted style notes failed:", saveNotesErr);
+          console.error("Autosaving Lyrah's extracted style notes failed:", saveNotesErr);
         }
       }
 
@@ -1462,7 +1497,7 @@ export default function App() {
               </div>
               <div>
                 <span className="font-serif text-xl sm:text-2xl font-semibold tracking-tight text-teal-dark dark:text-teal-brand">
-                  Lyra<span className="text-teal-brand font-sans">.</span>
+                  Lyrah<span className="text-teal-brand font-sans">.</span>
                 </span>
                 <p className="text-[9px] sm:text-[10px] text-secondary dark:text-slate-400 font-sans tracking-wide leading-none hidden xs:block">Afterschool STEM Copilot</p>
               </div>
@@ -1747,7 +1782,7 @@ export default function App() {
                 Your AI copilot for <span className="text-teal-800 dark:text-teal-brand underline decoration-teal-brand/40 underline-offset-4">STEM lesson prep</span>
               </h1>
               <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-sans font-normal">
-                Lyra turns long, messy science articles and PDF textbooks into beautiful interactive slide decks, hands-on lab guides, printable worksheets, and broken media link backups instantly.
+                Lyrah turns long, messy science articles and PDF textbooks into beautiful interactive slide decks, hands-on lab guides, printable worksheets, and broken media link backups instantly.
               </p>
             </div>
 
@@ -2019,7 +2054,9 @@ export default function App() {
                     {[
                       { id: "Science", label: "Science", icon: "🔬" },
                       { id: "Technology", label: "Technology", icon: "💻" },
-                      { id: "Engineering", label: "Engineering", icon: "⚙️" },
+                      { id: "Circuitry", label: "Circuitry", icon: "⚡" },
+                      { id: "Software", label: "Software & Coding", icon: "⚙️" },
+                      { id: "Engineering", label: "Engineering", icon: "🛠️" },
                       { id: "Art", label: "Art", icon: "🎨" },
                       { id: "Math", label: "Math", icon: "📐" }
                     ].map((cat) => (
@@ -2053,9 +2090,9 @@ export default function App() {
                       </div>
                       <div className="flex flex-wrap gap-1.5 pt-1">
                         {[
-                          { id: "Hardware", label: "Hardware", icon: "💻", desc: "Robotics, microcontrollers, 3D printing" },
-                          { id: "Software", label: "Software", icon: "⚙️", desc: "Block coding, Python, app logic" },
-                          { id: "Circuitry", label: "Circuitry", icon: "⚡", desc: "Breadboards, sensors, conductive circuits" }
+                          { id: "Hardware", label: "Hardware & Robotics", icon: "💻", desc: "Robotics, microcontrollers, 3D printing" },
+                          { id: "Software", label: "Software & Coding", icon: "⚙️", desc: "Scratch JR, Scratch, Minecraft, EduBlocks, Python" },
+                          { id: "Circuitry", label: "Circuitry & Electronics", icon: "⚡", desc: "DC motors, LEDs, breadboards, conductive circuits" }
                         ].map((techType) => {
                           const isSelected = selectedTechSubTypes.includes(techType.id);
                           return (
@@ -2113,42 +2150,66 @@ export default function App() {
                   )}
                 </div>
 
-                {/* Available Supplies */}
-                <div className="space-y-1">
+                {/* Available Supplies & Example Technologies (Dynamic based on Category & Focus) */}
+                <div className="space-y-2 sm:col-span-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-secondary dark:text-slate-300 uppercase font-sans">Available Supplies</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-secondary dark:text-slate-300 uppercase font-sans">
+                        {activeSupplyCategoryKey === "Software" ? "Available Software & Platforms" : "Available Supplies & Components"}
+                      </span>
+                      <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-md bg-teal-brand/20 text-teal-dark dark:text-teal-brand border border-teal-brand/30">
+                        Domain: {activeSupplyCategoryKey}
+                      </span>
+                    </div>
                     <span className="text-[9px] text-slate-400 font-mono">Select all that apply</span>
                   </div>
+
                   <div className="flex flex-wrap gap-1.5">
-                    {["Smart Board", "Chromebooks", "Tablets", "Art Supplies", "Low Tech (Paper Only)", "Other"].map((val) => {
-                      const isSelected = selectedSupplies.includes(val);
+                    {currentSupplyOptions.map((opt) => {
+                      const isSelected = selectedSupplies.includes(opt.id);
                       return (
                         <button
-                          key={val}
+                          key={opt.id}
                           type="button"
-                          onClick={() => toggleSupply(val)}
-                          className={`text-[10px] px-2.5 py-1 rounded-md font-sans font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                          onClick={() => toggleSupply(opt.id)}
+                          title={opt.description || opt.label}
+                          className={`text-xs px-2.5 py-1.5 rounded-xl font-sans font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
                             isSelected 
-                              ? "bg-teal-dark dark:bg-teal-brand text-white dark:text-slate-950 shadow-3xs scale-[1.02]" 
-                              : "bg-white dark:bg-slate-800 text-secondary dark:text-slate-300 border border-black/[0.08] dark:border-slate-700 hover:border-teal-brand/30"
+                              ? "bg-teal-dark dark:bg-teal-brand text-white dark:text-slate-950 border-teal-brand shadow-3xs micro-glow-teal scale-[1.02]" 
+                              : "bg-white dark:bg-slate-800 text-secondary dark:text-slate-300 border-black/[0.08] dark:border-slate-700 hover:border-teal-brand/30"
                           }`}
                         >
-                          <span>{isSelected ? "✓" : "+"}</span>
-                          <span>{val}</span>
+                          <span>{opt.icon}</span>
+                          <span>{opt.label}</span>
+                          {isSelected ? <Check className="w-3.5 h-3.5 text-teal-brand dark:text-slate-950 font-bold" /> : <span className="text-slate-400 text-[10px]">+</span>}
                         </button>
                       );
                     })}
                   </div>
 
+                  {/* Custom Supply / Software Input if "Other" is selected */}
                   {selectedSupplies.includes("Other") && (
-                    <div className="pt-1.5 animate-fade-in">
+                    <div className="pt-2 space-y-2 animate-fade-in">
                       <input
                         type="text"
-                        placeholder="Type custom supplies (e.g. 3D Printer, Lego Robotics, Clay, Scissors)"
+                        placeholder={
+                          activeSupplyCategoryKey === "Software"
+                            ? "Type custom software/platform (e.g., Godot, Scratch JR, Scratch 3.0, Roblox, App Inventor)"
+                            : activeSupplyCategoryKey === "Circuitry"
+                            ? "Type custom circuitry/components (e.g., 555 Timer, Solar Panel, Transistors, 9V Motor)"
+                            : "Type custom tools/materials (e.g., 3D Printer, Lego Robotics, Clay, Water Pumps)"
+                        }
                         value={customSuppliesInput}
                         onChange={(e) => setCustomSuppliesInput(e.target.value)}
-                        className="text-xs px-3 py-1.5 border border-teal-brand/40 rounded-xl bg-white dark:bg-slate-800 w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-teal-brand/20 focus:border-teal-brand font-sans text-teal-dark dark:text-teal-brand font-medium shadow-3xs"
+                        className="text-xs px-3.5 py-2 border border-teal-brand/50 rounded-xl bg-white dark:bg-slate-800 w-full focus:outline-none focus:ring-2 focus:ring-teal-brand/30 focus:border-teal-brand font-sans text-teal-dark dark:text-teal-brand font-semibold shadow-3xs"
                       />
+
+                      <div className="p-2.5 bg-sky-50 dark:bg-sky-950/40 border border-sky-300/40 dark:border-sky-800 rounded-xl text-[10px] text-sky-900 dark:text-sky-200 font-sans flex items-start gap-2">
+                        <Search className="w-3.5 h-3.5 text-sky-500 shrink-0 mt-0.5" />
+                        <p className="leading-snug">
+                          <strong>🔍 Google Search Grounding Active:</strong> Lyrah will search Google using <em>"{activeSupplyCategoryKey}"</em> + your custom keywords from the lesson plan to create, research real data on, and perfect the most realistic solution with technical feasibility checks & alternatives.
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -2216,13 +2277,13 @@ export default function App() {
                   )}
                 </div>
 
-                {/* Lyra's Memory Profile & AI Insights */}
+                {/* Lyrah's Memory Profile & AI Insights */}
                 {user ? (
                   <div className="bg-teal-50/60 dark:bg-teal-brand/10 border border-teal-brand/20 dark:border-teal-brand/30 rounded-xl p-3 space-y-1.5 animate-fadeIn">
                     <div className="flex items-center gap-1.5">
                       <Brain className="w-3.5 h-3.5 text-teal-700 dark:text-teal-brand animate-pulse" />
                       <span className="text-[9px] font-bold text-teal-900 dark:text-teal-brand uppercase tracking-wider font-sans">
-                        Lyra's Memory of You
+                        Lyrah's Memory of You
                       </span>
                     </div>
                     {profile?.instructorNotes ? (
@@ -2231,18 +2292,18 @@ export default function App() {
                           "I've learned that you focus on: <span className="font-semibold text-teal-900 dark:text-teal-brand">{profile.instructorNotes}</span>"
                         </p>
                         <span className="text-[8px] text-teal-700 dark:text-teal-brand font-medium block">
-                          💡 Lyra automatically synthesizes these pedagogical preferences into new plans.
+                          💡 Lyrah automatically synthesizes these pedagogical preferences into new plans.
                         </span>
                       </div>
                     ) : (
                       <p className="text-[9px] text-slate-600 dark:text-slate-400 italic font-sans leading-normal">
-                        Generate a lesson to activate. Lyra will observe your input patterns and custom instructions to learn your style.
+                        Generate a lesson to activate. Lyrah will observe your input patterns and custom instructions to learn your style.
                       </p>
                     )}
                   </div>
                 ) : (
                   <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl p-2.5 text-[9px] text-amber-950 dark:text-amber-200 leading-normal font-sans font-medium">
-                    🔒 <span className="font-bold">Sign In</span> to enable Lyra's adaptive memory. Lyra will save your instructions and learn your pedagogical style across sessions!
+                    🔒 <span className="font-bold">Sign In</span> to enable Lyrah's adaptive memory. Lyrah will save your instructions and learn your pedagogical style across sessions!
                   </div>
                 )}
               </div>
@@ -2864,6 +2925,105 @@ export default function App() {
                         </div>
                       )}
 
+                      {/* Technical Feasibility Audit & Grounded Alternatives Section */}
+                      {lesson.feasibilityAudit && (
+                        <div className="bg-amber-50/80 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-700/60 rounded-2xl p-5 space-y-4 shadow-xs relative overflow-hidden mt-4">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-200 dark:border-amber-800/80 pb-3">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0">
+                                <ShieldAlert className="w-4.5 h-4.5" />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h4 className="text-xs font-bold font-sans uppercase text-amber-950 dark:text-amber-200 tracking-wide">
+                                    Lyrah Technical Feasibility & Alternatives Audit
+                                  </h4>
+                                  <span className="text-[9px] font-mono font-bold px-2.5 py-0.5 bg-amber-500/20 text-amber-900 dark:text-amber-300 rounded-full border border-amber-500/30">
+                                    {lesson.feasibilityAudit.status}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-amber-900/80 dark:text-amber-300/80 font-sans">
+                                  Grounded evaluation of component limits, voltage/current requirements, software block logic, or physical failure risks
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Original Solution Evaluation */}
+                          <div className="p-3 bg-white/80 dark:bg-slate-900/80 border border-amber-200/80 dark:border-amber-800/50 rounded-xl space-y-1">
+                            <h5 className="text-[11px] font-bold font-sans text-amber-950 dark:text-amber-200 uppercase flex items-center gap-1.5">
+                              <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                              Instructor Solution Evaluation
+                            </h5>
+                            <p className="text-xs text-amber-900 dark:text-amber-300/90 leading-relaxed font-sans">
+                              {lesson.feasibilityAudit.originalSolutionEvaluation}
+                            </p>
+                          </div>
+
+                          {/* Potential Failure Points */}
+                          {lesson.feasibilityAudit.potentialFailurePoints && lesson.feasibilityAudit.potentialFailurePoints.length > 0 && (
+                            <div className="space-y-1.5">
+                              <h5 className="text-[11px] font-bold font-sans text-red-900 dark:text-red-300 uppercase flex items-center gap-1.5">
+                                <span>⚠️ Potential Classroom Failure Points</span>
+                              </h5>
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                {lesson.feasibilityAudit.potentialFailurePoints.map((point, pIdx) => (
+                                  <div key={pIdx} className="p-2.5 bg-red-50/70 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 rounded-xl text-xs text-red-900 dark:text-red-200 font-sans flex items-start gap-1.5">
+                                    <span className="text-red-500 font-bold shrink-0">•</span>
+                                    <span className="leading-tight">{point}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Recommended Alternatives */}
+                          {lesson.feasibilityAudit.recommendedAlternatives && lesson.feasibilityAudit.recommendedAlternatives.length > 0 && (
+                            <div className="space-y-2 pt-1">
+                              <h5 className="text-[11px] font-bold font-sans text-emerald-950 dark:text-emerald-300 uppercase flex items-center gap-1.5">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                                Recommended Realistic Alternatives (Grounded Solutions)
+                              </h5>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {lesson.feasibilityAudit.recommendedAlternatives.map((alt, aIdx) => (
+                                  <div key={aIdx} className="p-3 bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-300/70 dark:border-emerald-800/60 rounded-xl space-y-1">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-xs font-bold text-emerald-950 dark:text-emerald-200 font-sans">{alt.title}</span>
+                                      <span className="text-[9px] font-mono px-2 py-0.5 bg-emerald-500/20 text-emerald-900 dark:text-emerald-300 rounded font-semibold">
+                                        Tested Solution
+                                      </span>
+                                    </div>
+                                    <p className="text-xs text-emerald-900 dark:text-emerald-300/90 leading-snug font-sans">
+                                      {alt.description}
+                                    </p>
+                                    <div className="pt-1.5 text-[10px] text-emerald-800 dark:text-emerald-400 font-sans font-medium flex items-center gap-1 border-t border-emerald-200/60 dark:border-emerald-800/40 mt-1.5">
+                                      <span className="font-bold uppercase text-[9px]">Why it works better:</span> {alt.whyItWorksBetter}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Safety and Troubleshooting Tips */}
+                          {lesson.feasibilityAudit.safetyAndTroubleshootingTips && lesson.feasibilityAudit.safetyAndTroubleshootingTips.length > 0 && (
+                            <div className="p-3 bg-slate-900/90 dark:bg-slate-950 text-slate-100 rounded-xl space-y-1.5">
+                              <h5 className="text-[11px] font-bold font-sans text-teal-brand uppercase flex items-center gap-1.5">
+                                <span>🛠️ Live Classroom Troubleshooting Checklist</span>
+                              </h5>
+                              <ul className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-slate-300 font-sans">
+                                {lesson.feasibilityAudit.safetyAndTroubleshootingTips.map((tip, tIdx) => (
+                                  <li key={tIdx} className="flex items-start gap-1.5 bg-slate-800/60 p-2 rounded-lg border border-slate-700/50">
+                                    <span className="text-teal-brand font-bold shrink-0">✓</span>
+                                    <span className="leading-tight text-[11px]">{tip}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
                     </div>
                   </motion.div>
                 )}
@@ -3205,7 +3365,7 @@ export default function App() {
 
         {/* Minimal professional footer */}
         <footer className="px-6 sm:px-8 pt-8 mt-auto border-t border-black/[0.05] text-center text-[10px] text-secondary font-sans leading-normal space-y-1">
-          <p>© 2026 Lyra STEM - Immersive Lesson Plan Transformation Suite. All rights reserved.</p>
+          <p>© 2026 Lyrah STEM - Immersive Lesson Plan Transformation Suite. All rights reserved.</p>
           <p className="text-[9px] text-secondary/75">Designed in partnership with XPRIZE Education Initiative for high-yield classroom activities.</p>
         </footer>
 
@@ -3222,7 +3382,7 @@ export default function App() {
           />
         )}
 
-        {/* Floating Sparkle Icon for Lyra AI Co-Teacher Popup */}
+        {/* Floating Sparkle Icon for Lyrah AI Co-Teacher Popup */}
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
           {copilotOpen && (
             <motion.div
@@ -3239,7 +3399,7 @@ export default function App() {
                     <Sparkles className="w-4 h-4 animate-pulse" />
                   </div>
                   <div>
-                    <h3 className="text-xs font-bold font-sans uppercase tracking-wide">Lyra AI Co-Teacher</h3>
+                    <h3 className="text-xs font-bold font-sans uppercase tracking-wide">Lyrah AI Co-Teacher</h3>
                     <p className="text-[10px] text-teal-light/80 font-sans">Active Lesson Partner & Adaptations Assistant</p>
                   </div>
                 </div>
@@ -3278,7 +3438,7 @@ export default function App() {
           >
             <Sparkles className={`w-5 h-5 text-amber-300 ${copilotOpen ? "" : "animate-spin-slow"}`} />
             <span className="font-sans font-bold text-xs pr-0.5">
-              {copilotOpen ? "Close Lyra AI" : "Ask Lyra AI"}
+              {copilotOpen ? "Close Lyrah AI" : "Ask Lyrah AI"}
             </span>
             {!copilotOpen && (
               <span className="relative flex h-2.5 w-2.5">

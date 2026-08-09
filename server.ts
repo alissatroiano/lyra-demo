@@ -143,17 +143,23 @@ app.post("/api/process-lesson", async (req, res) => {
   }
 
   try {
-    const systemInstruction = `You are an expert STEM Curriculum Developer and Instructional Designer. 
-Your job is to take raw, verbose, long, or wordy lesson plans (or simple descriptions of topics) and transform them into an IMMERSIVE, highly interactive, and visually engaging educational lesson experience for Afterschool STEM Instructors and children (ages 6-14).
+    const systemInstruction = `You are Lyrah, an expert STEM Curriculum Developer and Instructional Designer. 
+Your job is to take raw, verbose, long, or wordy lesson plans (or simple descriptions of topics/materials) and transform them into an IMMERSIVE, highly interactive, and visually engaging educational lesson experience for Afterschool STEM Instructors and children (ages 6-14).
 
 Core requirements for your response:
 1. CONDENSE: Turn walls of text into clean, high-impact key takeaways.
 2. ENGAGE: Design an elegant slide deck outline where each slide has a clear visual concept, bulleted core insights, and teacher tips (notes on how to explain it).
 3. ALIGNED DEMONSTRATION & LAB: Create an exciting, safe, and highly visual hands-on activity or experiment that DIRECTLY mirrors and reinforces the core key Takeaways from the Interactive Slides and the assessment questions from the Smartboard Quiz.
-4. CODING LESSON ADAPTATION: If the input lesson involves computer science, coding, Scratch, Scratch JR, Minecraft, EduBlocks, Thunkable, Python, algorithms, robotics, or web logic, explicitly identify the software platform (e.g. "Scratch JR", "Scratch 3.0", "Minecraft Education", "EduBlocks", "Thunkable", "Code.org", "Python", "Micro:bit") and frame the handsOnActivity as a CODING LAB & BLOCK SEQUENCE.
-5. ASSESS: Generate an interactive, child-friendly worksheet and a multi-question quiz.
-6. RESOLVE: Provide suggestions to resolve potentially broken links in the original document by suggesting precise YouTube/Google search queries and explaining why they are suitable.
-7. ADAPT & OBSERVE: Identify the teacher's style, preferences, and classroom parameters from their custom instructions and inputs, and output a concise, actionable one-sentence 'extractedStyleNotes' summarizing their profile (e.g., "Educator prefers low-tech hands-on building challenges with structured classroom review.").
+4. CATEGORY & SOFTWARE / CIRCUITRY SPECIFICATION:
+   - If the lesson involves software/coding (e.g. Scratch JR, Minecraft Education, Scratch 3.0, EduBlocks, Thunkable, Code.org, Python, Micro:bit, or custom "Other" software), explicitly identify the software platform and frame the handsOnActivity as a CODING LAB & BLOCK SEQUENCE.
+   - If the lesson involves Circuitry, Electronics, or Hardware (e.g. DC Motors, LED Lights, Copper Tape/Wire, Batteries, Breadboards, Alligator Clips, Sensors, Switches), specify exact components, polarity, and circuit configuration.
+   - If "Other" software or custom supplies are specified, use the Category (e.g., Circuitry, Software, Engineering) and keywords from the lesson plan to create, find real data on, and perfect the most relevant and REALISTIC solution.
+5. REAL-WORLD FEASIBILITY AUDIT & ALTERNATIVE SOLUTIONS:
+   - Always evaluate whether the uploaded or requested setup will actually work in real life! (e.g., check battery voltages vs motor requirements, check if Scratch Jr lacks certain block types like variables, check if copper tape circuits short out without resistors, check physical stress limits).
+   - If the instructor's setup is flawed, risky, missing critical parts, or unreliable, provide a grounded 'feasibilityAudit' with realistic, tested alternatives and proactive troubleshooting tips for the teacher.
+6. ASSESS: Generate an interactive, child-friendly worksheet and a multi-question quiz.
+7. RESOLVE: Provide suggestions to resolve potentially broken links in the original document by suggesting precise YouTube/Google search queries and explaining why they are suitable.
+8. ADAPT & OBSERVE: Identify the teacher's style, preferences, and classroom parameters from their custom instructions and inputs, and output a concise, actionable one-sentence 'extractedStyleNotes'.
 
 You must output a highly structured JSON object matching the defined responseSchema strictly. Do not deviate.`;
 
@@ -162,9 +168,9 @@ You must output a highly structured JSON object matching the defined responseSch
 ${lessonContent}
 ----------------------------------
 
-${customPreferences ? `Teacher's Custom Request: ${customPreferences}` : ""}
+${customPreferences ? `Teacher's Custom Request & Available Supplies/Tools: ${customPreferences}` : ""}
 
-Please convert this into a comprehensive, highly interactive lesson plan with slides, worksheets, quizzes, a hands-on activity, and media backup queries.`;
+Please convert this into a comprehensive, highly interactive lesson plan with slides, worksheets, quizzes, a hands-on activity, media backup queries, and a technical feasibility audit with realistic alternatives.`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
@@ -185,6 +191,7 @@ Please convert this into a comprehensive, highly interactive lesson plan with sl
             "quiz",
             "mediaRecommendations",
             "extractedStyleNotes",
+            "feasibilityAudit",
           ],
           properties: {
             extractedStyleNotes: {
@@ -255,6 +262,44 @@ Please convert this into a comprehensive, highly interactive lesson plan with sl
                 softwarePlatform: {
                   type: Type.STRING,
                   description: "If this lesson involves coding or software, specify the exact software (e.g. 'Scratch JR', 'Scratch 3.0', 'Minecraft Education', 'EduBlocks', 'Thunkable', 'Code.org', 'Python', 'Micro:bit').",
+                },
+              },
+            },
+            feasibilityAudit: {
+              type: Type.OBJECT,
+              description: "Evaluation of the technical, physical, or software feasibility of the lesson setup. Identifies potential failure points and provides realistic, search-grounded alternatives.",
+              required: ["status", "originalSolutionEvaluation", "potentialFailurePoints", "recommendedAlternatives", "safetyAndTroubleshootingTips"],
+              properties: {
+                status: {
+                  type: Type.STRING,
+                  description: "E.g. 'Feasible & Grounded Solution', 'Resistor & Battery Voltage Fix Required', 'Scratch Jr Block Alternative Provided'.",
+                },
+                originalSolutionEvaluation: {
+                  type: Type.STRING,
+                  description: "Technical review of the proposed circuit, software block setup, or physical engineering model.",
+                },
+                potentialFailurePoints: {
+                  type: Type.ARRAY,
+                  items: { type: Type.STRING },
+                  description: "List of specific things that might go wrong during the live classroom demo or build.",
+                },
+                recommendedAlternatives: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    required: ["title", "description", "whyItWorksBetter"],
+                    properties: {
+                      title: { type: Type.STRING, description: "Name of the realistic alternative solution." },
+                      description: { type: Type.STRING, description: "Clear explanation of the tested, reliable setup or code approach." },
+                      whyItWorksBetter: { type: Type.STRING, description: "Why this alternative guarantees a successful classroom outcome." },
+                    },
+                  },
+                  description: "1-3 tested, realistic alternative setups or software platforms if the original solution is flawed or hard to obtain.",
+                },
+                safetyAndTroubleshootingTips: {
+                  type: Type.ARRAY,
+                  items: { type: Type.STRING },
+                  description: "Practical troubleshooting tips for the instructor when students encounter bugs or hardware issues.",
                 },
               },
             },
@@ -547,7 +592,7 @@ app.post("/api/chat", async (req, res) => {
       tools.push({ googleSearch: {} });
     }
 
-    const baseSysInst = systemInstruction || "You are Lyra, a friendly, energetic, encouraging, and innovative AI teaching copilot.";
+    const baseSysInst = systemInstruction || "You are Lyrah, a friendly, energetic, encouraging, and innovative AI teaching copilot.";
     const fullSystemInstruction = `${baseSysInst}\n\n[SVG Diagram Rule]: Only generate or output raw inline SVG diagrams (<svg>...</svg>) if the user query or active demo path visibly depends on text-generated vector visuals. Otherwise, stick to clean Markdown text formatting and structured explanations.`;
 
     const config: any = {
@@ -780,7 +825,7 @@ async function setupServer() {
           speechConfig: {
             voiceConfig: { prebuiltVoiceConfig: { voiceName: "Zephyr" } },
           },
-          systemInstruction: "You are Lyra, a supportive, energetic, and child-centric AI teaching co-pilot. Respond directly, conversationally, and concisely as if you are talking live with an instructor in a classroom. Give brief 1-2 sentence replies.",
+          systemInstruction: "You are Lyrah, a supportive, energetic, and child-centric AI teaching co-pilot. Respond directly, conversationally, and concisely as if you are talking live with an instructor in a classroom. Give brief 1-2 sentence replies.",
         },
         callbacks: {
           onmessage: (message: LiveServerMessage) => {
