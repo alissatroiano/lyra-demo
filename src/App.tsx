@@ -269,11 +269,36 @@ export default function App() {
 
   // Expandable Panel states
   const [isUploadExpanded, setIsUploadExpanded] = useState<boolean>(true);
-  const [isVaultExpanded, setIsVaultExpanded] = useState<boolean>(true);
+  const [isVaultExpanded, setIsVaultExpanded] = useState<boolean>(false);
   const [isCurriculumSuiteExpanded, setIsCurriculumSuiteExpanded] = useState<boolean>(true);
 
   // Deleting lesson ID state
   const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
+
+  // Helper to format saved lesson dates
+  const formatSavedDate = (createdAt: any) => {
+    if (!createdAt) return "Recent";
+    if (createdAt.seconds) {
+      const d = new Date(createdAt.seconds * 1000);
+      return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+    }
+    if (typeof createdAt === "string" || typeof createdAt === "number") {
+      const d = new Date(createdAt);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      }
+    }
+    return "Saved";
+  };
+
+  // Sorted saved lessons memo (sorted by date descending)
+  const sortedSavedLessons = React.useMemo(() => {
+    return [...savedLessons].sort((a, b) => {
+      const timeA = a.createdAt?.seconds ? a.createdAt.seconds * 1000 : (a.createdAt ? new Date(a.createdAt).getTime() : 0);
+      const timeB = b.createdAt?.seconds ? b.createdAt.seconds * 1000 : (b.createdAt ? new Date(b.createdAt).getTime() : 0);
+      return timeB - timeA;
+    });
+  }, [savedLessons]);
 
   // Interactive Chip parameters state (for easy configuration)
   const [selectedCategory, setSelectedCategory] = useState<string>("Science");
@@ -1106,122 +1131,281 @@ export default function App() {
       <div className={`w-full ${isDarkMode ? "bg-[#0f172a] text-slate-100" : "bg-white text-primary"} min-h-screen flex flex-col pb-16 px-3 sm:px-6 lg:px-10 xl:px-12 transition-colors duration-300`}>
         
         {/* Navigation Bar (ly-nav) */}
-        <nav className={`px-3 sm:px-6 py-3 sm:py-4 border-b flex items-center justify-between gap-2.5 sm:gap-4 backdrop-blur-md sticky top-0 z-30 transition-all -mx-3 sm:-mx-6 lg:-mx-10 xl:-mx-12 px-3 sm:px-6 lg:px-10 xl:px-12 ${
-          isDarkMode ? "border-slate-800/80 bg-slate-900/85 liquid-glass-dark" : "border-black/[0.09] bg-white/85 liquid-glass-light"
+        <nav className={`px-3 sm:px-6 py-3 border-b flex flex-col gap-2 backdrop-blur-md sticky top-0 z-30 transition-all -mx-3 sm:-mx-6 lg:-mx-10 xl:-mx-12 px-3 sm:px-6 lg:px-10 xl:px-12 ${
+          isDarkMode ? "border-slate-800/80 bg-slate-900/90 liquid-glass-dark" : "border-black/[0.09] bg-white/90 liquid-glass-light"
         }`}>
-          <div 
-            className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink-0"
-            onClick={() => setCurrentView("landing")}
-          >
-            {/* Mascot in mini logo format */}
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center shrink-0 border border-teal-brand/30 group-hover:scale-105 transition-transform micro-glow-teal">
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-teal-brand" />
+          {/* Top Row: Logo & Primary Actions */}
+          <div className="flex items-center justify-between gap-2.5 sm:gap-4 w-full">
+            <div 
+              className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink-0"
+              onClick={() => setCurrentView("landing")}
+            >
+              {/* Mascot in mini logo format */}
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center shrink-0 border border-teal-brand/30 group-hover:scale-105 transition-transform micro-glow-teal">
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-teal-brand" />
+              </div>
+              <div>
+                <span className="font-serif text-xl sm:text-2xl font-semibold tracking-tight text-teal-dark dark:text-teal-brand">
+                  Lyra<span className="text-teal-brand font-sans">.</span>
+                </span>
+                <p className="text-[9px] sm:text-[10px] text-secondary dark:text-slate-400 font-sans tracking-wide leading-none hidden xs:block">Afterschool STEM Copilot</p>
+              </div>
             </div>
-            <div>
-              <span className="font-serif text-xl sm:text-2xl font-semibold tracking-tight text-teal-dark dark:text-teal-brand">
-                Lyra<span className="text-teal-brand font-sans">.</span>
-              </span>
-              <p className="text-[9px] sm:text-[10px] text-secondary dark:text-slate-400 font-sans tracking-wide leading-none hidden xs:block">Afterschool STEM Copilot</p>
+
+            {/* Nav Actions */}
+            <div className="flex items-center gap-1.5 sm:gap-3">
+              {/* Fixed Top Navbar Link: My Lessons Vault Toggle */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (currentView !== "studio") {
+                    setCurrentView("studio");
+                  }
+                  setIsVaultExpanded(prev => !prev);
+                }}
+                className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[38px] border ${
+                  isVaultExpanded
+                    ? "bg-teal-brand text-slate-950 border-teal-brand shadow-3xs"
+                    : isDarkMode 
+                      ? "bg-slate-800 text-teal-brand border-slate-700 hover:bg-slate-700 hover:border-teal-brand/40" 
+                      : "bg-teal-light/60 text-teal-dark border-teal-brand/30 hover:bg-teal-light hover:border-teal-brand/50"
+                }`}
+                title="Toggle Firebase Cloud Storage Vault sticky-pad"
+              >
+                <Cloud className="w-3.5 h-3.5" />
+                <span>My Lessons</span>
+                {user && savedLessons.length > 0 && (
+                  <span className={`px-1.5 py-0.2 font-mono text-[9px] font-extrabold rounded-full ${
+                    isVaultExpanded ? "bg-slate-950 text-teal-brand" : "bg-teal-brand text-slate-950"
+                  }`}>
+                    {savedLessons.length}
+                  </span>
+                )}
+              </button>
+
+              {/* 2026 Cyber STEM Lab Theme Switcher */}
+              <button
+                type="button"
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                className={`p-2 rounded-xl border transition-all cursor-pointer flex items-center justify-center shrink-0 min-h-[38px] ${
+                  isDarkMode 
+                    ? "bg-slate-800 text-amber-300 border-slate-700 hover:border-amber-400 micro-glow-amber" 
+                    : "bg-surface-1 text-teal-dark border-black/[0.08] hover:border-teal-brand/40"
+                }`}
+                title={isDarkMode ? "Switch to Studio Light Theme" : "Switch to 2026 Cyber Lab Dark Theme"}
+              >
+                {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+
+              {profile?.isSubscribed ? (
+                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-600/50 text-emerald-800 dark:text-emerald-300 font-bold text-xs rounded-full shadow-3xs micro-glow-emerald">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>Pro Member</span>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowSubscriptionModal(true)}
+                  className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 font-extrabold text-xs rounded-full shadow-3xs hover:shadow-xs transition-all cursor-pointer border border-amber-300/60 micro-glow-amber min-h-[38px]"
+                >
+                  <Crown className="w-3.5 h-3.5 text-slate-950 shrink-0" />
+                  <span>Upgrade</span>
+                </button>
+              )}
+
+              {authLoading ? (
+                <div className="w-5 h-5 border-2 border-teal-brand border-t-transparent rounded-full animate-spin" />
+              ) : user ? (
+                <div className={`flex items-center gap-1.5 sm:gap-2 p-1 pr-2.5 sm:pr-3 rounded-full border shadow-3xs text-xs ${
+                  isDarkMode ? "bg-slate-800 border-slate-700 text-slate-200" : "bg-surface-1 border-black/[0.05]"
+                }`}>
+                  {user.photoURL ? (
+                    <img referrerPolicy="no-referrer" src={user.photoURL} alt={user.displayName || 'Educator'} className="w-6 h-6 sm:w-6.5 sm:h-6.5 rounded-full object-cover border border-teal-brand/20" />
+                  ) : (
+                    <div className="w-6 h-6 sm:w-6.5 sm:h-6.5 rounded-full bg-teal-dark text-white flex items-center justify-center font-bold text-[10px]">
+                      {user.displayName?.[0]?.toUpperCase() || 'E'}
+                    </div>
+                  )}
+                  <span className="font-sans font-medium text-teal-dark dark:text-teal-brand max-w-[70px] sm:max-w-[100px] truncate hidden sm:inline">{user.displayName?.split(" ")[0]}</span>
+                  <button
+                    type="button"
+                    onClick={logOut}
+                    className="ml-0.5 text-[10px] text-red-600 dark:text-red-400 hover:text-red-700 font-bold transition-all px-1.5 py-0.5 rounded-md hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
+                    title="Sign Out"
+                  >
+                    Exit
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSignInAndRedirect}
+                  className="px-3 sm:px-3.5 py-1.5 bg-teal-dark hover:bg-opacity-95 text-white rounded-full text-xs font-bold transition-all shadow-3xs flex items-center gap-1.5 cursor-pointer micro-glow-teal min-h-[38px]"
+                >
+                  <LogIn className="w-3.5 h-3.5 text-teal-brand" />
+                  <span>Sign In</span>
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Nav Actions */}
-          <div className="flex items-center gap-1.5 sm:gap-3">
-            {/* Fixed Top Navbar Link: My Lessons Vault */}
-            <button
-              type="button"
-              onClick={() => {
-                if (currentView !== "studio") {
-                  setCurrentView("studio");
-                }
-                setTimeout(() => {
-                  const el = document.getElementById("my-lessons-vault");
-                  if (el) {
-                    el.scrollIntoView({ behavior: "smooth" });
-                  } else if (!user) {
-                    handleSignInAndRedirect();
-                  }
-                }, 100);
-              }}
-              className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[38px] border ${
-                isDarkMode 
-                  ? "bg-slate-800 text-teal-brand border-slate-700 hover:bg-slate-700 hover:border-teal-brand/40" 
-                  : "bg-teal-light/60 text-teal-dark border-teal-brand/30 hover:bg-teal-light hover:border-teal-brand/50"
-              }`}
-              title="View your saved lessons in Firebase Cloud Storage"
-            >
-              <Cloud className="w-3.5 h-3.5 text-teal-brand" />
-              <span>My Lessons</span>
-              {user && savedLessons.length > 0 && (
-                <span className="px-1.5 py-0.2 bg-teal-brand text-slate-950 font-mono text-[9px] font-extrabold rounded-full">
-                  {savedLessons.length}
-                </span>
-              )}
-            </button>
-
-            {/* 2026 Cyber STEM Lab Theme Switcher */}
-            <button
-              type="button"
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className={`p-2 rounded-xl border transition-all cursor-pointer flex items-center justify-center shrink-0 min-h-[38px] ${
-                isDarkMode 
-                  ? "bg-slate-800 text-amber-300 border-slate-700 hover:border-amber-400 micro-glow-amber" 
-                  : "bg-surface-1 text-teal-dark border-black/[0.08] hover:border-teal-brand/40"
-              }`}
-              title={isDarkMode ? "Switch to Studio Light Theme" : "Switch to 2026 Cyber Lab Dark Theme"}
-            >
-              {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-
-            {profile?.isSubscribed ? (
-              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-600/50 text-emerald-800 dark:text-emerald-300 font-bold text-xs rounded-full shadow-3xs micro-glow-emerald">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>Pro Member</span>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setShowSubscriptionModal(true)}
-                className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 font-extrabold text-xs rounded-full shadow-3xs hover:shadow-xs transition-all cursor-pointer border border-amber-300/60 micro-glow-amber min-h-[38px]"
+          {/* Row 2: Secondary Header Row directly below user's logged in name for Firebase Cloud Storage Vault */}
+          <div className="w-full flex justify-end pt-1 border-t border-black/[0.05] dark:border-slate-800/80">
+            <div className="w-full max-w-sm sm:max-w-md relative" id="my-lessons-vault">
+              {/* Sticky-pad Bar Header */}
+              <div
+                onClick={() => setIsVaultExpanded(!isVaultExpanded)}
+                className="flex items-center justify-between p-2 sm:p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 cursor-pointer select-none hover:bg-slate-850 hover:border-teal-brand/40 transition-all shadow-xs group"
               >
-                <Crown className="w-3.5 h-3.5 text-slate-950 shrink-0" />
-                <span>Upgrade</span>
-              </button>
-            )}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-[10px] font-bold font-mono tracking-wider text-teal-brand uppercase bg-teal-brand/20 border border-teal-brand/30 px-2 py-0.5 rounded-md flex items-center gap-1.5">
+                    <Cloud className="w-3.5 h-3.5 text-teal-brand" />
+                    Vault
+                  </span>
+                  <span className="text-xs font-bold font-sans text-slate-200 group-hover:text-teal-brand transition-colors">
+                    Firebase Cloud Storage
+                  </span>
+                  <span className="px-2 py-0.2 bg-teal-brand/10 text-teal-brand text-[10px] font-mono font-extrabold rounded-full border border-teal-brand/20">
+                    {savedLessons.length}
+                  </span>
+                </div>
 
-            {authLoading ? (
-              <div className="w-5 h-5 border-2 border-teal-brand border-t-transparent rounded-full animate-spin" />
-            ) : user ? (
-              <div className={`flex items-center gap-1.5 sm:gap-2 p-1 pr-2.5 sm:pr-3 rounded-full border shadow-3xs text-xs ${
-                isDarkMode ? "bg-slate-800 border-slate-700 text-slate-200" : "bg-surface-1 border-black/[0.05]"
-              }`}>
-                {user.photoURL ? (
-                  <img referrerPolicy="no-referrer" src={user.photoURL} alt={user.displayName || 'Educator'} className="w-6 h-6 sm:w-6.5 sm:h-6.5 rounded-full object-cover border border-teal-brand/20" />
-                ) : (
-                  <div className="w-6 h-6 sm:w-6.5 sm:h-6.5 rounded-full bg-teal-dark text-white flex items-center justify-center font-bold text-[10px]">
-                    {user.displayName?.[0]?.toUpperCase() || 'E'}
-                  </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">
+                    {isVaultExpanded ? "Close sticky-pad" : "Open sticky-pad"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsVaultExpanded(!isVaultExpanded);
+                    }}
+                    className="p-1 rounded-lg hover:bg-slate-800 text-slate-300 transition-all cursor-pointer"
+                    aria-label={isVaultExpanded ? "Collapse Vault Section" : "Expand Vault Section"}
+                  >
+                    {isVaultExpanded ? <ChevronUp className="w-4 h-4 text-teal-brand" /> : <ChevronDown className="w-4 h-4 text-teal-brand" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Opened Sticky-Pad Dropdown Content */}
+              <AnimatePresence>
+                {isVaultExpanded && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                    transition={{ duration: 0.18 }}
+                    className="absolute right-0 top-full mt-2 w-full bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-3 shadow-2xl text-slate-100 z-50 liquid-glass-dark"
+                  >
+                    <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold font-mono tracking-wider text-teal-brand uppercase bg-teal-brand/20 border border-teal-brand/30 px-2 py-0.5 rounded-md">
+                          Cloud Storage Vault
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-sans">Sorted by Date</span>
+                      </div>
+                      {user && (
+                        <span className="text-[9px] font-mono text-slate-400 truncate max-w-[130px]">
+                          {user.email}
+                        </span>
+                      )}
+                    </div>
+
+                    {!user ? (
+                      <div className="p-4 text-center space-y-2.5 bg-slate-800/60 rounded-xl border border-dashed border-slate-700">
+                        <Cloud className="w-6 h-6 text-teal-brand mx-auto" />
+                        <p className="text-xs font-bold text-slate-200">Sign in to access Cloud Storage Vault</p>
+                        <button
+                          type="button"
+                          onClick={handleSignInAndRedirect}
+                          className="px-3 py-1.5 bg-teal-brand text-slate-950 font-bold text-xs rounded-xl shadow-3xs cursor-pointer hover:bg-teal-400 transition-all"
+                        >
+                          Sign In with Google
+                        </button>
+                      </div>
+                    ) : sortedSavedLessons.length === 0 ? (
+                      <div className="p-4 text-center space-y-2 bg-slate-800/60 rounded-xl border border-dashed border-slate-700">
+                        <Cloud className="w-6 h-6 text-teal-brand/60 mx-auto" />
+                        <p className="text-xs font-bold text-slate-200">No saved lessons in cloud storage yet</p>
+                        <p className="text-[10px] text-slate-400 font-sans leading-relaxed">
+                          Click <strong className="text-teal-brand">"Save to Cloud"</strong> on any active lesson plan to store it here!
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="max-h-64 sm:max-h-72 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                        {sortedSavedLessons.map((saved) => {
+                          const isCurrentlyActive = lesson.id === saved.id;
+                          return (
+                            <div
+                              key={saved.id}
+                              className={`p-3 rounded-xl border transition-all flex items-center justify-between gap-2.5 ${
+                                isCurrentlyActive
+                                  ? "border-teal-brand bg-teal-brand/15"
+                                  : "border-slate-800 bg-slate-800/80 hover:border-slate-700 hover:bg-slate-800"
+                              }`}
+                            >
+                              <div className="overflow-hidden flex-1 space-y-1">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-xs font-bold text-slate-100 truncate">{saved.lessonTitle}</p>
+                                  {isCurrentlyActive && (
+                                    <span className="px-1.5 py-0.2 bg-teal-brand text-slate-950 text-[8px] font-mono font-extrabold rounded uppercase shrink-0">Active</span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 text-[10px] text-slate-400 font-sans">
+                                  <span>{formatSavedDate(saved.createdAt)}</span>
+                                  <span>•</span>
+                                  <span>{saved.duration} Block</span>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setLesson(saved);
+                                    setActiveTab("slides");
+                                  }}
+                                  className="px-2.5 py-1 bg-teal-brand/20 hover:bg-teal-brand text-teal-brand hover:text-slate-950 rounded-lg text-[10px] font-bold transition-all cursor-pointer min-h-[30px]"
+                                >
+                                  Load
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={deletingLessonId === saved.id}
+                                  onClick={async () => {
+                                    if (confirm(`Delete "${saved.lessonTitle}" from Firebase Cloud Storage?`)) {
+                                      try {
+                                        setDeletingLessonId(saved.id);
+                                        await deleteLessonFromCloud(saved.id);
+                                        setSaveStatus("Deleted from cloud");
+                                        setTimeout(() => setSaveStatus(null), 3000);
+                                      } catch (err: any) {
+                                        alert("Failed to delete lesson: " + (err?.message || "Unknown error"));
+                                      } finally {
+                                        setDeletingLessonId(null);
+                                      }
+                                    }
+                                  }}
+                                  className="p-1.5 hover:bg-red-950/60 text-slate-400 hover:text-red-400 rounded-lg transition-all cursor-pointer min-h-[30px] disabled:opacity-50"
+                                  title="Delete from cloud storage"
+                                >
+                                  {deletingLessonId === saved.id ? (
+                                    <RefreshCw className="w-3.5 h-3.5 animate-spin text-red-400" />
+                                  ) : (
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </motion.div>
                 )}
-                <span className="font-sans font-medium text-teal-dark dark:text-teal-brand max-w-[70px] sm:max-w-[100px] truncate hidden sm:inline">{user.displayName?.split(" ")[0]}</span>
-                <button
-                  type="button"
-                  onClick={logOut}
-                  className="ml-0.5 text-[10px] text-red-600 dark:text-red-400 hover:text-red-700 font-bold transition-all px-1.5 py-0.5 rounded-md hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
-                  title="Sign Out"
-                >
-                  Exit
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={handleSignInAndRedirect}
-                className="px-3 sm:px-3.5 py-1.5 bg-teal-dark hover:bg-opacity-95 text-white rounded-full text-xs font-bold transition-all shadow-3xs flex items-center gap-1.5 cursor-pointer micro-glow-teal min-h-[38px]"
-              >
-                <LogIn className="w-3.5 h-3.5 text-teal-brand" />
-                <span>Sign In</span>
-              </button>
-            )}
+              </AnimatePresence>
+            </div>
           </div>
         </nav>
 
@@ -1852,160 +2036,31 @@ export default function App() {
           </div>
         </header>
 
-        {/* Cloud Saved Lessons and Active Workspace Column Stack */}
-        <section className="px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8 flex-1 w-full">
+        {/* Active Workspace Column Stack */}
+        <section className="px-3 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8 flex-1 w-full max-w-7xl mx-auto">
           
-          {/* Cloud Storage Saved Lessons Vault */}
-          {user && (
-            <div className="bg-surface-0 dark:bg-slate-900/90 border border-black/[0.06] dark:border-slate-800 rounded-2xl shadow-sm transition-all overflow-hidden w-full liquid-glass-light dark:liquid-glass-dark" id="my-lessons-vault">
-              <div 
-                className="flex justify-between items-center p-4 sm:p-5 cursor-pointer select-none border-b border-black/[0.05] dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
-                onClick={() => setIsVaultExpanded(!isVaultExpanded)}
-              >
-                <div className="flex items-center gap-2.5 flex-wrap">
-                  <Cloud className="w-5 h-5 text-teal-brand" />
-                  <span className="font-serif text-base sm:text-lg font-bold text-teal-dark dark:text-teal-brand">Your Firebase Cloud Storage Vault</span>
-                  <span className="px-2.5 py-0.5 bg-teal-brand/10 text-teal-brand text-xs font-mono font-bold rounded-full border border-teal-brand/20">
-                    {savedLessons.length} {savedLessons.length === 1 ? 'Lesson' : 'Lessons'}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="text-[10px] font-mono text-secondary dark:text-slate-400 uppercase tracking-wider hidden sm:inline">
-                    Connected: {user.email}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsVaultExpanded(!isVaultExpanded);
-                    }}
-                    className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all cursor-pointer"
-                    aria-label={isVaultExpanded ? "Collapse Vault Section" : "Expand Vault Section"}
-                  >
-                    {isVaultExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
-              <AnimatePresence>
-                {isVaultExpanded && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="p-4 sm:p-5 space-y-3.5"
-                  >
-                    {savedLessons.length === 0 ? (
-                      <div className="p-6 text-center space-y-2 bg-white/50 dark:bg-slate-800/40 rounded-xl border border-dashed border-black/[0.08] dark:border-slate-800">
-                        <Cloud className="w-8 h-8 text-teal-brand/50 mx-auto" />
-                        <p className="text-xs font-bold text-primary dark:text-slate-200">No saved lesson plans in cloud storage yet</p>
-                        <p className="text-[11px] text-secondary dark:text-slate-400 max-w-md mx-auto font-sans">
-                          Click <strong className="text-teal-brand">"Save to Cloud"</strong> on any active lesson plan to store it securely in your Firebase account and access it anytime!
-                        </p>
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {savedLessons.map((saved) => {
-                          const isCurrentlyActive = lesson.id === saved.id;
-                          return (
-                            <div 
-                              key={saved.id}
-                              className={`p-3.5 rounded-xl border transition-all flex justify-between items-center gap-3 shadow-3xs ${
-                                isCurrentlyActive
-                                  ? "border-teal-brand bg-teal-brand/5 dark:bg-teal-brand/10 dark:border-teal-brand/60"
-                                  : "border-black/[0.06] dark:border-slate-800 bg-white dark:bg-slate-800/80 hover:border-teal-brand/40"
-                              }`}
-                            >
-                              <div className="overflow-hidden flex-1 space-y-0.5">
-                                <div className="flex items-center gap-1.5">
-                                  <p className="text-xs font-bold text-primary dark:text-slate-100 truncate">{saved.lessonTitle}</p>
-                                  {isCurrentlyActive && (
-                                    <span className="px-1.5 py-0.2 bg-teal-brand text-slate-950 text-[8px] font-mono font-extrabold rounded uppercase shrink-0">Active</span>
-                                  )}
-                                </div>
-                                <span className="text-[10px] text-secondary dark:text-slate-400 font-sans block truncate">
-                                  {saved.duration} Block
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1.5 shrink-0">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setLesson(saved);
-                                    setActiveTab("slides");
-                                  }}
-                                  className="px-2.5 py-1.5 bg-teal-light dark:bg-teal-brand/20 text-teal-brand hover:bg-teal-brand hover:text-white dark:hover:text-slate-950 rounded-lg text-[10px] font-bold transition-all shadow-3xs cursor-pointer micro-glow-teal min-h-[34px]"
-                                >
-                                  Load
-                                </button>
-                                <button
-                                  type="button"
-                                  disabled={deletingLessonId === saved.id}
-                                  onClick={async () => {
-                                    if (confirm(`Permanently delete "${saved.lessonTitle}" from your Firebase Cloud Storage?`)) {
-                                      try {
-                                        setDeletingLessonId(saved.id);
-                                        await deleteLessonFromCloud(saved.id);
-                                        setSaveStatus("Lesson deleted from cloud");
-                                        setTimeout(() => setSaveStatus(null), 3000);
-                                      } catch (err: any) {
-                                        alert("Failed to delete lesson: " + (err?.message || "Unknown error"));
-                                      } finally {
-                                        setDeletingLessonId(null);
-                                      }
-                                    }
-                                  }}
-                                  className="p-1.5 hover:bg-red-100 dark:hover:bg-red-950/60 text-slate-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg transition-all cursor-pointer min-h-[34px] disabled:opacity-50"
-                                  title="Delete lesson from cloud storage"
-                                >
-                                  {deletingLessonId === saved.id ? (
-                                    <RefreshCw className="w-4 h-4 animate-spin text-red-500" />
-                                  ) : (
-                                    <Trash2 className="w-4 h-4" />
-                                  )}
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
-
           {/* Active Lesson Meta Display & Curriculum Suite */}
-          <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800/90 rounded-2xl shadow-xs relative overflow-hidden w-full liquid-glass-light dark:liquid-glass-dark" id="workspace-panel">
-            <div className="absolute top-0 right-0 w-36 h-36 bg-gradient-to-bl from-teal-light/20 to-transparent rounded-full blur-2xl pointer-events-none" />
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm transition-all overflow-hidden w-full" id="workspace-panel">
             
+            {/* Header Bar matching Upload Curriculum Material */}
             <div 
-              className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 sm:p-6 cursor-pointer select-none border-b border-black/[0.06] dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-colors z-10 relative"
+              className="flex justify-between items-center p-4 sm:p-5 cursor-pointer select-none border-b border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
               onClick={() => setIsCurriculumSuiteExpanded(!isCurriculumSuiteExpanded)}
             >
-              <div className="space-y-1 max-w-3xl">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-[10px] font-mono font-bold tracking-wider text-teal-brand bg-teal-light dark:bg-teal-brand/20 border border-teal-brand/20 px-2.5 py-0.5 rounded-full uppercase micro-glow-teal">
-                    Active Curriculum Suite
-                  </span>
-                  <span className="text-xs text-secondary dark:text-slate-300 font-sans flex items-center gap-1 font-medium">
-                    <Clock className="w-3.5 h-3.5 text-gold-brand" />
-                    {lesson.duration} Block
-                  </span>
-                </div>
-                <h2 className="font-serif text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-teal-dark dark:text-teal-brand">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="text-[10px] font-bold font-mono tracking-wider text-teal-800 dark:text-teal-brand uppercase bg-teal-50 dark:bg-teal-brand/20 border border-teal-200 dark:border-teal-brand/20 px-2.5 py-0.5 rounded-md">
+                  2. Active Curriculum Suite
+                </span>
+                <span className="text-xs font-bold font-sans text-slate-800 dark:text-slate-100 truncate max-w-[180px] sm:max-w-md">
                   {lesson.lessonTitle}
-                </h2>
-                <p className="text-xs sm:text-sm text-secondary dark:text-slate-300 leading-relaxed font-sans">
-                  {lesson.summary}
-                </p>
+                </span>
+                <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 hidden md:inline">
+                  ({lesson.duration} Block)
+                </span>
               </div>
 
               {/* Cloud Save Actions & Collapse Toggle */}
-              <div className="shrink-0 flex items-center gap-3 self-start md:self-center">
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                 {user ? (
                   <button
                     type="button"
@@ -2014,10 +2069,10 @@ export default function App() {
                       handleSaveToCloud();
                     }}
                     disabled={dbLoading}
-                    className="px-4.5 py-2.5 bg-teal-dark dark:bg-teal-brand dark:text-slate-950 hover:bg-opacity-95 text-white rounded-xl text-xs font-extrabold shadow-3xs flex items-center justify-center gap-2 transition-all cursor-pointer micro-glow-teal min-h-[42px]"
+                    className="px-3.5 py-1.5 bg-teal-dark dark:bg-teal-brand dark:text-slate-950 hover:bg-opacity-95 text-white rounded-xl text-xs font-extrabold shadow-3xs flex items-center justify-center gap-1.5 transition-all cursor-pointer micro-glow-teal min-h-[36px]"
                   >
-                    <Cloud className="w-4 h-4 text-teal-brand dark:text-slate-950" />
-                    {dbLoading ? 'Saving...' : 'Save to Cloud'}
+                    <Cloud className="w-3.5 h-3.5 text-teal-brand dark:text-slate-950" />
+                    <span>{dbLoading ? 'Saving...' : 'Save to Cloud'}</span>
                   </button>
                 ) : (
                   <button
@@ -2026,14 +2081,14 @@ export default function App() {
                       e.stopPropagation();
                       signInWithGoogle();
                     }}
-                    className="px-3.5 py-2 bg-white dark:bg-slate-800 hover:bg-surface-0 text-secondary dark:text-slate-200 border border-black/[0.08] dark:border-slate-700 rounded-xl text-xs font-bold shadow-3xs flex items-center justify-center gap-2 transition-all cursor-pointer min-h-[42px]"
+                    className="px-3 py-1.5 bg-white dark:bg-slate-800 hover:bg-surface-0 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold shadow-3xs flex items-center justify-center gap-1.5 transition-all cursor-pointer min-h-[36px]"
                   >
                     <LogIn className="w-3.5 h-3.5 text-teal-brand" />
-                    <span>Sign In to Save</span>
+                    <span className="hidden sm:inline">Sign In to Save</span>
                   </button>
                 )}
                 {saveStatus && (
-                  <span className="text-[10px] font-bold text-teal-brand font-sans flex items-center gap-1">
+                  <span className="text-[10px] font-bold text-teal-brand font-sans hidden sm:flex items-center gap-1">
                     <Check className="w-3.5 h-3.5" /> {saveStatus}
                   </span>
                 )}
@@ -2043,10 +2098,10 @@ export default function App() {
                     e.stopPropagation();
                     setIsCurriculumSuiteExpanded(!isCurriculumSuiteExpanded);
                   }}
-                  className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-all cursor-pointer border border-slate-200 dark:border-slate-700"
+                  className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 transition-all cursor-pointer"
                   aria-label={isCurriculumSuiteExpanded ? "Collapse Active Curriculum Suite" : "Expand Active Curriculum Suite"}
                 >
-                  {isCurriculumSuiteExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                  {isCurriculumSuiteExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                 </button>
               </div>
             </div>
@@ -2060,6 +2115,24 @@ export default function App() {
                   transition={{ duration: 0.2 }}
                   className="p-4 sm:p-6 space-y-6"
                 >
+                  {/* Lesson Overview Banner */}
+                  <div className="space-y-1.5 border-b border-slate-200 dark:border-slate-800 pb-4">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs text-secondary dark:text-slate-300 font-sans flex items-center gap-1 font-medium">
+                        <Clock className="w-3.5 h-3.5 text-gold-brand" />
+                        {lesson.duration} Block
+                      </span>
+                      <span className="text-[10px] font-mono text-teal-brand bg-teal-light dark:bg-teal-brand/20 px-2 py-0.5 rounded font-bold">
+                        {selectedCategory}
+                      </span>
+                    </div>
+                    <h2 className="font-serif text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-teal-dark dark:text-teal-brand">
+                      {lesson.lessonTitle}
+                    </h2>
+                    <p className="text-xs sm:text-sm text-secondary dark:text-slate-300 leading-relaxed font-sans">
+                      {lesson.summary}
+                    </p>
+                  </div>
 
             {/* Adaptive Reordering Indicator Banner */}
             <div className="flex items-center justify-between gap-2 px-3.5 py-2 bg-teal-50/80 dark:bg-teal-brand/10 border border-teal-brand/20 rounded-xl mb-3 text-xs text-teal-dark dark:text-teal-brand font-sans">
