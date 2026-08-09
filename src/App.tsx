@@ -125,7 +125,12 @@ export default function App() {
       setTimeout(() => setSaveStatus(null), 3000);
     } catch (err: any) {
       console.error("Failed to save lesson:", err);
-      alert("Failed to save lesson: " + err.message);
+      let errMsg = err?.message || "Unknown error";
+      try {
+        const parsed = JSON.parse(errMsg);
+        if (parsed?.error) errMsg = parsed.error;
+      } catch {}
+      alert("Failed to save lesson: " + errMsg);
     }
   };
 

@@ -167,6 +167,128 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+// Helper to compress base64 data URLs to smaller JPEGs using canvas
+async function compressBase64Image(dataUrl: string, maxWidth = 500, quality = 0.5): Promise<string> {
+  if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) {
+    return dataUrl;
+  }
+  // If it's already small (< 50KB), return as is
+  if (dataUrl.length < 50000) {
+    return dataUrl;
+  }
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressed);
+          return;
+        }
+      } catch (e) {
+        console.warn('Canvas compression failed:', e);
+      }
+      resolve(dataUrl);
+    };
+    img.onerror = () => {
+      resolve(dataUrl);
+    };
+    img.src = dataUrl;
+  });
+}
+
+// Prepare lesson document ensuring payload is safely under Firestore 1MB (1,048,576 bytes) limit
+async function prepareLessonForFirestore(lessonData: ProcessedLesson, uid: string, lessonId: string) {
+  let visuals = lessonData.generatedVisuals || [];
+  
+  // Compress any base64 images inside generatedVisuals
+  const processedVisuals = await Promise.all(
+    visuals.map(async (vis) => {
+      if (vis.url && vis.url.startsWith('data:image/')) {
+        const compressedUrl = await compressBase64Image(vis.url, 500, 0.5);
+        return { ...vis, url: compressedUrl };
+      }
+      return vis;
+    })
+  );
+
+  let newLessonDoc: any = {
+    id: lessonId,
+    userId: uid,
+    lessonTitle: lessonData.lessonTitle || 'Untitled Lesson',
+    duration: lessonData.duration || '45 minutes',
+    summary: lessonData.summary || '',
+    keyTakeaways: lessonData.keyTakeaways || [],
+    slides: lessonData.slides || [],
+    handsOnActivity: lessonData.handsOnActivity || { title: '', materials: [], steps: [], scientificPrinciple: '' },
+    worksheet: lessonData.worksheet || { title: '', instructions: '', questions: [] },
+    quiz: lessonData.quiz || [],
+    mediaRecommendations: lessonData.mediaRecommendations || [],
+    generatedVisuals: processedVisuals,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+
+  // Calculate approximate byte size of JSON payload
+  let jsonString = JSON.stringify(newLessonDoc);
+  let payloadBytes = new Blob([jsonString]).size;
+
+  // Maximum allowed size safety threshold: 750,000 bytes (safely below 1,048,576 B)
+  const MAX_SAFE_BYTES = 750000;
+
+  if (payloadBytes > MAX_SAFE_BYTES) {
+    // Stage 1: Keep only the 2 most recent visuals if payload is still too large
+    if (newLessonDoc.generatedVisuals.length > 2) {
+      newLessonDoc.generatedVisuals = newLessonDoc.generatedVisuals.slice(0, 2);
+    }
+    jsonString = JSON.stringify(newLessonDoc);
+    payloadBytes = new Blob([jsonString]).size;
+  }
+
+  if (payloadBytes > MAX_SAFE_BYTES) {
+    // Stage 2: Replace any remaining huge base64 visuals with lightweight seed placeholders
+    newLessonDoc.generatedVisuals = newLessonDoc.generatedVisuals.map((v: any, i: number) => {
+      if (v.url && v.url.startsWith('data:image/')) {
+        return {
+          ...v,
+          url: `https://picsum.photos/seed/${encodeURIComponent(newLessonDoc.lessonTitle + '-vis-' + i)}/800/450`
+        };
+      }
+      return v;
+    });
+    jsonString = JSON.stringify(newLessonDoc);
+    payloadBytes = new Blob([jsonString]).size;
+  }
+
+  if (payloadBytes > MAX_SAFE_BYTES) {
+    // Stage 3: Trim any huge text fields if text content alone is massive
+    if (newLessonDoc.summary && newLessonDoc.summary.length > 3000) {
+      newLessonDoc.summary = newLessonDoc.summary.slice(0, 3000) + '...';
+    }
+    if (newLessonDoc.slides && newLessonDoc.slides.length > 12) {
+      newLessonDoc.slides = newLessonDoc.slides.slice(0, 12);
+    }
+  }
+
+  return newLessonDoc;
+}
+
   const saveLessonToCloud = async (lessonData: ProcessedLesson): Promise<string> => {
     if (!auth.currentUser) {
       throw new Error("You must be signed in to save lessons to the cloud.");
@@ -178,24 +300,8 @@ export const FirebaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const lessonId = 'lesson_' + Math.random().toString(36).substring(2, 15);
     const lessonPath = `lessons/${lessonId}`;
 
-    const newLessonDoc = {
-      id: lessonId,
-      userId: auth.currentUser.uid,
-      lessonTitle: lessonData.lessonTitle || 'Untitled Lesson',
-      duration: lessonData.duration || '45 minutes',
-      summary: lessonData.summary || '',
-      keyTakeaways: lessonData.keyTakeaways || [],
-      slides: lessonData.slides || [],
-      handsOnActivity: lessonData.handsOnActivity || { title: '', materials: [], steps: [], scientificPrinciple: '' },
-      worksheet: lessonData.worksheet || { title: '', instructions: [], questions: [] },
-      quiz: lessonData.quiz || [],
-      mediaRecommendations: lessonData.mediaRecommendations || [],
-      generatedVisuals: lessonData.generatedVisuals || [],
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
-    };
-
     try {
+      const newLessonDoc = await prepareLessonForFirestore(lessonData, auth.currentUser.uid, lessonId);
       await setDoc(doc(db, 'lessons', lessonId), newLessonDoc);
       // Reload lessons to get latest
       await loadLessons();
