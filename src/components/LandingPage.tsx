@@ -218,7 +218,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   INDIVIDUAL TEACHER
                 </span>
                 <h4 className="font-serif text-2xl font-bold text-slate-900 dark:text-slate-100">STEM Educator Pro</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">Designed for single STEM/STEAM classroom teachers & lab instructors.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-500 font-sans">Designed for single STEM/STEAM classroom teachers & lab instructors.</p>
               </div>
 
               <div className="flex items-baseline gap-1.5 pt-2">
