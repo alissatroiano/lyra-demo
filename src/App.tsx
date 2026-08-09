@@ -385,14 +385,69 @@ export default function App() {
     return codingKeywords.some(kw => textToScan.includes(kw));
   }, [lesson]);
 
-  // Retrieve 4 Google Search Grounded build prototype examples for the active hands-on activity
+  // Identify specific Software / Coding platform if lesson falls into software
+  const identifiedSoftware = React.useMemo(() => {
+    if (!lesson) return null;
+
+    const textToScan = [
+      (lesson.handsOnActivity as any)?.softwarePlatform || '',
+      (lesson as any).software || '',
+      lesson.lessonTitle || '',
+      lesson.summary || '',
+      ...(lesson.keyTakeaways || []),
+      ...(lesson.handsOnActivity?.materials || []),
+      ...(lesson.handsOnActivity?.steps || []),
+      lesson.handsOnActivity?.title || '',
+      lesson.handsOnActivity?.scientificPrinciple || '',
+      selectedCategory || ''
+    ].join(" ").toLowerCase();
+
+    if (textToScan.includes("scratch jr") || textToScan.includes("scratchjr") || textToScan.includes("junior scratch")) {
+      return "Scratch JR";
+    }
+    if (textToScan.includes("minecraft")) {
+      return "Minecraft Education";
+    }
+    if (textToScan.includes("edublocks") || textToScan.includes("edu blocks")) {
+      return "EduBlocks";
+    }
+    if (textToScan.includes("thunkable") || textToScan.includes("app inventor")) {
+      return "Thunkable";
+    }
+    if (textToScan.includes("code.org") || textToScan.includes("code org") || textToScan.includes("tynker") || textToScan.includes("app lab") || textToScan.includes("sprite lab")) {
+      return "Code.org / Tynker";
+    }
+    if (textToScan.includes("micro:bit") || textToScan.includes("microbit") || textToScan.includes("makecode")) {
+      return "Micro:bit / MakeCode";
+    }
+    if (textToScan.includes("roblox") || textToScan.includes("lua")) {
+      return "Roblox Studio";
+    }
+    if (textToScan.includes("python") || textToScan.includes("jupyter")) {
+      return "Python";
+    }
+    if (textToScan.includes("scratch 3") || textToScan.includes("scratch") || textToScan.includes("sprite") || textToScan.includes("green flag")) {
+      return "Scratch 3.0";
+    }
+    if (textToScan.includes("lego") || textToScan.includes("spike prime") || textToScan.includes("wedo") || textToScan.includes("mindstorms")) {
+      return "LEGO Spike / WeDo";
+    }
+    if (selectedCategory === "Technology" || selectedCategory === "Software" || selectedCategory === "Coding" || isCodingLesson) {
+      return "Visual Block-Based Coding";
+    }
+    return null;
+  }, [lesson, selectedCategory, isCodingLesson]);
+
+  // Retrieve 4 Google Search Grounded build prototype examples for the active hands-on activity / software
   const groundedPrototypeImages = React.useMemo(() => {
     if (!lesson) return [];
     const title = lesson.handsOnActivity?.title || lesson.lessonTitle || "STEM Prototype Build";
     const lower = title.toLowerCase();
 
     let categoryTheme = "engineering";
-    if (lower.includes("catapult") || lower.includes("launch") || lower.includes("projectile") || lower.includes("siege")) {
+    if (identifiedSoftware) {
+      categoryTheme = identifiedSoftware;
+    } else if (lower.includes("catapult") || lower.includes("launch") || lower.includes("projectile") || lower.includes("siege")) {
       categoryTheme = "catapult";
     } else if (lower.includes("magnet") || lower.includes("electric") || lower.includes("circuit") || lower.includes("wire") || lower.includes("voltage")) {
       categoryTheme = "circuitry";
@@ -404,9 +459,269 @@ export default function App() {
       categoryTheme = "robotics";
     }
 
-    const baseSearchQuery = `${title} STEM student build prototype classroom example`;
+    const baseSearchQuery = `${identifiedSoftware ? identifiedSoftware + " " : ""}${title} STEM student build prototype classroom example`;
 
     const imageSets: Record<string, Array<{ url: string; title: string; caption: string; tag: string }>> = {
+      "Scratch JR": [
+        {
+          url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80",
+          title: "ScratchJR Green Flag & Event Trigger Stack",
+          caption: "Horizontal icon blocks snapping Green Flag, Start-on-Tap, and Message triggers for early learners (ages 5-7).",
+          tag: "ScratchJR Triggers"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1580894732413-a704936a0422?auto=format&fit=crop&w=800&q=80",
+          title: "ScratchJR Motion Grid & Hop Parameters",
+          caption: "Horizontal motion arrows specifying grid steps (Move Right 4, Hop 2, Go Home) for sprite navigation.",
+          tag: "ScratchJR Motion"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80",
+          title: "ScratchJR Character Paint & Voice Recorder",
+          caption: "Customizing sprite characters in the paint editor, adding speech bubbles, and recording voice audio.",
+          tag: "Paint & Voice"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=800&q=80",
+          title: "ScratchJR Multi-Page Scene & Repeat Forever",
+          caption: "Transitioning between story pages and repeating animation loops for interactive storybook projects.",
+          tag: "Page Transitions"
+        }
+      ],
+      "Minecraft Education": [
+        {
+          url: "https://images.unsplash.com/photo-1627856013091-fed6e4e30025?auto=format&fit=crop&w=800&q=80",
+          title: "Minecraft Code Builder Agent Wall Construction",
+          caption: "Programming the Minecraft Agent using block code to place blocks, turn, and build 3D structures.",
+          tag: "Agent Builder"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80",
+          title: "Minecraft Redstone Logic & Circuit Automation",
+          caption: "Building AND/OR logic gates and automated repeaters using Redstone dust and torches.",
+          tag: "Redstone Circuits"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
+          title: "Minecraft World Coordinates & Fill Commands",
+          caption: "Utilizing relative world coordinates (~ ~ ~) and repeat loops to terraform environments instantly.",
+          tag: "World Coordinates"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=800&q=80",
+          title: "Minecraft Chemistry Lab & Element Constructor",
+          caption: "Combining protons, neutrons, and electrons in Minecraft Education Chemistry to synthesize compounds.",
+          tag: "Chemistry Lab"
+        }
+      ],
+      "Scratch 3.0": [
+        {
+          url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80",
+          title: "Scratch 3.0 Sprite Coordinate & Motion Logic",
+          caption: "Vertical block scripts setting X/Y positions, point-in-direction angles, and smooth glides.",
+          tag: "Sprite Motion"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=800&q=80",
+          title: "Scratch Event Handlers & Variable Backpack",
+          caption: "Managing broadcast messages, 'When Green Flag Clicked', and updating global variable counters.",
+          tag: "Variables & Events"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80",
+          title: "Scratch Sensing & Collision Detection Loop",
+          caption: "Forever loops checking 'if touching color or mouse pointer' to trigger game over or victory states.",
+          tag: "Sensing Loops"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80",
+          title: "Scratch Stage Backdrop & Costume Animation",
+          caption: "Switching backdrop scenes and looping through sprite costumes for smooth frame-by-frame animation.",
+          tag: "Stage Animation"
+        }
+      ],
+      "EduBlocks": [
+        {
+          url: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80",
+          title: "EduBlocks Python Drag-and-Drop Workspace",
+          caption: "Bridging block coding to Python syntax with side-by-side block vs text code view.",
+          tag: "Block-to-Text"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80",
+          title: "EduBlocks Terminal Console Output & Logic Stacks",
+          caption: "Executing print statements, user inputs, and conditional branches in a simulated Python shell.",
+          tag: "Python Console"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
+          title: "EduBlocks Micro:bit Pin & Hardware Control",
+          caption: "Controlling digital read/write pins, servo motors, and sensor loops via EduBlocks Python blocks.",
+          tag: "Hardware Pins"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80",
+          title: "EduBlocks Module Import & Function Definition",
+          caption: "Importing Python libraries like random, math, and time inside drag-and-drop block definitions.",
+          tag: "Python Modules"
+        }
+      ],
+      "Thunkable": [
+        {
+          url: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=800&q=80",
+          title: "Thunkable Mobile Canvas & UI Component Layout",
+          caption: "Designing responsive phone app screens with buttons, labels, image pickers, and navigation bars.",
+          tag: "Mobile UI"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
+          title: "Thunkable Event Logic & Sound Player Blocks",
+          caption: "Connecting 'When Button Clicked' event block to 'Call Sound Play' action block.",
+          tag: "Event Handlers"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80",
+          title: "Thunkable Cloud DB & Variable Storage",
+          caption: "Saving student app data to cloud tables and reading stored app variables dynamically.",
+          tag: "Cloud Storage"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1555774698-0b77e0d5fac6?auto=format&fit=crop&w=800&q=80",
+          title: "Thunkable Live Companion Tablet Testing",
+          caption: "Testing mobile app prototypes live on tablets via QR code pairing for real-time iteration.",
+          tag: "Live Testing"
+        }
+      ],
+      "Code.org / Tynker": [
+        {
+          url: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=80",
+          title: "Code.org Maze Navigation & Repeat Loops",
+          caption: "Sequencing 'move forward' and 'turn' blocks with repeat loops to solve puzzle mazes.",
+          tag: "Puzzle Loops"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
+          title: "Code.org App Lab Event Listeners & Screen Controls",
+          caption: "Using onEvent('button1', 'click') blocks to change screen backgrounds and play audio clips.",
+          tag: "App Lab UI"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=800&q=80",
+          title: "Code.org Sprite Lab Interactive Behaviors",
+          caption: "Assigning behaviors like 'spinning', 'wandering', and collision event handlers to custom sprites.",
+          tag: "Sprite Lab"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80",
+          title: "Code.org Dance Party Audio Sync & Loops",
+          caption: "Syncing character dance moves to musical measure triggers and beat event blocks.",
+          tag: "Audio & Dance"
+        }
+      ],
+      "Micro:bit / MakeCode": [
+        {
+          url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
+          title: "Micro:bit 5x5 LED Grid Display & Icons",
+          caption: "Plotting X/Y coordinates and displaying custom LED pattern animations in MakeCode.",
+          tag: "LED Grid"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1581092162384-8987c1d64718?auto=format&fit=crop&w=800&q=80",
+          title: "Micro:bit Accelerometer & Gesture Inputs",
+          caption: "Programming 'on shake' and 'on button A+B pressed' event triggers for interactive projects.",
+          tag: "Gesture Sensors"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80",
+          title: "Micro:bit Radio Messaging & Sensor Logging",
+          caption: "Sending radio signals between Micro:bit boards to transmit temperature and tilt sensor data.",
+          tag: "Radio Mesh"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?auto=format&fit=crop&w=800&q=80",
+          title: "Micro:bit Motor Shield & Robot Servo Controls",
+          caption: "Wiring pin output signals to micro servos for steering motorized robot chassis.",
+          tag: "Servo Motors"
+        }
+      ],
+      "Roblox Studio": [
+        {
+          url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
+          title: "Roblox Studio 3D Part Builder & Terrain Grid",
+          caption: "Constructing 3D geometry with anchored parts, custom materials, and spawn locations.",
+          tag: "3D World"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80",
+          title: "Roblox Lua Scripting & Touched Event Handlers",
+          caption: "Writing Lua scripts attached to parts with script.Parent.Touched connections for checkpoints.",
+          tag: "Lua Events"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=800&q=80",
+          title: "Roblox Leaderstats & GUI HUD Elements",
+          caption: "Creating player leaderboard statistics and ScreenGui interfaces for score tracking.",
+          tag: "Leaderstats"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80",
+          title: "Roblox Obby Obstacle Course Mechanics",
+          caption: "Designing lava brick kill triggers, disappearing platforms, and level completion teleporters.",
+          tag: "Obby Mechanics"
+        }
+      ],
+      "Python": [
+        {
+          url: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80",
+          title: "Python Syntax & Control Flow Workspace",
+          caption: "Writing clean Python code with indentation loops, functions, and conditional logic.",
+          tag: "Python Syntax"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=800&q=80",
+          title: "Python Turtle Graphics & Visual Math Loops",
+          caption: "Using the Turtle library to draw geometric patterns and fractal spirals using nested loops.",
+          tag: "Turtle Graphics"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
+          title: "Python Data Plotting & Matplotlib Charts",
+          caption: "Generating line graphs, scatter plots, and histograms from CSV sensor datasets.",
+          tag: "Data Science"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80",
+          title: "Python Terminal Console & Debugging Workstation",
+          caption: "Running interactive Python scripts, handling exceptions, and debugging code line-by-line.",
+          tag: "Debugging Console"
+        }
+      ],
+      "Visual Block-Based Coding": [
+        {
+          url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80",
+          title: "Visual Block Coding Stack & Logic Flow",
+          caption: "Drag-and-drop block coding workspace demonstrating event triggers, loops, and conditions.",
+          tag: "Block Logic"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1580894732413-a704936a0422?auto=format&fit=crop&w=800&q=80",
+          title: "Interactive Sprite Canvas & Coordinate Mapping",
+          caption: "Mapping X and Y screen coordinates to guide sprite movements and collision hitboxes.",
+          tag: "Sprite Canvas"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80",
+          title: "Variable Counter & Game State Manager",
+          caption: "Storing player score data, lives, and timer countdowns in block variable containers.",
+          tag: "State Management"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80",
+          title: "Classroom Code Review & Debugging Station",
+          caption: "Students testing block scripts, reviewing error logs, and refining software algorithms.",
+          tag: "Code Review"
+        }
+      ],
       catapult: [
         {
           url: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
@@ -543,9 +858,10 @@ export default function App() {
 
     return selectedSet.map(item => ({
       ...item,
+      softwarePlatform: identifiedSoftware,
       searchUrl: `https://www.google.com/search?q=${encodeURIComponent(item.title + " " + baseSearchQuery)}&tbm=isch&safe=active`
     }));
-  }, [lesson]);
+  }, [lesson, identifiedSoftware]);
 
   // Reorder Active Curriculum Suite tabs based on learned instructor memory & category focus
   const getInstructorDynamicTabs = React.useCallback(() => {
@@ -2428,15 +2744,24 @@ export default function App() {
                                 <div className="w-6 h-6 rounded-lg bg-sky-500/20 text-sky-600 dark:text-sky-400 flex items-center justify-center">
                                   <Search className="w-3.5 h-3.5" />
                                 </div>
-                                <h4 className="text-xs font-bold font-sans uppercase text-teal-dark dark:text-teal-brand flex items-center gap-2">
+                                <h4 className="text-xs font-bold font-sans uppercase text-teal-dark dark:text-teal-brand flex flex-wrap items-center gap-2">
                                   <span>Grounded Build Examples Carousel</span>
+                                  {identifiedSoftware && (
+                                    <span className="text-[9px] font-mono px-2.5 py-0.5 bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 rounded-full font-extrabold flex items-center gap-1 shadow-2xs">
+                                      <Terminal className="w-3 h-3 text-amber-500" /> Software Identified: {identifiedSoftware}
+                                    </span>
+                                  )}
                                   <span className="text-[9px] font-mono px-2 py-0.5 bg-sky-500/10 text-sky-600 dark:text-sky-300 border border-sky-500/30 rounded-full font-bold flex items-center gap-1">
                                     <Check className="w-3 h-3" /> Search Grounded
                                   </span>
                                 </h4>
                               </div>
                               <p className="text-[11px] text-secondary dark:text-slate-400 font-sans">
-                                Real-world classroom build models for "{lesson.handsOnActivity.title || lesson.lessonTitle}"
+                                {identifiedSoftware ? (
+                                  <span>Software-tailored build models & examples for <strong className="text-teal-dark dark:text-teal-brand font-mono">{identifiedSoftware}</strong> in "{lesson.handsOnActivity.title || lesson.lessonTitle}"</span>
+                                ) : (
+                                  <span>Real-world classroom build models for "{lesson.handsOnActivity.title || lesson.lessonTitle}"</span>
+                                )}
                               </p>
                             </div>
 
