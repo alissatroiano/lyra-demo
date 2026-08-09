@@ -148,6 +148,93 @@ export default function App() {
     }
   });
 
+  // ---- Assistive reading state -------------------------------------------
+  // Anti-glare grounds are deliberately outside the theme tokens: they are
+  // calibrated for glare reduction, not brand, and must not shift when the
+  // palette changes.
+  const [dyslexiaMode, setDyslexiaMode] = useState<boolean>(false);
+  const [antiGlare, setAntiGlare] = useState<"none" | "cream" | "mint" | "peach">("none");
+  const [readingRuler, setReadingRuler] = useState<boolean>(false);
+  const [bionicReading, setBionicReading] = useState<boolean>(false);
+  const [ttsSpeed, setTtsSpeed] = useState<number>(0.9);
+  const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
+  const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>("");
+
+  const speakText = (text: string, speed: number = 0.9) => {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    // Strip phonetic bracket annotations so "friction [FRIK-shun]" isn't read
+    // aloud as literal brackets.
+    const utterance = new SpeechSynthesisUtterance(text.replace(/\[[^\]]*\]/g, ""));
+    utterance.rate = speed;
+
+    const voice = window.speechSynthesis.getVoices().find(v => v.voiceURI === selectedVoiceURI);
+    if (voice) {
+      utterance.voice = voice;
+      const name = voice.name.toLowerCase();
+      utterance.pitch = name.includes("google") || name.includes("natural") ? 1.05 : 1.0;
+    } else {
+      utterance.pitch = 1.0;
+    }
+
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const stopSpeaking = () => {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
+  };
+
+  // Speech must not outlive the view that started it — otherwise the browser
+  // keeps talking with no visible control to stop it.
+  useEffect(() => {
+    return () => {
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    };
+  }, []);
+
+  // Bionic reading: bold the leading ~40% of each word to guide visual flow.
+  const formatBionicText = (text: string) => {
+    if (!text) return "";
+    return text.split(/\s+/).map((word, wIdx) => {
+      if (!word) return null;
+
+      // Phonetic guides stay unformatted so they read as a distinct aid.
+      if (word.startsWith("[") || word.endsWith("]")) {
+        return (
+          <span key={wIdx} className="inline-block mr-1 text-teal-brand font-mono text-xs select-none">
+            {word}{" "}
+          </span>
+        );
+      }
+
+      const match = word.match(/^([^a-zA-Z0-9]*)([a-zA-Z0-9]+)([^a-zA-Z0-9]*)$/);
+      if (!match) return <span key={wIdx}>{word} </span>;
+
+      const [, prefix, coreWord, suffix] = match;
+      if (coreWord.length <= 1) return <span key={wIdx}>{word} </span>;
+
+      const boldLen = Math.ceil(coreWord.length * 0.4) || 1;
+      const boldColorClass = antiGlare !== "none"
+        ? "font-extrabold text-slate-900"
+        : "font-extrabold text-gold-brand";
+
+      return (
+        <span key={wIdx} className="inline-block mr-1">
+          {prefix}
+          <strong className={boldColorClass}>{coreWord.substring(0, boldLen)}</strong>
+          <span>{coreWord.substring(boldLen)}</span>
+          {suffix}
+        </span>
+      );
+    });
+  };
+
   useEffect(() => {
     try {
       localStorage.setItem('lyra_cyber_lab_dark', isDarkMode.toString());
@@ -167,20 +254,61 @@ export default function App() {
     goal: string,
     tech?: string
   ): string => {
-    // Primary content text scan (prioritize actual user content/filename over fallback supplies)
     const primaryText = ((content || "") + " " + (fileName || "")).toLowerCase();
-    const fullText = (primaryText + " " + (tech || "")).toLowerCase();
+    const techText = (tech || "").toLowerCase();
+    const fullText = (primaryText + " " + techText).toLowerCase();
 
-    // Explicit Software Platform Checks (Scratch/ScratchJR primary over Minecraft)
-    const isScratchJr = primaryText.includes("scratchjr") || primaryText.includes("scratch jr") || primaryText.includes("junior scratch") || (fullText.includes("scratchjr") && !primaryText.includes("minecraft"));
-    const isScratch = (primaryText.includes("scratch") || primaryText.includes("sprite") || primaryText.includes("costume") || primaryText.includes("green flag") || primaryText.includes("backdrop")) && !isScratchJr;
-    const isMinecraft = (primaryText.includes("minecraft") || primaryText.includes("command block") || primaryText.includes("redstone") || primaryText.includes("makecode agent")) && !isScratch && !isScratchJr;
-    const isRoblox = primaryText.includes("roblox") || primaryText.includes("lua");
-    const isEduBlocks = primaryText.includes("edublocks") || primaryText.includes("edu blocks");
-    const isThunkable = primaryText.includes("thunkable") || primaryText.includes("app inventor");
-    const isCodeOrg = primaryText.includes("code.org") || primaryText.includes("game lab") || primaryText.includes("sprite lab");
-    const isMicroBit = primaryText.includes("micro:bit") || primaryText.includes("microbit");
-    const isPython = primaryText.includes("python") && !isEduBlocks;
+    // The instructor's own platform selection wins over anything scanned out of
+    // the document. Previously this ran the other way: a single incidental
+    // mention of a platform anywhere in an uploaded file flipped the whole
+    // pipeline to it, so a stop-motion lesson that name-dropped Minecraft once
+    // compiled as a Minecraft lesson even though the instructor had picked
+    // "Other". "Custom Tools / Software" is the empty-Other placeholder, not a
+    // real choice, so it does not count as a selection.
+    const hasExplicitTech = !!techText && !techText.includes("custom tools / software");
+
+    // Count mentions rather than taking the first hit: the platform a lesson is
+    // actually about gets named repeatedly, a passing example gets named once.
+    const countOf = (needles: string[]) =>
+      needles.reduce((n, needle) => n + (primaryText.split(needle).length - 1), 0);
+
+    const platformScores: Record<string, number> = {
+      scratchJr: countOf(["scratchjr", "scratch jr", "junior scratch"]),
+      scratch: countOf(["scratch", "sprite", "costume", "green flag", "backdrop"]),
+      minecraft: countOf(["minecraft", "command block", "redstone", "makecode agent"]),
+      roblox: countOf(["roblox", "lua"]),
+      eduBlocks: countOf(["edublocks", "edu blocks"]),
+      thunkable: countOf(["thunkable", "app inventor"]),
+      codeOrg: countOf(["code.org", "game lab", "sprite lab"]),
+      microBit: countOf(["micro:bit", "microbit"]),
+      python: countOf(["python"]),
+    };
+
+    // A platform must be named at least twice before it defines the lesson. One
+    // mention is an aside ("you could also try this in Minecraft") and must not
+    // outrank what the lesson is actually about. Below the threshold we fall
+    // through to subject detection rather than guessing a platform.
+    const ranked = Object.entries(platformScores)
+      .filter(([, n]) => n > 1)
+      .sort((a, b) => b[1] - a[1]);
+    const winner = ranked.length ? ranked[0][0] : null;
+
+    const picked = (key: string, ...aliases: string[]) =>
+      hasExplicitTech ? aliases.some(a => techText.includes(a)) : winner === key;
+
+    const isScratchJr = picked("scratchJr", "scratch jr", "scratchjr");
+    const isScratch = picked("scratch", "scratch") && !isScratchJr;
+    const isMinecraft = picked("minecraft", "minecraft") && !isScratch && !isScratchJr;
+    const isRoblox = picked("roblox", "roblox");
+    const isEduBlocks = picked("eduBlocks", "edublocks", "edu blocks");
+    const isThunkable = picked("thunkable", "thunkable", "app inventor");
+    const isCodeOrg = picked("codeOrg", "code.org");
+    const isMicroBit = picked("microBit", "micro:bit", "microbit");
+    const isPython = picked("python", "python") && !isEduBlocks;
+
+    // Stop motion, claymation and video projects had no branch at all, so they
+    // fell through to a generic filename echo.
+    const isAnimation = /stop[- ]?motion|claymation|animation|storyboard|flipbook|time[- ]?lapse/.test(fullText);
     const isRobotics = fullText.includes("lego") || fullText.includes("spike") || fullText.includes("ev3") || fullText.includes("robot") || fullText.includes("sensor");
     const isEngineering = fullText.includes("catapult") || fullText.includes("bridge") || fullText.includes("tower") || fullText.includes("physics") || fullText.includes("gravity") || fullText.includes("truss");
     const isScience = fullText.includes("chem") || fullText.includes("bio") || fullText.includes("cell") || fullText.includes("plant") || fullText.includes("eco");
@@ -197,6 +325,7 @@ export default function App() {
       if (isCodeOrg) return "Parsing Code.org Game Lab sprites, draw loops & key controls";
       if (isMicroBit) return "Parsing Micro:bit LED matrix display, buttons & sensor blocks";
       if (isPython) return "Parsing Python code syntax, variable logic & function loops";
+      if (isAnimation) return "Parsing stop-motion frame rates, storyboard beats & rig setup";
       if (isRobotics) return "Parsing Robotics sensor loops, motor actuators & hardware logic";
       if (isEngineering) return "Parsing physical engineering mechanics, forces & structural stress";
       if (isScience) return "Parsing biological structures, chemical reactions & lab safety";
@@ -222,6 +351,7 @@ export default function App() {
       if (isCodeOrg) return "Linking Code.org collision detection, variable scores & sound effects";
       if (isMicroBit) return "Linking Micro:bit radio signals, pin inputs & sensor loops";
       if (isPython) return "Linking Python conditional logic, list iterations & console scripts";
+      if (isAnimation) return "Linking frame-by-frame capture, lighting consistency & character rigs";
       if (isRobotics) return "Linking LEGO robotics motor speeds, ultrasonic sensors & gears";
       if (isEngineering) return "Linking catapult trajectory angles, tension physics & prototype build steps";
       if (isScience) return "Formulating hands-on lab experiments, molecular models & observation steps";
@@ -247,6 +377,7 @@ export default function App() {
       if (isCodeOrg) return "Synthesizing Code.org interactive game lab guide & smart quiz";
       if (isMicroBit) return "Synthesizing Micro:bit hardware coding guide & smart quiz";
       if (isPython) return "Synthesizing Python coding challenge, slide deck & smart quiz";
+      if (isAnimation) return "Synthesizing stop-motion shot list, slide deck & smart quiz";
       if (isRobotics) return "Synthesizing Robotics lab challenge, slide deck & smart quiz";
       if (isEngineering) return "Synthesizing hands-on engineering lab, slide deck & smart quiz";
       return "Synthesizing interactive slides, lab guide & smart quiz";
@@ -2414,7 +2545,18 @@ export default function App() {
                     transition={{ duration: 0.25 }}
                     className="space-y-6 animate-fade-in"
                   >
-                    <InteractiveSlideshow slides={lesson.slides} />
+                    <InteractiveSlideshow
+                      slides={lesson.slides}
+                      dyslexiaMode={dyslexiaMode}
+                      antiGlare={antiGlare}
+                      readingRuler={readingRuler}
+                      bionicReading={bionicReading}
+                      ttsSpeed={ttsSpeed}
+                      speakText={speakText}
+                      stopSpeaking={stopSpeaking}
+                      isSpeaking={isSpeaking}
+                      formatBionicText={formatBionicText}
+                    />
 
                     {/* Scientific learning pillars */}
                     <div className="bg-surface-0/60 border border-black/[0.06] rounded-2xl p-5 space-y-4">

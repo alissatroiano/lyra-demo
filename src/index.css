@@ -111,6 +111,23 @@
 }
 
 /* ====================================================================
+   Assistive reading
+   Applied to lesson body copy when dyslexia mode is on. The gains come
+   from spacing rather than a novelty typeface: wider letter and word
+   spacing plus generous line height reduce crowding, which is the
+   effect with the best evidence behind it.
+   ==================================================================== */
+.dyslexia-mode-styles {
+  font-family: "DM Sans", ui-sans-serif, system-ui, -apple-system, sans-serif !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.12em !important;
+  word-spacing: 0.22em !important;
+  line-height: 1.95 !important;
+  text-align: left !important; /* never justify — rivers of whitespace hurt tracking */
+  text-shadow: 0.3px 0.3px 0 rgba(0, 0, 0, 0.06) !important;
+}
+
+/* ====================================================================
    Star chart surfaces
    Lyra is a constellation, so the product's surfaces are drawn like a
    planisphere: a faint declination grid, scattered magnitude dots, and
