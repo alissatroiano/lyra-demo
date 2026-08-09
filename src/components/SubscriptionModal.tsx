@@ -31,15 +31,39 @@ export default function SubscriptionModal({
     if (!user) return;
     setLoading(true);
     setError(null);
+
+    const priceId = selectedPlan === "monthly" ? "price_1U2OwBKExpIuZ5d5bmfH68py" : "price_yearly_educator_99";
+
     try {
-      // Call backend api /api/subscribe with Stripe details
-      const res = await fetch("/api/subscribe", {
+      // 1. First try creating real Stripe Checkout session
+      const res = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           uid: user.uid,
           email: user.email,
-          plan: selectedPlan === "yearly" ? "Lyrah Educator Pro (Annual)" : "Lyrah Educator Pro (Monthly)",
+          plan: selectedPlan === "monthly" ? "intro_999" : "annual",
+          priceId
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.url) {
+        // Redirect user to official secure Stripe Checkout page to process live payment!
+        window.location.href = data.url;
+        return;
+      }
+
+      // 2. Fallback to direct subscription if checkout session endpoint is not available
+      const subRes = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uid: user.uid,
+          email: user.email,
+          plan: selectedPlan === "monthly" ? "Demo Incentive ($9.99 One-Time Fee)" : "Lyrah Educator Pro (Annual)",
+          priceId,
           cardName,
           cardNumber,
           expDate,
@@ -47,12 +71,12 @@ export default function SubscriptionModal({
         })
       });
 
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error || "Failed to process Stripe subscription.");
+      const subData = await subRes.json();
+      if (!subRes.ok || subData.error) {
+        throw new Error(data.error || subData.error || "Failed to process Stripe subscription.");
       }
 
-      await onSubscribe(selectedPlan === "yearly" ? "annual" : "monthly", { cardName });
+      await onSubscribe(selectedPlan === "yearly" ? "annual" : "intro_999", { cardName });
     } catch (err: any) {
       console.error("Subscription payment error:", err);
       setError(err.message || "An error occurred while processing your payment. Please try again.");
@@ -147,21 +171,24 @@ export default function SubscriptionModal({
                   <button
                     type="button"
                     onClick={() => setSelectedPlan("monthly")}
-                    className={`p-4 rounded-xl border text-left transition-all cursor-pointer ${
+                    className={`p-4 rounded-xl border text-left transition-all relative cursor-pointer ${
                       selectedPlan === "monthly"
                         ? "border-teal-600 dark:border-teal-brand bg-teal-50 dark:bg-teal-brand/10 shadow-sm ring-2 ring-teal-500/30"
                         : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50"
                     }`}
                   >
-                    <div className="flex justify-between items-start">
-                      <span className="text-xs font-bold text-slate-900 dark:text-slate-100">Educator Pro</span>
+                    <span className="absolute -top-2.5 left-3 bg-teal-dark text-teal-brand text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs border border-teal-brand/40">
+                      Demo Incentive
+                    </span>
+                    <div className="flex justify-between items-start mt-1">
+                      <span className="text-xs font-bold text-slate-900 dark:text-slate-100">$9.99 Intro Access</span>
                       <input type="radio" checked={selectedPlan === "monthly"} onChange={() => {}} className="accent-teal-700" />
                     </div>
                     <div className="mt-2 flex items-baseline gap-1.5">
-                      <span className="text-xs font-serif line-through text-slate-400 dark:text-slate-500 font-normal">$12.99</span>
-                      <p className="text-xl font-serif font-extrabold text-teal-900 dark:text-teal-brand">$9.99<span className="text-xs font-sans font-normal text-slate-600 dark:text-slate-400">/mo</span></p>
+                      <span className="text-xs font-serif line-through text-slate-400 dark:text-slate-500 font-normal">$29.00</span>
+                      <p className="text-xl font-serif font-extrabold text-teal-900 dark:text-teal-brand">$9.99<span className="text-xs font-sans font-normal text-slate-600 dark:text-slate-400"> one-time</span></p>
                     </div>
-                    <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">Flexible, cancel anytime</p>
+                    <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">One-time fee demo incentive</p>
                   </button>
 
                   <button

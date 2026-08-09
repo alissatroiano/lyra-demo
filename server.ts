@@ -94,7 +94,7 @@ try {
   console.error("Failed to initialize GoogleGenAI client:", error);
 }
 
-// API endpoint to extract text from pdf or docx files
+// API endpoint to extract text from pdf, docx, or text files
 app.post("/api/extract-text", async (req, res) => {
   const { fileBase64, fileName } = req.body;
 
@@ -109,11 +109,34 @@ app.post("/api/extract-text", async (req, res) => {
     let extractedText = "";
 
     if (extension === "pdf") {
-      const data = await pdfParse(buffer);
-      extractedText = data.text || "";
+      try {
+        const pdfParseModule = await import("pdf-parse");
+        const PDFParse = (pdfParseModule as any).PDFParse;
+        if (PDFParse) {
+          const parser = new PDFParse({ data: buffer });
+          const textResult = await parser.getText();
+          extractedText = textResult?.text || "";
+        } else if (typeof (pdfParseModule as any).default === "function") {
+          const data = await (pdfParseModule as any).default(buffer);
+          extractedText = data.text || "";
+        } else {
+          throw new Error("PDFParse class not available in pdf-parse module");
+        }
+      } catch (pdfErr: any) {
+        console.warn("PDF parser error, falling back to stream text extraction:", pdfErr?.message);
+        const rawStr = buffer.toString("binary");
+        const matches = rawStr.match(/\(([^()]+)\)\s*T[jJ]/g) || rawStr.match(/[\x20-\x7E\s]{10,}/g);
+        if (matches && matches.length > 0) {
+          extractedText = matches.map((m) => m.replace(/^[()]+|[()]+$/g, "")).join(" ");
+        } else {
+          throw new Error(`PDF extraction failed: ${pdfErr?.message || String(pdfErr)}`);
+        }
+      }
     } else if (extension === "docx") {
       const result = await mammoth.extractRawText({ buffer });
       extractedText = result.value || "";
+    } else if (["txt", "md", "csv", "rtf", "json", "doc"].includes(extension)) {
+      extractedText = buffer.toString("utf-8");
     } else {
       return res.status(400).json({ error: `Unsupported file extension: .${extension}` });
     }
@@ -750,9 +773,133 @@ app.post("/api/analyze-video", async (req, res) => {
   }
 });
 
-// Secure Stripe Subscription Endpoint
+// Secure Stripe Checkout Endpoint
+app.post("/api/create-checkout-session", async (req, res) => {
+  const { uid, email, plan, priceId: reqPriceId } = req.body;
+
+  if (!uid || !email) {
+    return res.status(400).json({ error: "User UID and Email are required for payment." });
+  }
+
+  const stripeSecret = process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecret) {
+    return res.status(400).json({ error: "Stripe is not configured on the server. Missing STRIPE_SECRET_KEY." });
+  }
+
+  const priceId = reqPriceId || (
+    (plan === "yearly" || plan === "annual")
+      ? (process.env.STRIPE_PROD_KEY_2 || "price_yearly_educator_99")
+      : (process.env.STRIPE_PROD_KEY_1 || "price_1U2OwBKExpIuZ5d5bmfH68py")
+  );
+
+  const protocol = req.headers["x-forwarded-proto"] || "https";
+  const host = req.headers.host || "localhost:3000";
+  const origin = `${protocol}://${host}`;
+
+  try {
+    const Stripe = (await import("stripe")).default;
+    const stripe = new Stripe(stripeSecret);
+
+    console.log(`Creating Stripe Checkout Session for ${email} (${uid}) using priceId: ${priceId}`);
+
+    let session;
+    const defaultMode = (plan === "yearly" || plan === "annual") ? "subscription" : "payment";
+
+    try {
+      session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        mode: defaultMode as any,
+        customer_email: email,
+        client_reference_id: uid,
+        success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${origin}/?payment=cancel`,
+        metadata: {
+          uid,
+          plan: plan || "intro",
+          priceId,
+          productId: "prod_V2TrpJIKS5bF5O"
+        },
+      });
+    } catch (modeErr: any) {
+      console.warn(`Stripe session creation failed with mode ${defaultMode}, retrying with alternate mode... Error:`, modeErr?.message);
+      const altMode = defaultMode === "payment" ? "subscription" : "payment";
+      session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price: priceId,
+            quantity: 1,
+          },
+        ],
+        mode: altMode as any,
+        customer_email: email,
+        client_reference_id: uid,
+        success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${origin}/?payment=cancel`,
+        metadata: {
+          uid,
+          plan: plan || "intro",
+          priceId,
+          productId: "prod_V2TrpJIKS5bF5O"
+        },
+      });
+    }
+
+    res.json({ url: session.url, sessionId: session.id });
+  } catch (error: any) {
+    console.error("Stripe Checkout Session Error:", error);
+    res.status(500).json({
+      error: "Failed to create Stripe Checkout session.",
+      details: error?.message || String(error)
+    });
+  }
+});
+
+// Verify Checkout Session status after Stripe redirect
+app.get("/api/verify-checkout-session", async (req, res) => {
+  const sessionId = req.query.session_id as string;
+  if (!sessionId) {
+    return res.status(400).json({ error: "Missing session_id query parameter." });
+  }
+
+  const stripeSecret = process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecret) {
+    return res.status(400).json({ error: "STRIPE_SECRET_KEY not configured on server." });
+  }
+
+  try {
+    const Stripe = (await import("stripe")).default;
+    const stripe = new Stripe(stripeSecret);
+
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const isPaid = session.payment_status === "paid" || session.status === "complete";
+
+    res.json({
+      verified: isPaid,
+      sessionId: session.id,
+      paymentStatus: session.payment_status,
+      customerEmail: session.customer_email || session.customer_details?.email,
+      uid: session.client_reference_id || session.metadata?.uid,
+      plan: session.metadata?.plan || "intro_999",
+    });
+  } catch (error: any) {
+    console.error("Verify Stripe Checkout Session error:", error);
+    res.status(500).json({
+      error: "Failed to verify Stripe payment session.",
+      details: error?.message || String(error)
+    });
+  }
+});
+
+// Secure Direct Stripe Subscription Endpoint (Fallback)
 app.post("/api/subscribe", async (req, res) => {
-  const { uid, email, plan, cardName, cardNumber, expDate, cvc } = req.body;
+  const { uid, email, plan, cardName, cardNumber, expDate, cvc, priceId: reqPriceId } = req.body;
 
   if (!uid || !email) {
     return res.status(400).json({ error: "User UID and Email are required to register a subscription." });
@@ -760,9 +907,9 @@ app.post("/api/subscribe", async (req, res) => {
 
   try {
     const stripeSecret = process.env.STRIPE_SECRET_KEY;
-    const priceId = (plan === "yearly" || plan === "annual")
+    const priceId = reqPriceId || ((plan === "yearly" || plan === "annual")
       ? (process.env.STRIPE_PROD_KEY_2 || "price_yearly_educator_99")
-      : (process.env.STRIPE_PROD_KEY_1 || "price_monthly_educator_999");
+      : (process.env.STRIPE_PROD_KEY_1 || "price_1U2OwBKExpIuZ5d5bmfH68py"));
 
     let transactionId = "sub_live_" + Math.random().toString(36).substring(2, 12).toUpperCase();
     

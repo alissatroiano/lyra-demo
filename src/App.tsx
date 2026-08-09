@@ -267,6 +267,31 @@ export default function App() {
   // Lab material checking states
   const [checkedMaterials, setCheckedMaterials] = useState<Record<string, boolean>>({});
 
+  // Verify Stripe Checkout Session returning from Stripe
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentStatus = urlParams.get("payment");
+    const sessionId = urlParams.get("session_id");
+
+    if (paymentStatus === "success" && sessionId) {
+      console.log("Verifying returning Stripe Checkout session:", sessionId);
+      fetch(`/api/verify-checkout-session?session_id=${sessionId}`)
+        .then((res) => res.json())
+        .then(async (data) => {
+          if (data.verified) {
+            console.log("Stripe payment successfully verified!", data);
+            await subscribeUser(data.plan || "Demo Incentive ($9.99 One-Time Fee)");
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        })
+        .catch((err) => {
+          console.error("Error verifying Stripe payment session:", err);
+        });
+    } else if (paymentStatus === "cancel") {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
+
   // Worksheet simulated answers
   const [studentAnswers, setStudentAnswers] = useState<Record<string, string>>({});
   const [showSampleAnswers, setShowSampleAnswers] = useState<boolean>(false);
@@ -956,7 +981,7 @@ export default function App() {
 
     const allTabs = [
       { id: "slides", label: "Interactive Slides", icon: Layers },
-      { id: "lab", label: isGamingLesson ? "🎮 Gaming & Coding Blocks" : (isCodingLesson ? "💻 Coding Blocks & Lab" : "Hands-On Lab"), icon: isGamingLesson ? Gamepad2 : (isCodingLesson ? Terminal : Activity) },
+      { id: "lab", label: selectedCategory === "Software" ? "💻 Coding Blocks" : "Hands-On Lab", icon: selectedCategory === "Software" ? Terminal : Activity },
       { id: "quiz", label: "Smartboard Quiz", icon: HelpCircle },
       { id: "media", label: "Media Fixer", icon: Link2Off }
     ];
@@ -1191,19 +1216,25 @@ export default function App() {
             })
           });
 
-          if (!response.ok) {
-            const errData = await response.json();
-            throw new Error(errData.error || "Failed to extract text from document");
+          const responseText = await response.text();
+          let data: any = {};
+          try {
+            data = JSON.parse(responseText);
+          } catch {
+            throw new Error(`Server returned non-JSON response (${response.status}). Please check document format.`);
           }
 
-          const data = await response.json();
-          if (data.text) {
+          if (!response.ok) {
+            throw new Error(data.error || data.details || "Failed to extract text from document");
+          }
+
+          if (data.text && data.text.trim().length > 0) {
             setCustomContent(data.text);
             triggerTempTextMaterialOpen();
             autoDetectCurriculumSettings(data.text, file.name, customPreferences);
             setShowPlanConfirmationModal(true);
           } else {
-            throw new Error("No text content could be extracted from this document.");
+            throw new Error("No readable text content could be extracted from this document.");
           }
         } catch (err: any) {
           console.error("Text extraction failed:", err);
@@ -3748,7 +3779,7 @@ export default function App() {
                     </div>
                     <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                       <Terminal className="w-4 h-4 text-amber-500 shrink-0" />
-                      <span>Coding Blocks & Hands-On Lab Guide</span>
+                      <span>{selectedCategory === "Software" ? "Coding Blocks" : "Hands-On Lab"}</span>
                     </div>
                     <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                       <HelpIcon className="w-4 h-4 text-sky-500 shrink-0" />
