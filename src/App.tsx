@@ -2852,7 +2852,7 @@ export default function App() {
                     <Crown className="w-5 h-5 text-amber-300" />
                   </div>
                   <div>
-                    <h4 className="font-serif font-bold text-base text-white">Unlock Full Educator Pro Access ($19.99/mo)</h4>
+                    <h4 className="font-serif font-bold text-base text-white">Unlock Full Educator Pro Access ($9.99/mo)</h4>
                     <p className="text-xs text-teal-100/80 font-sans">Register and subscribe to access unlimited AI transformations, persistent Cloud Firestore lesson saving, and full curriculum suite tools.</p>
                   </div>
                 </div>
@@ -2867,7 +2867,7 @@ export default function App() {
                   }}
                   className="px-5 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-extrabold text-xs rounded-xl shadow-sm transition-all cursor-pointer shrink-0 flex items-center gap-2"
                 >
-                  <span>{user ? 'Activate Pro Access ($19.99/mo)' : 'Sign In & Subscribe'}</span>
+                  <span>{user ? 'Activate Pro Access ($9.99/mo)' : 'Sign In & Subscribe'}</span>
                   <ArrowRight className="w-4 h-4 text-slate-950" />
                 </button>
               </div>

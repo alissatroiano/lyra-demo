@@ -209,20 +209,21 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-          {/* Plan 1: STEM Educator Pro - $19.99 */}
-          <div className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 flex flex-col justify-between shadow-sm hover:border-teal-brand transition-all relative">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          {/* Plan 1: STEM Educator Pro - $12.99 slashed out -> $9.99/mo */}
+          <div className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-6 flex flex-col justify-between shadow-sm hover:border-teal-brand transition-all relative">
             <div className="space-y-4">
               <div className="space-y-1">
                 <span className="text-[10px] font-mono font-bold text-teal-900 dark:text-teal-brand uppercase tracking-wider bg-teal-50 dark:bg-teal-brand/20 px-2.5 py-1 rounded-md border border-teal-200 dark:border-teal-brand/30 inline-block">
                   INDIVIDUAL TEACHER
                 </span>
-                <h4 className="font-serif text-2xl font-bold text-slate-900 dark:text-slate-100">STEM Educator Pro</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-500 font-sans">Designed for single STEM/STEAM classroom teachers & lab instructors.</p>
+                <h4 className="font-serif text-2xl font-bold text-slate-900 dark:text-slate-100">Educator Pro</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">Designed for single STEM/STEAM classroom teachers & lab instructors.</p>
               </div>
 
-              <div className="flex items-baseline gap-1.5 pt-2">
-                <span className="font-serif text-4xl font-bold text-teal-900 dark:text-teal-brand">$19.99</span>
+              <div className="flex items-baseline gap-2 pt-2">
+                <span className="line-through text-slate-400 dark:text-slate-500 font-serif text-2xl font-normal">$12.99</span>
+                <span className="font-serif text-4xl font-extrabold text-teal-900 dark:text-teal-brand">$9.99</span>
                 <span className="text-xs text-slate-500 dark:text-slate-400 font-sans font-medium">/ month</span>
               </div>
 
@@ -267,15 +268,75 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   onSelectPlan();
                 }
               }}
-              className="w-full py-3.5 bg-teal-800 dark:bg-teal-600 hover:bg-slate-900 dark:hover:bg-teal-500 text-white rounded-xl text-xs font-extrabold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3 bg-teal-800 dark:bg-teal-600 hover:bg-slate-900 dark:hover:bg-teal-500 text-white rounded-xl text-xs font-extrabold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>Get Educator Pro ($19.99/mo)</span>
+              <span>Get Educator Pro ($9.99/mo)</span>
               <ArrowRight className="w-4 h-4 text-amber-300" />
             </button>
           </div>
 
-          {/* Plan 2: STEM Camp Director - $49.99 */}
-          <div className="bg-gradient-to-b from-teal-dark via-teal-900 to-slate-900 text-white rounded-3xl p-6 sm:p-8 space-y-6 flex flex-col justify-between shadow-lg relative border-2 border-teal-brand/40 overflow-hidden">
+          {/* Plan 2: Educator Yearly - $99.00 */}
+          <div className="bg-white dark:bg-slate-900 border-2 border-teal-brand/60 rounded-3xl p-6 space-y-6 flex flex-col justify-between shadow-md hover:border-teal-brand transition-all relative">
+            <div className="absolute -top-3 right-4 bg-teal-brand text-slate-950 text-[10px] font-extrabold px-3 py-0.5 rounded-full uppercase tracking-wider font-mono shadow-xs">
+              BEST VALUE
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono font-bold text-teal-900 dark:text-teal-brand uppercase tracking-wider bg-teal-50 dark:bg-teal-brand/20 px-2.5 py-1 rounded-md border border-teal-200 dark:border-teal-brand/30 inline-block">
+                  ANNUAL PASS
+                </span>
+                <h4 className="font-serif text-2xl font-bold text-slate-900 dark:text-slate-100">Educator Yearly</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">Full annual access to all Lyra STEM AI co-teacher tools ($8.25/mo).</p>
+              </div>
+
+              <div className="flex items-baseline gap-1.5 pt-2">
+                <span className="font-serif text-4xl font-extrabold text-teal-900 dark:text-teal-brand">$99.00</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-sans font-medium">/ year</span>
+              </div>
+
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2.5 text-xs text-slate-700 dark:text-slate-300 font-sans">
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
+                  <span><strong>Everything in Educator Pro</strong></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
+                  <span>Save over 17% compared to monthly</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
+                  <span>Priority access to new AI model updates</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
+                  <span>Dedicated educator support channel</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
+                  <span>Full year of persistent cloud storage</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!user) {
+                  onSignIn();
+                } else {
+                  onSelectPlan();
+                }
+              }}
+              className="w-full py-3 bg-gradient-to-r from-teal-dark to-teal-800 dark:from-teal-600 dark:to-teal-500 hover:from-teal-900 hover:to-teal-950 text-white rounded-xl text-xs font-extrabold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Get Educator Yearly ($99.00/yr)</span>
+              <ArrowRight className="w-4 h-4 text-amber-300" />
+            </button>
+          </div>
+
+          {/* Plan 3: STEM Camp Director - $49.99 */}
+          <div className="bg-gradient-to-b from-teal-dark via-teal-900 to-slate-900 text-white rounded-3xl p-6 space-y-6 flex flex-col justify-between shadow-lg relative border-2 border-teal-brand/40 overflow-hidden">
             <div className="absolute top-0 right-0 bg-gold-brand text-slate-950 text-[10px] font-extrabold px-3.5 py-1 rounded-bl-xl uppercase tracking-wider font-mono shadow-xs">
               DIRECTORS & CAMPS
             </div>
@@ -286,7 +347,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   CAMP & AFTERSCHOOL
                 </span>
                 <h4 className="font-serif text-2xl font-bold text-white">STEM Camp Director</h4>
-                <p className="text-xs text-teal-100/80 font-sans">Built for multi-instructor STEM camps, summer programs & afterschool directors.</p>
+                <p className="text-xs text-teal-100/80 font-sans">Built for multi-instructor STEM camps, summer programs & directors.</p>
               </div>
 
               <div className="flex items-baseline gap-1.5 pt-2">
@@ -327,7 +388,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   onSelectPlan();
                 }
               }}
-              className="w-full py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 rounded-xl text-xs font-black transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 rounded-xl text-xs font-black transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>Choose Camp Director ($49.99/mo)</span>
               <ArrowRight className="w-4 h-4 text-slate-950" />
