@@ -817,6 +817,16 @@ app.post("/api/create-checkout-session", async (req, res) => {
 
     console.log(`Creating Stripe Checkout Session for ${email} (${uid}) using priceId: ${priceId}`);
 
+    // Instructor retention incentive. Stripe owns the discount itself so the
+    // offer can change mid-school-year without a redeploy:
+    //   - STRIPE_COUPON_ID set  -> that coupon is applied automatically
+    //   - otherwise             -> the promo code field is shown at checkout
+    // The two are mutually exclusive in the Checkout API; sending both is an error.
+    const autoCoupon = process.env.STRIPE_COUPON_ID;
+    const discountOptions = autoCoupon
+      ? { discounts: [{ coupon: autoCoupon }] }
+      : { allow_promotion_codes: true };
+
     // Mode follows the price's own billing type. The previous retry-with-the-
     // other-mode fallback masked real errors: a bad price id failed twice and
     // surfaced whichever message came second.
@@ -836,7 +846,9 @@ app.post("/api/create-checkout-session", async (req, res) => {
         uid,
         plan: plan || "intro",
         priceId,
+        coupon: autoCoupon || "promo_code_field",
       },
+      ...discountOptions,
     });
 
     res.json({ url: session.url, sessionId: session.id });
