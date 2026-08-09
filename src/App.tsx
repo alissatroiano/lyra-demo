@@ -834,7 +834,7 @@ export default function App() {
             data.extractedStyleNotes
           );
         } catch (saveNotesErr) {
-          console.error("Autosaving Lyra's extracted style notes failed:", saveNotesErr);
+          console.error("Autosaving Lyrah's extracted style notes failed:", saveNotesErr);
         }
       }
 
@@ -1119,7 +1119,7 @@ export default function App() {
             </div>
             <div>
               <span className="font-serif text-xl sm:text-2xl font-semibold tracking-tight text-teal-dark dark:text-teal-brand">
-                Lyra<span className="text-teal-brand font-sans">.</span>
+                Lyrah<span className="text-teal-brand font-sans">.</span>
               </span>
               <p className="text-[9px] sm:text-[10px] text-secondary dark:text-slate-400 font-sans tracking-wide leading-none hidden xs:block">Afterschool STEM Copilot</p>
             </div>
@@ -1247,7 +1247,7 @@ export default function App() {
                 Your AI copilot for <span className="text-teal-800 dark:text-teal-brand underline decoration-teal-brand/40 underline-offset-4">STEM lesson prep</span>
               </h1>
               <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-sans font-normal">
-                Lyra turns long, messy science articles and PDF textbooks into beautiful interactive slide decks, hands-on lab guides, printable worksheets, and broken media link backups instantly.
+                Lyrah turns long, messy science articles and PDF textbooks into beautiful interactive slide decks, hands-on lab guides, printable worksheets, and broken media link backups instantly.
               </p>
             </div>
 
@@ -1716,13 +1716,13 @@ export default function App() {
                   )}
                 </div>
 
-                {/* Lyra's Memory Profile & AI Insights */}
+                {/* Lyrah's Memory Profile & AI Insights */}
                 {user ? (
                   <div className="bg-teal-50/60 dark:bg-teal-brand/10 border border-teal-brand/20 dark:border-teal-brand/30 rounded-xl p-3 space-y-1.5 animate-fadeIn">
                     <div className="flex items-center gap-1.5">
                       <Brain className="w-3.5 h-3.5 text-teal-700 dark:text-teal-brand animate-pulse" />
                       <span className="text-[9px] font-bold text-teal-900 dark:text-teal-brand uppercase tracking-wider font-sans">
-                        Lyra's Memory of You
+                        Lyrah's Memory of You
                       </span>
                     </div>
                     {profile?.instructorNotes ? (
@@ -1731,18 +1731,18 @@ export default function App() {
                           "I've learned that you focus on: <span className="font-semibold text-teal-900 dark:text-teal-brand">{profile.instructorNotes}</span>"
                         </p>
                         <span className="text-[8px] text-teal-700 dark:text-teal-brand font-medium block">
-                          💡 Lyra automatically synthesizes these pedagogical preferences into new plans.
+                          💡 Lyrah automatically synthesizes these pedagogical preferences into new plans.
                         </span>
                       </div>
                     ) : (
                       <p className="text-[9px] text-slate-600 dark:text-slate-400 italic font-sans leading-normal">
-                        Generate a lesson to activate. Lyra will observe your input patterns and custom instructions to learn your style.
+                        Generate a lesson to activate. Lyrah will observe your input patterns and custom instructions to learn your style.
                       </p>
                     )}
                   </div>
                 ) : (
                   <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl p-2.5 text-[9px] text-amber-950 dark:text-amber-200 leading-normal font-sans font-medium">
-                    🔒 <span className="font-bold">Sign In</span> to enable Lyra's adaptive memory. Lyra will save your instructions and learn your pedagogical style across sessions!
+                    🔒 <span className="font-bold">Sign In</span> to enable Lyrah's adaptive memory. Lyrah will save your instructions and learn your pedagogical style across sessions!
                   </div>
                 )}
               </div>
@@ -2807,7 +2807,7 @@ export default function App() {
 
         {/* Minimal professional footer */}
         <footer className="px-6 sm:px-8 pt-8 mt-auto border-t border-black/[0.05] text-center text-[10px] text-secondary font-sans leading-normal space-y-1">
-          <p>© 2026 Lyra STEM - Immersive Lesson Plan Transformation Suite. All rights reserved.</p>
+          <p>© 2026 Lyrah STEM - Immersive Lesson Plan Transformation Suite. All rights reserved.</p>
           <p className="text-[9px] text-secondary/75">Designed in partnership with XPRIZE Education Initiative for high-yield classroom activities.</p>
         </footer>
 
@@ -2824,7 +2824,7 @@ export default function App() {
           />
         )}
 
-        {/* Floating Sparkle Icon for Lyra AI Co-Teacher Popup */}
+        {/* Floating Sparkle Icon for Lyrah AI Co-Teacher Popup */}
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
           {copilotOpen && (
             <motion.div
@@ -2841,7 +2841,7 @@ export default function App() {
                     <Sparkles className="w-4 h-4 animate-pulse" />
                   </div>
                   <div>
-                    <h3 className="text-xs font-bold font-sans uppercase tracking-wide">Lyra AI Co-Teacher</h3>
+                    <h3 className="text-xs font-bold font-sans uppercase tracking-wide">Lyrah AI Co-Teacher</h3>
                     <p className="text-[10px] text-teal-light/80 font-sans">Active Lesson Partner & Adaptations Assistant</p>
                   </div>
                 </div>
@@ -2880,7 +2880,7 @@ export default function App() {
           >
             <Sparkles className={`w-5 h-5 text-amber-300 ${copilotOpen ? "" : "animate-spin-slow"}`} />
             <span className="font-sans font-bold text-xs pr-0.5">
-              {copilotOpen ? "Close Lyra AI" : "Ask Lyra AI"}
+              {copilotOpen ? "Close Lyrah AI" : "Ask Lyrah AI"}
             </span>
             {!copilotOpen && (
               <span className="relative flex h-2.5 w-2.5">

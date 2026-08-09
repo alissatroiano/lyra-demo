@@ -1,5 +1,5 @@
 {
-  "name": "Lyra",
+  "name": "Lyrah",
   "description": "An AI-powered STEM lesson experience generator that transforms wordy lesson plans into immersive interactive demonstrations, worksheets, and visuals for educators.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
