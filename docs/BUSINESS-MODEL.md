@@ -1,4 +1,4 @@
-# Lyra — Business Model
+# Lyrah — Business Model
 
 **Category:** Education & Human Potential
 **Live product:** https://lyra-6050696394.us-east1.run.app
@@ -9,7 +9,7 @@
 
 ---
 
-## 1. How Lyra uses AI to impact Education & Human Potential
+## 1. How Lyrah uses AI to impact Education & Human Potential
 
 Teachers don't have a knowledge problem. They have a preparation problem.
 
@@ -23,7 +23,7 @@ It falls hardest on the people with the least institutional support. A district 
 curriculum team. An afterschool STEM coordinator, a homeschool pod leader, a freelance enrichment
 instructor — they have a text document and a Sunday evening.
 
-**Lyra converts curriculum into a taught lesson.** Paste in wordy material and it produces five
+**Lyrah converts curriculum into a taught lesson.** Paste in wordy material and it produces five
 artifacts ready for a classroom:
 
 1. **Smart Slideshow** — conceptual slides with instructor scripts and teaching guidance
@@ -40,7 +40,7 @@ perfectly good older lesson gets abandoned, and it's the least interesting probl
 `gemini-3.1-flash-image` for classroom visuals. Without them there is no product — there is a text
 box.
 
-The impact claim is deliberately narrow: **Lyra doesn't teach anyone. It gives the person who does
+The impact claim is deliberately narrow: **Lyrah doesn't teach anyone. It gives the person who does
 the teaching their evenings back**, and makes high-quality materials reachable for instructors
 without a curriculum department behind them.
 
@@ -77,7 +77,7 @@ outcomes are downstream of this product and we don't claim them.
 
 ### Live now
 
-**Lyra Educator Pro — $19.99/month or $159/year** (a 34% annual discount). Unlimited curriculum
+**Lyrah Educator Pro — $19.99/month or $159/year** (a 34% annual discount). Unlimited curriculum
 transformation across all five modules. Stripe checkout, live in the deployed application.
 
 ### Planned tiers
@@ -99,7 +99,7 @@ the product and README agree.]`
   carry attribution; the product markets itself through its own output.
 - **Community.** Afterschool and STEM enrichment networks are densely connected and share resources
   constantly. This category spreads by recommendation, not advertising.
-- **B2C → B2B.** An instructor using Lyra weekly is the warm introduction to the organisation that
+- **B2C → B2B.** An instructor using Lyrah weekly is the warm introduction to the organisation that
   employs them. Individual adoption is the wedge; the site licence is the revenue.
 
 ### Value created
@@ -114,7 +114,7 @@ Retention is seasonal by nature — teaching runs in terms, and summer is quiet.
 rather than pretending otherwise: annual billing at a real discount, and a library that accumulates
 so returning users find their previous work waiting.
 
-The durable retention is organisational. Once a program's materials are produced in Lyra, switching
+The durable retention is organisational. Once a program's materials are produced in Lyrah, switching
 means rebuilding a term's worth of content.
 
 ---
@@ -162,14 +162,14 @@ the balance sheet.
 
 **Consolidation, and it's already happened.**
 
-I built Lyra, then spent several weeks on a second product — an AI interview-practice platform —
+I built Lyrah, then spent several weeks on a second product — an AI interview-practice platform —
 before recognising it was splitting my focus across two early-stage products with different buyers,
-different infrastructure, and different failure modes. I've consolidated onto Lyra: it has clearer
+different infrastructure, and different failure modes. I've consolidated onto Lyrah: it has clearer
 demand, a simpler operating model, and it's entirely mine to move on.
 
 That decision cost time. It also produced the more useful conclusion: **an early product does not
 fail from lack of ideas, it fails from divided attention.** The plan after the hackathon is
-deliberately narrow — one product, one buyer, one metric. Instructors using Lyra weekly, and the
+deliberately narrow — one product, one buyer, one metric. Instructors using Lyrah weekly, and the
 measured hours it gives them back.
 
 ---

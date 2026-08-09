@@ -18,7 +18,7 @@
     },
     "Lesson": {
       "title": "Lesson",
-      "description": "A fully structured lesson generated or loaded in the Lyra application",
+      "description": "A fully structured lesson generated or loaded in the Lyrah application",
       "type": "object",
       "properties": {
         "id": { "type": "string", "description": "The unique document ID" },

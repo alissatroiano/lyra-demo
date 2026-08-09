@@ -1,6 +1,6 @@
-# Security Specification - Lyra Firestore Security
+# Security Specification - Lyrah Firestore Security
 
-This document outlines the security architecture, invariants, attack vectors, and testing payloads for the Lyra database.
+This document outlines the security architecture, invariants, attack vectors, and testing payloads for the Lyrah database.
 
 ---
 
@@ -222,7 +222,7 @@ afterAll(async () => {
   await testEnv.cleanup();
 });
 
-describe("Lyra Security Rules Tests", () => {
+describe("Lyrah Security Rules Tests", () => {
   test("Payload 1: Reject user profile creation for other user IDs", async () => {
     const attackerContext = testEnv.authenticatedContext("attacker_user_456", { email_verified: true });
     const db = attackerContext.firestore();
