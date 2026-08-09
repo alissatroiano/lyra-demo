@@ -75,22 +75,30 @@ export default function InteractiveSlideshow({
 
   const isPresentationWindow = typeof window !== "undefined" && window.location.search.includes("presentation=true");
 
-  // Keyboard navigation for arrow keys and Space and Escape
+  // Keyboard navigation.
+  //
+  // In presentation and fullscreen the deck owns the whole screen, so arrows
+  // and Space drive it globally. Inline, the deck is one element on a scrolling
+  // page — hijacking arrows there would break normal scrolling — so it only
+  // responds when focus is actually inside the slideshow. That still gives the
+  // inline view a keyboard path, which it previously had none of.
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") {
-        return;
-      }
-      if (isPresentationWindow || isLocalFullscreen) {
-        if (e.key === "ArrowRight" || e.key === " ") {
-          e.preventDefault();
-          setCurrentIndex((prev) => (prev + 1) % slides.length);
-        } else if (e.key === "ArrowLeft") {
-          e.preventDefault();
-          setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);
-        } else if (e.key === "Escape") {
-          setIsLocalFullscreen(false);
-        }
+      const el = document.activeElement;
+      if (el?.tagName === "INPUT" || el?.tagName === "TEXTAREA") return;
+
+      const isImmersive = isPresentationWindow || isLocalFullscreen;
+      const focusInside = !!(el && slideshowContainerRef.current?.contains(el));
+      if (!isImmersive && !focusInside) return;
+
+      if (e.key === "ArrowRight" || (e.key === " " && isImmersive)) {
+        e.preventDefault();
+        setCurrentIndex((prev) => (prev + 1) % slides.length);
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);
+      } else if (e.key === "Escape" && isLocalFullscreen) {
+        setIsLocalFullscreen(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -131,7 +139,7 @@ export default function InteractiveSlideshow({
     return () => {
       clearInterval(timer);
     };
-  }, [isPlaying, currentIndex, slides.length]);
+  }, [isPlaying, slides.length]);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!readingRuler || !rulerRef.current) return;
@@ -182,7 +190,7 @@ export default function InteractiveSlideshow({
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => speakText(`Slide ${currentIndex + 1}: ${currentSlide.title}. ` + currentSlide.content.join(" "), ttsSpeed)}
+              onClick={() => isSpeaking ? stopSpeaking() : speakText(`Slide ${currentIndex + 1}: ${currentSlide.title}. ` + (currentSlide.content || []).join(" "), ttsSpeed)}
               className={`p-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center border cursor-pointer ${
                 isSpeaking
                   ? "bg-red-500/20 border-red-500 text-red-400"
@@ -294,7 +302,7 @@ export default function InteractiveSlideshow({
   }
 
   return (
-    <div className="space-y-4" id="interactive-slides-container">
+    <div className="space-y-4" id="interactive-slides-container" ref={slideshowContainerRef}>
       {/* Slide Deck Style Picker Bar */}
       <div className="bg-surface-0 border border-black/[0.05] rounded-2xl p-3 flex flex-col sm:flex-row items-center justify-between gap-2.5">
         <div className="flex items-center gap-1.5 text-xs font-bold text-teal-dark font-sans shrink-0">
@@ -351,7 +359,7 @@ export default function InteractiveSlideshow({
         <div className="flex items-center flex-wrap gap-2 justify-end">
           <button
             type="button"
-            onClick={() => speakText(`Slide ${currentIndex + 1}: ${currentSlide.title}. ` + currentSlide.content.join(" "), ttsSpeed)}
+            onClick={() => isSpeaking ? stopSpeaking() : speakText(`Slide ${currentIndex + 1}: ${currentSlide.title}. ` + (currentSlide.content || []).join(" "), ttsSpeed)}
             className={`p-2 rounded-lg text-xs font-bold font-sans transition-all flex items-center justify-center border cursor-pointer ${
               isSpeaking
                 ? "bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
@@ -438,22 +446,29 @@ export default function InteractiveSlideshow({
           <div className="absolute inset-0 bg-[radial-gradient(#ffffff08_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none opacity-30" />
         )}
         
-        {/* Progress indicators */}
-        <div className="absolute top-0 left-0 right-0 p-1 flex gap-1 z-10">
+        {/* Progress indicators — real buttons so they are reachable by keyboard
+            and announced. These were click-only divs, which is the kind of gap
+            that undercuts the accessibility work everywhere else in here. */}
+        <div className="absolute top-0 left-0 right-0 p-1 flex gap-1 z-10" role="tablist" aria-label="Slides">
           {slides.map((_, idx) => (
-            <div 
+            <button
               key={idx}
-              onClick={() => {
-                setCurrentIndex(idx);
-              }}
-              className="h-1 flex-1 rounded-full overflow-hidden bg-black/10 dark:bg-white/10 cursor-pointer transition-all hover:bg-black/20 dark:hover:bg-white/20"
+              type="button"
+              role="tab"
+              aria-label={`Go to slide ${idx + 1} of ${slides.length}`}
+              aria-selected={idx === currentIndex}
+              onClick={() => setCurrentIndex(idx)}
+              className="h-1 flex-1 rounded-full overflow-hidden bg-black/10 dark:bg-white/10 cursor-pointer transition-all hover:bg-black/20 dark:hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-brand p-0 border-0"
             >
-              <div 
-                className={`h-full bg-teal-brand transition-all duration-300 ${
+              {/* Fill follows the selected deck style — it was hardcoded teal
+                  while everything around it respected currentStyleObj. */}
+              <span
+                style={{ backgroundColor: currentStyleObj.previewDots[1] || currentStyleObj.previewDots[0] }}
+                className={`block h-full transition-all duration-300 ${
                   idx === currentIndex ? "w-full" : idx < currentIndex ? "w-full opacity-40" : "w-0"
                 }`}
               />
-            </div>
+            </button>
           ))}
         </div>
 
@@ -601,7 +616,7 @@ export default function InteractiveSlideshow({
                 </div>
                 <div>
                   <h5 className="text-xs font-bold uppercase font-sans tracking-tight">Facilitator Cues & Speaking Prompts</h5>
-                  <p className="text-[9px] text-amber-800/80 leading-none">Pedagogical recommendations by Lyra</p>
+                  <p className="text-[9px] text-amber-800/80 leading-none">Pedagogical recommendations by Lyrah</p>
                 </div>
               </div>
               <p className="text-xs text-amber-950 leading-relaxed font-sans bg-white/70 border border-amber-200/30 p-3 rounded-xl">
