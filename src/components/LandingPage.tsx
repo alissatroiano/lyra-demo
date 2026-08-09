@@ -1,5 +1,5 @@
 import React from "react";
-import { Sparkles, ArrowRight, Layers, Activity, Palette, HelpCircle, Link2Off, Check, Database, FileCode, BookOpen, LogIn, Clock, Users } from "lucide-react";
+import { Sparkles, ArrowRight, Layers, Activity, Palette, HelpCircle, Link2Off, Check, Database, FileCode, BookOpen, LogIn, Clock, Users, Briefcase } from "lucide-react";
 import { LyraMark } from "./LyraMark";
 
 interface LandingPageProps {
@@ -94,23 +94,23 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           {[
             {
               icon: Clock,
-              title: "Prep happens after the teaching day",
-              body: "Turning a curriculum outline into slides, a worksheet and an answer key is unpaid work that lands on evenings and weekends."
+              title: "Hours of manual preparation",
+              body: "Teachers spend an average of 10–15 hours a week outside class converting textbook chapters into slides and worksheets."
             },
             {
               icon: Link2Off,
-              title: "Inherited lessons have dead links",
-              body: "Good material gets abandoned because the videos are private, deleted, or on an intranet you can't reach from the classroom."
+              title: "Broken media links & references",
+              body: "Shared curriculum templates often contain dead URLs and outdated video links that disrupt classrooms."
             },
             {
               icon: Users,
-              title: "One plan, very different learners",
-              body: "Adapting a single lesson for dyslexic, ADHD and hands-on learners in the same room usually means rewriting it three times."
+              title: "Catering to neurodiverse learning",
+              body: "It's incredibly difficult to adapt a single standard lesson plan to dyslexic, ADHD, and tactile learners in the same class."
             },
             {
-              icon: Layers,
-              title: "Five pages that must fit in one hour",
-              body: "Curriculum is written for a prep period you don't get. Deciding what to cut — and remembering it in November — is the real job."
+              icon: Briefcase,
+              title: "Disorganized teacher notes",
+              body: "Facilitator scripts and lesson modifications are often stored across separate emails, drives, and printouts."
             }
           ].map(({ icon: Icon, title, body }) => (
             <div
@@ -131,33 +131,63 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </section>
 
-      {/* Pipeline: How Lyrah Transforms Lessons */}
-      <div className="bg-teal-dark text-white rounded-3xl p-8 space-y-6 shadow-sm relative overflow-hidden" id="pipeline-section">
-        <div className="text-center space-y-1.5">
-          <span className="text-[10px] font-mono font-bold text-teal-brand uppercase tracking-widest">HOW LYRAH TRANSFORMS LESSONS</span>
-          <h3 className="font-display text-2xl font-bold text-teal-light">The Interactive Pipeline</h3>
+      {/* How Lyrah works — five steps in the order they actually run, so the
+          numbering carries real sequence rather than decoration. */}
+      <section className="space-y-4" id="pipeline-section">
+        <span className="text-[10px] font-mono font-bold text-teal-brand uppercase tracking-[0.18em]">
+          How Lyrah works — 5 AI agents, one learning package
+        </span>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {[
+            {
+              icon: FileCode,
+              tint: "bg-teal-brand/10 text-teal-brand",
+              title: "Material Ingestion",
+              body: "Upload any textbook PDF, DOCX, or pasted lesson plan up to 50 pages long."
+            },
+            {
+              icon: Check,
+              tint: "bg-emerald-500/10 text-emerald-500",
+              title: "Invariant Extraction",
+              body: "Our AI extractors safely parse and outline key STEM concepts and learning goals."
+            },
+            {
+              icon: Palette,
+              tint: "bg-gold-brand/10 text-gold-brand",
+              title: "Media Recommendation",
+              body: "Generates high-yield safe search queries for animated videos and live science demos."
+            },
+            {
+              icon: Layers,
+              tint: "bg-rose-500/10 text-rose-500",
+              title: "Layout Generation",
+              body: "Assembles beautifully structured slide decks, teaching scripts, and gamified quizzes."
+            },
+            {
+              icon: Activity,
+              tint: "bg-meridian/10 text-meridian",
+              title: "Student Adaptation",
+              body: "Applies dyslexia-friendly bionic formatting and phonetic aids to the outputs."
+            }
+          ].map(({ icon: Icon, tint, title, body }, i) => (
+            <div
+              key={title}
+              className="flex flex-col gap-3 p-5 rounded-2xl bg-surface-2 dark:bg-cyber-card border border-black/[0.06] dark:border-slate-800"
+            >
+              <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${tint}`}>
+                <Icon className="w-5 h-5" />
+              </span>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 font-sans leading-snug">
+                {i + 1}. {title}
+              </h4>
+              <p className="text-xs text-secondary dark:text-slate-400 font-sans leading-relaxed">
+                {body}
+              </p>
+            </div>
+          ))}
         </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 pt-2 text-left">
-          <div className="bg-black/[0.2] p-5 rounded-2xl border border-white/[0.08] space-y-2">
-            <span className="text-[10px] font-mono text-teal-brand block font-bold">STAGE 01</span>
-            <h5 className="text-sm font-bold font-sans">Raw Curriculum Intake</h5>
-            <p className="text-xs text-teal-light/80 leading-relaxed font-sans">Drop standard textbooks, plain articles, or raw outlines into the parser.</p>
-          </div>
-
-          <div className="bg-black/[0.2] p-5 rounded-2xl border border-white/[0.08] space-y-2">
-            <span className="text-[10px] font-mono text-teal-brand block font-bold">STAGE 02</span>
-            <h5 className="text-sm font-bold font-sans">AI Alignment Engine</h5>
-            <p className="text-xs text-teal-light/80 leading-relaxed font-sans">Gemini restructures text into active gamified modules tailored for specific age groups.</p>
-          </div>
-
-          <div className="bg-black/[0.2] p-5 rounded-2xl border border-white/[0.08] space-y-2">
-            <span className="text-[10px] font-mono text-teal-brand block font-bold">STAGE 03</span>
-            <h5 className="text-sm font-bold font-sans">Multi-Channel Outputs</h5>
-            <p className="text-xs text-teal-light/80 leading-relaxed font-sans">Instantly yields slides, experimental guides, Visual Studio diagrams, and quiz modules.</p>
-          </div>
-        </div>
-      </div>
+      </section>
 
       {/* Complete Lesson Suite Showcase */}
       <div className="space-y-6">
