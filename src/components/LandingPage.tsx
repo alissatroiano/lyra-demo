@@ -1,6 +1,5 @@
 import React from "react";
 import { Sparkles, ArrowRight, Layers, Activity, Palette, HelpCircle, Link2Off, Check, Database, FileCode, BookOpen, LogIn } from "lucide-react";
-import { RobotBunnyMascot } from "../App";
 import { LyraMark } from "./LyraMark";
 
 interface LandingPageProps {
@@ -70,15 +69,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
           </div>
 
-          {/* Mascot, plotted against the constellation the product is named for */}
-          <div className="self-center md:self-auto shrink-0 bg-white/80 dark:bg-cyber-card/90 border border-teal-brand/20 dark:border-slate-800 rounded-3xl p-6 shadow-md relative">
-            <LyraMark className="absolute inset-0 w-full h-full p-3 opacity-25 dark:opacity-40 pointer-events-none" />
-            <div className="relative animate-float">
-              <RobotBunnyMascot className="w-32 h-32 sm:w-36 sm:h-36" />
-            </div>
+          {/* The constellation the product is named for */}
+          <div className="star-field self-center md:self-auto shrink-0 bg-cyber-bg border border-teal-brand/25 rounded-3xl p-6 shadow-md relative">
+            <LyraMark className="w-32 h-32 sm:w-40 sm:h-40 text-teal-brand relative" />
             <div className="mt-3 text-center relative">
-              <span className="text-[10px] font-extrabold font-mono text-teal-900 dark:text-teal-brand bg-teal-light/60 dark:bg-teal-brand/20 px-2.5 py-1 rounded-full uppercase tracking-wide">
-                Lyrah AI Co-Teacher
+              <span className="text-[10px] font-extrabold font-mono text-teal-brand bg-teal-brand/15 border border-teal-brand/30 px-2.5 py-1 rounded-full uppercase tracking-[0.15em]">
+                Lyra &middot; α Lyrae
               </span>
             </div>
           </div>

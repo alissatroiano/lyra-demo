@@ -66,16 +66,11 @@ import InteractiveSlideshow from "./components/InteractiveSlideshow";
 import AICopilot from "./components/AICopilot";
 import NanaBananaPro from "./components/NanaBananaPro";
 import { LandingPage } from "./components/LandingPage";
+import { LyraMark } from "./components/LyraMark";
 
-// Official Lyrah Robot Bunny Mascot Logo
-export const RobotBunnyMascot = ({ className = "w-28 h-28" }: { className?: string }) => (
-  <img 
-    src="/src/assets/images/lyrah_logo_1786276082567.jpg" 
-    alt="Lyrah AI Mascot Logo" 
-    className={`object-contain rounded-2xl drop-shadow-md ${className}`} 
-    referrerPolicy="no-referrer"
-  />
-);
+// The bunny mascot is retired — LyraMark (the constellation) is the brand
+// figure now. It also removes a /src/assets/... image path that only
+// resolved through the Vite dev server and would have 404'd in production.
 
 export default function App() {
   const { 
@@ -1668,20 +1663,15 @@ export default function App() {
               className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink-0"
               onClick={() => setCurrentView("landing")}
             >
-              {/* Mascot in mini logo format */}
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center shrink-0 border border-teal-brand/40 group-hover:scale-105 transition-transform micro-glow-teal p-0.5">
-                <img 
-                  src="/src/assets/images/lyrah_logo_1786276082567.jpg" 
-                  alt="Lyrah Logo" 
-                  className="w-full h-full object-contain rounded-lg"
-                  referrerPolicy="no-referrer"
-                />
+              {/* The constellation, not a mascot */}
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-cyber-bg flex items-center justify-center shrink-0 border border-teal-brand/50 group-hover:scale-105 group-hover:border-teal-brand transition-all micro-glow-teal">
+                <LyraMark className="w-full h-full p-1 text-teal-brand" />
               </div>
-              <div>
-                <span className="font-display text-xl sm:text-2xl font-semibold tracking-tight text-teal-dark dark:text-teal-brand">
-                  Lyrah<span className="text-teal-brand font-sans">.</span>
+              <div className="leading-none">
+                <span className="brand-word block text-2xl sm:text-3xl">
+                  Lyrah
                 </span>
-                <p className="text-[9px] sm:text-[10px] text-secondary dark:text-slate-400 font-sans tracking-wide leading-none hidden xs:block">Afterschool STEM Copilot</p>
+                <p className="text-[9px] sm:text-[10px] text-secondary dark:text-slate-400 font-sans tracking-[0.18em] uppercase leading-none mt-1 hidden xs:block">Afterschool STEM Copilot</p>
               </div>
             </div>
 
@@ -1968,9 +1958,9 @@ export default function App() {
               </p>
             </div>
 
-            {/* Mascot float wrap on the right */}
-            <div className="self-center md:self-auto shrink-0 bg-teal-light/40 dark:bg-slate-800/60 border border-teal-brand/10 dark:border-teal-brand/30 rounded-2xl p-3 sm:p-4 shadow-3xs animate-float">
-              <RobotBunnyMascot className="w-20 h-20 sm:w-28 sm:h-28" />
+            {/* Lyra, plotted */}
+            <div className="star-field self-center md:self-auto shrink-0 bg-cyber-bg border border-teal-brand/25 dark:border-teal-brand/30 rounded-2xl p-3 sm:p-4 shadow-3xs">
+              <LyraMark className="w-20 h-20 sm:w-28 sm:h-28 text-teal-brand" />
             </div>
           </div>
 
@@ -3908,13 +3898,8 @@ export default function App() {
               {/* Modal Header */}
               <div className="bg-teal-dark px-5 py-4 text-white flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-teal-brand/20 border border-teal-brand/40 overflow-hidden flex items-center justify-center p-0.5 shrink-0">
-                    <img 
-                      src="/src/assets/images/lyrah_logo_1786276082567.jpg" 
-                      alt="Lyrah Mascot Logo" 
-                      className="w-full h-full object-contain rounded-lg"
-                      referrerPolicy="no-referrer"
-                    />
+                  <div className="w-8 h-8 rounded-xl bg-teal-brand/20 border border-teal-brand/40 flex items-center justify-center p-0.5 shrink-0">
+                    <LyraMark className="w-full h-full text-teal-brand" showLines={false} />
                   </div>
                   <div>
                     <h3 className="text-xs font-bold font-sans uppercase tracking-wide">Lyrah AI Co-Teacher</h3>
@@ -3954,13 +3939,8 @@ export default function App() {
             }`}
             id="lyra-copilot-sparkle-trigger"
           >
-            <div className="w-6 h-6 rounded-full overflow-hidden bg-teal-brand/20 border border-amber-300/60 shrink-0 p-0.5">
-              <img 
-                src="/src/assets/images/lyrah_logo_1786276082567.jpg" 
-                alt="Lyrah Avatar" 
-                className="w-full h-full object-contain rounded-full"
-                referrerPolicy="no-referrer"
-              />
+            <div className="w-6 h-6 rounded-full bg-teal-brand/20 border border-amber-300/60 shrink-0 p-0.5 flex items-center justify-center">
+              <LyraMark className="w-full h-full text-teal-brand" showLines={false} />
             </div>
             <span className="font-sans font-bold text-xs pr-0.5">
               {copilotOpen ? "Close Lyrah AI" : "Ask Lyrah AI"}
