@@ -12,7 +12,9 @@ import mammoth from "mammoth";
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+// Cloud Run injects PORT and expects the container to listen on it; 3000 is the
+// local default.
+const PORT = Number(process.env.PORT) || 3000;
 
 // Stripe Webhook Endpoint (requires raw body before express.json parsing)
 app.post("/api/webhook/stripe", express.raw({ type: "application/json" }), async (req, res) => {
