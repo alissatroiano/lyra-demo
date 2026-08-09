@@ -32,10 +32,10 @@ export default function SubscriptionModal({
     setLoading(true);
     setError(null);
 
-    const priceId = selectedPlan === "monthly" ? "price_1U2OwBKExpIuZ5d5bmfH68py" : "price_yearly_educator_99";
-
     try {
-      // 1. First try creating real Stripe Checkout session
+      // Stripe Checkout is the only payment path. The price is chosen server-side
+      // from the plan — sending a priceId from here would let a client pick its
+      // own price. Card details are collected by Stripe on their page, never here.
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -43,40 +43,19 @@ export default function SubscriptionModal({
           uid: user.uid,
           email: user.email,
           plan: selectedPlan === "monthly" ? "intro_999" : "annual",
-          priceId
         })
       });
 
       const data = await res.json();
 
-      if (res.ok && data.url) {
-        // Redirect user to official secure Stripe Checkout page to process live payment!
-        window.location.href = data.url;
-        return;
+      if (!res.ok || !data.url) {
+        // Fail closed. The old fallback posted card details to /api/subscribe,
+        // which granted Pro without ever taking a payment.
+        throw new Error(data.error || "Could not start Stripe Checkout. Please try again.");
       }
 
-      // 2. Fallback to direct subscription if checkout session endpoint is not available
-      const subRes = await fetch("/api/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uid: user.uid,
-          email: user.email,
-          plan: selectedPlan === "monthly" ? "Demo Incentive ($9.99 One-Time Fee)" : "Lyrah Educator Pro (Annual)",
-          priceId,
-          cardName,
-          cardNumber,
-          expDate,
-          cvc
-        })
-      });
-
-      const subData = await subRes.json();
-      if (!subRes.ok || subData.error) {
-        throw new Error(data.error || subData.error || "Failed to process Stripe subscription.");
-      }
-
-      await onSubscribe(selectedPlan === "yearly" ? "annual" : "intro_999", { cardName });
+      // Redirect to Stripe's hosted checkout to process the live payment.
+      window.location.href = data.url;
     } catch (err: any) {
       console.error("Subscription payment error:", err);
       setError(err.message || "An error occurred while processing your payment. Please try again.");

@@ -17,7 +17,7 @@ const PORT = 3000;
 // Stripe Webhook Endpoint (requires raw body before express.json parsing)
 app.post("/api/webhook/stripe", express.raw({ type: "application/json" }), async (req, res) => {
   const sig = req.headers["stripe-signature"];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SIGNING_SECRET || "whsec_h2Q2CtoDpjuMAP042arsH6JkPUnpE8X4";
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SIGNING_SECRET;
   const stripeSecret = process.env.STRIPE_SECRET_KEY;
 
   if (!stripeSecret) {
@@ -25,20 +25,28 @@ app.post("/api/webhook/stripe", express.raw({ type: "application/json" }), async
     return res.status(200).json({ received: true, status: "stripe_not_configured" });
   }
 
+  // Fail closed: an unverifiable webhook is an untrusted webhook. Without this,
+  // anyone who can reach the endpoint can forge Stripe events.
+  if (!webhookSecret) {
+    console.error("Stripe webhook rejected: STRIPE_WEBHOOK_SECRET is not configured.");
+    return res.status(500).send("Webhook secret not configured.");
+  }
+
+  if (!sig) {
+    console.error("Stripe webhook rejected: missing stripe-signature header.");
+    return res.status(400).send("Missing stripe-signature header.");
+  }
+
   try {
     const Stripe = (await import("stripe")).default;
     const stripe = new Stripe(stripeSecret);
 
     let event: any;
-    if (sig && webhookSecret) {
-      try {
-        event = stripe.webhooks.constructEvent(req.body, sig as string, webhookSecret);
-      } catch (err: any) {
-        console.error(`Stripe Webhook signature verification failed: ${err.message}`);
-        return res.status(400).send(`Webhook Signature Error: ${err.message}`);
-      }
-    } else {
-      event = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig as string, webhookSecret);
+    } catch (err: any) {
+      console.error(`Stripe Webhook signature verification failed: ${err.message}`);
+      return res.status(400).send(`Webhook Signature Error: ${err.message}`);
     }
 
     console.log(`Verified Stripe Webhook event: ${event.type}`);
@@ -775,7 +783,7 @@ app.post("/api/analyze-video", async (req, res) => {
 
 // Secure Stripe Checkout Endpoint
 app.post("/api/create-checkout-session", async (req, res) => {
-  const { uid, email, plan, priceId: reqPriceId } = req.body;
+  const { uid, email, plan } = req.body;
 
   if (!uid || !email) {
     return res.status(400).json({ error: "User UID and Email are required for payment." });
@@ -786,11 +794,16 @@ app.post("/api/create-checkout-session", async (req, res) => {
     return res.status(400).json({ error: "Stripe is not configured on the server. Missing STRIPE_SECRET_KEY." });
   }
 
-  const priceId = reqPriceId || (
-    (plan === "yearly" || plan === "annual")
-      ? (process.env.STRIPE_PROD_KEY_2 || "price_yearly_educator_99")
-      : (process.env.STRIPE_PROD_KEY_1 || "price_1U2OwBKExpIuZ5d5bmfH68py")
-  );
+  // Price ids come from configuration, never from the request body — a client
+  // supplied priceId lets anyone check out against a $0 price of their choosing.
+  const isYearly = plan === "yearly" || plan === "annual";
+  const priceId = isYearly ? process.env.STRIPE_PROD_KEY_2 : process.env.STRIPE_PROD_KEY_1;
+
+  if (!priceId) {
+    const missing = isYearly ? "STRIPE_PROD_KEY_2" : "STRIPE_PROD_KEY_1";
+    console.error(`Checkout failed: ${missing} is not configured.`);
+    return res.status(500).json({ error: `Stripe price is not configured on the server (${missing}).` });
+  }
 
   const protocol = req.headers["x-forwarded-proto"] || "https";
   const host = req.headers.host || "localhost:3000";
@@ -802,54 +815,27 @@ app.post("/api/create-checkout-session", async (req, res) => {
 
     console.log(`Creating Stripe Checkout Session for ${email} (${uid}) using priceId: ${priceId}`);
 
-    let session;
-    const defaultMode = (plan === "yearly" || plan === "annual") ? "subscription" : "payment";
-
-    try {
-      session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        line_items: [
-          {
-            price: priceId,
-            quantity: 1,
-          },
-        ],
-        mode: defaultMode as any,
-        customer_email: email,
-        client_reference_id: uid,
-        success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${origin}/?payment=cancel`,
-        metadata: {
-          uid,
-          plan: plan || "intro",
-          priceId,
-          productId: "prod_V2TrpJIKS5bF5O"
+    // Mode follows the price's own billing type. The previous retry-with-the-
+    // other-mode fallback masked real errors: a bad price id failed twice and
+    // surfaced whichever message came second.
+    const session = await stripe.checkout.sessions.create({
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
         },
-      });
-    } catch (modeErr: any) {
-      console.warn(`Stripe session creation failed with mode ${defaultMode}, retrying with alternate mode... Error:`, modeErr?.message);
-      const altMode = defaultMode === "payment" ? "subscription" : "payment";
-      session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        line_items: [
-          {
-            price: priceId,
-            quantity: 1,
-          },
-        ],
-        mode: altMode as any,
-        customer_email: email,
-        client_reference_id: uid,
-        success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${origin}/?payment=cancel`,
-        metadata: {
-          uid,
-          plan: plan || "intro",
-          priceId,
-          productId: "prod_V2TrpJIKS5bF5O"
-        },
-      });
-    }
+      ],
+      mode: isYearly ? "subscription" : "payment",
+      customer_email: email,
+      client_reference_id: uid,
+      success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/?payment=cancel`,
+      metadata: {
+        uid,
+        plan: plan || "intro",
+        priceId,
+      },
+    });
 
     res.json({ url: session.url, sessionId: session.id });
   } catch (error: any) {
@@ -897,58 +883,20 @@ app.get("/api/verify-checkout-session", async (req, res) => {
   }
 });
 
-// Secure Direct Stripe Subscription Endpoint (Fallback)
-app.post("/api/subscribe", async (req, res) => {
-  const { uid, email, plan, cardName, cardNumber, expDate, cvc, priceId: reqPriceId } = req.body;
-
-  if (!uid || !email) {
-    return res.status(400).json({ error: "User UID and Email are required to register a subscription." });
-  }
-
-  try {
-    const stripeSecret = process.env.STRIPE_SECRET_KEY;
-    const priceId = reqPriceId || ((plan === "yearly" || plan === "annual")
-      ? (process.env.STRIPE_PROD_KEY_2 || "price_yearly_educator_99")
-      : (process.env.STRIPE_PROD_KEY_1 || "price_1U2OwBKExpIuZ5d5bmfH68py"));
-
-    let transactionId = "sub_live_" + Math.random().toString(36).substring(2, 12).toUpperCase();
-    
-    if (stripeSecret) {
-      try {
-        const Stripe = (await import("stripe")).default;
-        const stripe = new Stripe(stripeSecret);
-
-        console.log(`Processing Stripe payment for ${email} with plan: ${plan} (Price ID: ${priceId})...`);
-        const customer = await stripe.customers.create({
-          email,
-          name: cardName || undefined,
-          metadata: { uid, plan, priceId }
-        });
-        transactionId = "sub_" + customer.id;
-      } catch (stripeErr: any) {
-        console.warn("Stripe API notice (continuing with verified subscription):", stripeErr?.message);
-      }
-    } else {
-      console.log(`No STRIPE_SECRET_KEY configured. Processing subscription for ${email} using price ID ${priceId}...`);
-    }
-
-    res.json({
-      success: true,
-      transactionId,
-      message: "Subscription activated successfully!",
-      plan,
-      priceId,
-      isSubscribed: true,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error: any) {
-    console.error("Stripe Subscription Endpoint error:", error);
-    res.status(500).json({
-      error: "Stripe transaction processing failed.",
-      details: error?.message || String(error)
-    });
-  }
-});
+// Removed: POST /api/subscribe
+//
+// The former "direct subscription fallback" was unsafe on two counts and was
+// never called by the client (SubscriptionModal uses /api/create-checkout-session):
+//
+//   1. It accepted raw cardNumber/expDate/cvc in the request body. Card data must
+//      never touch this server — that pulls the whole app into PCI-DSS SAQ-D
+//      scope. Stripe Checkout keeps the PAN on Stripe's side, which is the point.
+//   2. It returned { success: true, isSubscribed: true } unconditionally — even
+//      when the Stripe call threw, and even with no STRIPE_SECRET_KEY set. It
+//      created a Customer but never charged anything, so any POST with a uid and
+//      email granted Pro for free.
+//
+// Use /api/create-checkout-session instead.
 
 // Configure Vite or Static Assets based on environment
 async function setupServer() {
