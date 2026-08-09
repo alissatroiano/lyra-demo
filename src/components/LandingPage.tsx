@@ -1,6 +1,6 @@
 import React from "react";
-import { Sparkles, ArrowRight, Layers, Activity, Palette, HelpCircle, Link2Off, Check, Database, FileCode, BookOpen, LogIn } from "lucide-react";
-import { RobotBunnyMascot } from "../App";
+import { Sparkles, ArrowRight, Layers, Activity, Palette, HelpCircle, Link2Off, Check, Database, FileCode, BookOpen, LogIn, Clock, Users } from "lucide-react";
+import { LyraMark } from "./LyraMark";
 
 interface LandingPageProps {
   onLaunchStudio: () => void;
@@ -18,7 +18,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   return (
     <main className="px-6 sm:px-8 py-8 space-y-12 animate-fade-in flex-1 max-w-7xl mx-auto w-full">
       {/* Landing Hero Section */}
-      <header className="py-10 px-6 sm:px-10 relative overflow-hidden bg-gradient-to-b from-teal-light/30 via-teal-light/10 to-transparent dark:from-slate-900/90 dark:via-slate-900/40 dark:to-transparent rounded-3xl border border-teal-brand/15 dark:border-slate-800 shadow-3xs">
+      <header className="star-field chart-grid py-10 px-6 sm:px-10 relative overflow-hidden bg-gradient-to-b from-teal-light/30 via-teal-light/10 to-transparent dark:from-cyber-bg dark:via-cyber-bg/60 dark:to-transparent rounded-3xl border border-teal-brand/15 dark:border-slate-800 shadow-3xs">
         <div className="absolute top-0 right-0 w-64 h-64 bg-teal-brand/10 rounded-full blur-3xl pointer-events-none" />
         
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 relative z-10">
@@ -29,11 +29,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
 
             <h1 className="font-display text-3.5xl sm:text-5xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
-              Transform Plain STEM Lessons into <span className="text-teal-700 dark:text-teal-brand underline decoration-amber-400 dark:decoration-amber-500 underline-offset-6">Interactive Visual Adventures</span>
+              Stop rebuilding your lesson <span className="text-teal-700 dark:text-teal-brand underline decoration-amber-400 dark:decoration-amber-500 underline-offset-6">every Sunday night</span>
             </h1>
 
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans font-normal">
-              Lyrah automatically restructures dense science articles, raw textbooks, and outline PDFs into classroom-ready smartboard slides, hands-on engineering labs, Nana Banana Pro visual diagrams, and interactive quizzes.
+              Paste in the curriculum you already have. Get slides, a hands-on lab checklist, a
+              printable worksheet with the answer key, and a review game — with the dead video
+              links already flagged. Ready to teach, not ready to edit for two hours.
             </p>
 
             <div className="pt-2 flex flex-wrap items-center gap-3">
@@ -69,17 +71,65 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
           </div>
 
-          {/* Mascot Illustration */}
-          <div className="self-center md:self-auto shrink-0 bg-white/80 dark:bg-slate-900/90 border border-teal-brand/20 dark:border-slate-800 rounded-3xl p-6 shadow-md animate-float relative">
-            <RobotBunnyMascot className="w-32 h-32 sm:w-36 sm:h-36" />
-            <div className="mt-3 text-center">
-              <span className="text-[10px] font-extrabold font-mono text-teal-900 dark:text-teal-brand bg-teal-light/60 dark:bg-teal-brand/20 px-2.5 py-1 rounded-full uppercase tracking-wide">
-                Lyrah AI Co-Teacher
+          {/* The constellation the product is named for */}
+          <div className="star-field self-center md:self-auto shrink-0 bg-cyber-bg border border-teal-brand/25 rounded-3xl p-6 shadow-md relative">
+            <LyraMark className="w-32 h-32 sm:w-40 sm:h-40 text-teal-brand relative" />
+            <div className="mt-3 text-center relative">
+              <span className="text-[10px] font-extrabold font-mono text-teal-brand bg-teal-brand/15 border border-teal-brand/30 px-2.5 py-1 rounded-full uppercase tracking-[0.15em]">
+                Lyra &middot; α Lyrae
               </span>
             </div>
           </div>
         </div>
       </header>
+
+      {/* The problem, stated before the product. An instructor should recognise
+          their own week in this block before being asked to care how it works. */}
+      <section className="space-y-4" id="problem-section">
+        <span className="text-[10px] font-mono font-bold text-teal-brand uppercase tracking-[0.18em]">
+          The problem Lyrah solves
+        </span>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {[
+            {
+              icon: Clock,
+              title: "Prep happens after the teaching day",
+              body: "Turning a curriculum outline into slides, a worksheet and an answer key is unpaid work that lands on evenings and weekends."
+            },
+            {
+              icon: Link2Off,
+              title: "Inherited lessons have dead links",
+              body: "Good material gets abandoned because the videos are private, deleted, or on an intranet you can't reach from the classroom."
+            },
+            {
+              icon: Users,
+              title: "One plan, very different learners",
+              body: "Adapting a single lesson for dyslexic, ADHD and hands-on learners in the same room usually means rewriting it three times."
+            },
+            {
+              icon: Layers,
+              title: "Five pages that must fit in one hour",
+              body: "Curriculum is written for a prep period you don't get. Deciding what to cut — and remembering it in November — is the real job."
+            }
+          ].map(({ icon: Icon, title, body }) => (
+            <div
+              key={title}
+              className="flex items-start gap-3.5 p-5 rounded-2xl bg-surface-1 dark:bg-cyber-card border border-black/[0.06] dark:border-slate-800"
+            >
+              <Icon className="w-5 h-5 text-teal-brand shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 font-sans leading-snug">
+                  {title}
+                </h4>
+                <p className="text-xs text-secondary dark:text-slate-400 font-sans leading-relaxed">
+                  {body}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* Pipeline: How Lyrah Transforms Lessons */}
       <div className="bg-teal-dark text-white rounded-3xl p-8 space-y-6 shadow-sm relative overflow-hidden" id="pipeline-section">

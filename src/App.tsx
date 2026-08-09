@@ -66,16 +66,11 @@ import InteractiveSlideshow from "./components/InteractiveSlideshow";
 import AICopilot from "./components/AICopilot";
 import NanaBananaPro from "./components/NanaBananaPro";
 import { LandingPage } from "./components/LandingPage";
+import { LyraMark } from "./components/LyraMark";
 
-// Official Lyrah Robot Bunny Mascot Logo
-export const RobotBunnyMascot = ({ className = "w-28 h-28" }: { className?: string }) => (
-  <img 
-    src="/src/assets/images/lyrah_logo_1786276082567.jpg" 
-    alt="Lyrah AI Mascot Logo" 
-    className={`object-contain rounded-2xl drop-shadow-md ${className}`} 
-    referrerPolicy="no-referrer"
-  />
-);
+// The bunny mascot is retired — LyraMark (the constellation) is the brand
+// figure now. It also removes a /src/assets/... image path that only
+// resolved through the Vite dev server and would have 404'd in production.
 
 export default function App() {
   const { 
@@ -141,14 +136,104 @@ export default function App() {
     }
   });
 
-  // 2026 Cyber STEM Lab Dark Mode state
+  // Dark is the default: the palette is a night sky, and the accent is tuned to
+  // sit on the deep indigo ground. Anyone who has already chosen a theme keeps
+  // their choice — only an unset preference falls through to dark.
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('lyra_cyber_lab_dark') === 'true';
+      const stored = localStorage.getItem('lyra_cyber_lab_dark');
+      return stored === null ? true : stored === 'true';
     } catch {
-      return false;
+      return true;
     }
   });
+
+  // ---- Assistive reading state -------------------------------------------
+  // Anti-glare grounds are deliberately outside the theme tokens: they are
+  // calibrated for glare reduction, not brand, and must not shift when the
+  // palette changes.
+  const [dyslexiaMode, setDyslexiaMode] = useState<boolean>(false);
+  const [antiGlare, setAntiGlare] = useState<"none" | "cream" | "mint" | "peach">("none");
+  const [readingRuler, setReadingRuler] = useState<boolean>(false);
+  const [bionicReading, setBionicReading] = useState<boolean>(false);
+  const [ttsSpeed, setTtsSpeed] = useState<number>(0.9);
+  const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
+  const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>("");
+
+  const speakText = (text: string, speed: number = 0.9) => {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    // Strip phonetic bracket annotations so "friction [FRIK-shun]" isn't read
+    // aloud as literal brackets.
+    const utterance = new SpeechSynthesisUtterance(text.replace(/\[[^\]]*\]/g, ""));
+    utterance.rate = speed;
+
+    const voice = window.speechSynthesis.getVoices().find(v => v.voiceURI === selectedVoiceURI);
+    if (voice) {
+      utterance.voice = voice;
+      const name = voice.name.toLowerCase();
+      utterance.pitch = name.includes("google") || name.includes("natural") ? 1.05 : 1.0;
+    } else {
+      utterance.pitch = 1.0;
+    }
+
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const stopSpeaking = () => {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    }
+  };
+
+  // Speech must not outlive the view that started it — otherwise the browser
+  // keeps talking with no visible control to stop it.
+  useEffect(() => {
+    return () => {
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    };
+  }, []);
+
+  // Bionic reading: bold the leading ~40% of each word to guide visual flow.
+  const formatBionicText = (text: string) => {
+    if (!text) return "";
+    return text.split(/\s+/).map((word, wIdx) => {
+      if (!word) return null;
+
+      // Phonetic guides stay unformatted so they read as a distinct aid.
+      if (word.startsWith("[") || word.endsWith("]")) {
+        return (
+          <span key={wIdx} className="inline-block mr-1 text-teal-brand font-mono text-xs select-none">
+            {word}{" "}
+          </span>
+        );
+      }
+
+      const match = word.match(/^([^a-zA-Z0-9]*)([a-zA-Z0-9]+)([^a-zA-Z0-9]*)$/);
+      if (!match) return <span key={wIdx}>{word} </span>;
+
+      const [, prefix, coreWord, suffix] = match;
+      if (coreWord.length <= 1) return <span key={wIdx}>{word} </span>;
+
+      const boldLen = Math.ceil(coreWord.length * 0.4) || 1;
+      const boldColorClass = antiGlare !== "none"
+        ? "font-extrabold text-slate-900"
+        : "font-extrabold text-gold-brand";
+
+      return (
+        <span key={wIdx} className="inline-block mr-1">
+          {prefix}
+          <strong className={boldColorClass}>{coreWord.substring(0, boldLen)}</strong>
+          <span>{coreWord.substring(boldLen)}</span>
+          {suffix}
+        </span>
+      );
+    });
+  };
 
   useEffect(() => {
     try {
@@ -169,20 +254,61 @@ export default function App() {
     goal: string,
     tech?: string
   ): string => {
-    // Primary content text scan (prioritize actual user content/filename over fallback supplies)
     const primaryText = ((content || "") + " " + (fileName || "")).toLowerCase();
-    const fullText = (primaryText + " " + (tech || "")).toLowerCase();
+    const techText = (tech || "").toLowerCase();
+    const fullText = (primaryText + " " + techText).toLowerCase();
 
-    // Explicit Software Platform Checks (Scratch/ScratchJR primary over Minecraft)
-    const isScratchJr = primaryText.includes("scratchjr") || primaryText.includes("scratch jr") || primaryText.includes("junior scratch") || (fullText.includes("scratchjr") && !primaryText.includes("minecraft"));
-    const isScratch = (primaryText.includes("scratch") || primaryText.includes("sprite") || primaryText.includes("costume") || primaryText.includes("green flag") || primaryText.includes("backdrop")) && !isScratchJr;
-    const isMinecraft = (primaryText.includes("minecraft") || primaryText.includes("command block") || primaryText.includes("redstone") || primaryText.includes("makecode agent")) && !isScratch && !isScratchJr;
-    const isRoblox = primaryText.includes("roblox") || primaryText.includes("lua");
-    const isEduBlocks = primaryText.includes("edublocks") || primaryText.includes("edu blocks");
-    const isThunkable = primaryText.includes("thunkable") || primaryText.includes("app inventor");
-    const isCodeOrg = primaryText.includes("code.org") || primaryText.includes("game lab") || primaryText.includes("sprite lab");
-    const isMicroBit = primaryText.includes("micro:bit") || primaryText.includes("microbit");
-    const isPython = primaryText.includes("python") && !isEduBlocks;
+    // The instructor's own platform selection wins over anything scanned out of
+    // the document. Previously this ran the other way: a single incidental
+    // mention of a platform anywhere in an uploaded file flipped the whole
+    // pipeline to it, so a stop-motion lesson that name-dropped Minecraft once
+    // compiled as a Minecraft lesson even though the instructor had picked
+    // "Other". "Custom Tools / Software" is the empty-Other placeholder, not a
+    // real choice, so it does not count as a selection.
+    const hasExplicitTech = !!techText && !techText.includes("custom tools / software");
+
+    // Count mentions rather than taking the first hit: the platform a lesson is
+    // actually about gets named repeatedly, a passing example gets named once.
+    const countOf = (needles: string[]) =>
+      needles.reduce((n, needle) => n + (primaryText.split(needle).length - 1), 0);
+
+    const platformScores: Record<string, number> = {
+      scratchJr: countOf(["scratchjr", "scratch jr", "junior scratch"]),
+      scratch: countOf(["scratch", "sprite", "costume", "green flag", "backdrop"]),
+      minecraft: countOf(["minecraft", "command block", "redstone", "makecode agent"]),
+      roblox: countOf(["roblox", "lua"]),
+      eduBlocks: countOf(["edublocks", "edu blocks"]),
+      thunkable: countOf(["thunkable", "app inventor"]),
+      codeOrg: countOf(["code.org", "game lab", "sprite lab"]),
+      microBit: countOf(["micro:bit", "microbit"]),
+      python: countOf(["python"]),
+    };
+
+    // A platform must be named at least twice before it defines the lesson. One
+    // mention is an aside ("you could also try this in Minecraft") and must not
+    // outrank what the lesson is actually about. Below the threshold we fall
+    // through to subject detection rather than guessing a platform.
+    const ranked = Object.entries(platformScores)
+      .filter(([, n]) => n > 1)
+      .sort((a, b) => b[1] - a[1]);
+    const winner = ranked.length ? ranked[0][0] : null;
+
+    const picked = (key: string, ...aliases: string[]) =>
+      hasExplicitTech ? aliases.some(a => techText.includes(a)) : winner === key;
+
+    const isScratchJr = picked("scratchJr", "scratch jr", "scratchjr");
+    const isScratch = picked("scratch", "scratch") && !isScratchJr;
+    const isMinecraft = picked("minecraft", "minecraft") && !isScratch && !isScratchJr;
+    const isRoblox = picked("roblox", "roblox");
+    const isEduBlocks = picked("eduBlocks", "edublocks", "edu blocks");
+    const isThunkable = picked("thunkable", "thunkable", "app inventor");
+    const isCodeOrg = picked("codeOrg", "code.org");
+    const isMicroBit = picked("microBit", "micro:bit", "microbit");
+    const isPython = picked("python", "python") && !isEduBlocks;
+
+    // Stop motion, claymation and video projects had no branch at all, so they
+    // fell through to a generic filename echo.
+    const isAnimation = /stop[- ]?motion|claymation|animation|storyboard|flipbook|time[- ]?lapse/.test(fullText);
     const isRobotics = fullText.includes("lego") || fullText.includes("spike") || fullText.includes("ev3") || fullText.includes("robot") || fullText.includes("sensor");
     const isEngineering = fullText.includes("catapult") || fullText.includes("bridge") || fullText.includes("tower") || fullText.includes("physics") || fullText.includes("gravity") || fullText.includes("truss");
     const isScience = fullText.includes("chem") || fullText.includes("bio") || fullText.includes("cell") || fullText.includes("plant") || fullText.includes("eco");
@@ -199,6 +325,7 @@ export default function App() {
       if (isCodeOrg) return "Parsing Code.org Game Lab sprites, draw loops & key controls";
       if (isMicroBit) return "Parsing Micro:bit LED matrix display, buttons & sensor blocks";
       if (isPython) return "Parsing Python code syntax, variable logic & function loops";
+      if (isAnimation) return "Parsing stop-motion frame rates, storyboard beats & rig setup";
       if (isRobotics) return "Parsing Robotics sensor loops, motor actuators & hardware logic";
       if (isEngineering) return "Parsing physical engineering mechanics, forces & structural stress";
       if (isScience) return "Parsing biological structures, chemical reactions & lab safety";
@@ -224,6 +351,7 @@ export default function App() {
       if (isCodeOrg) return "Linking Code.org collision detection, variable scores & sound effects";
       if (isMicroBit) return "Linking Micro:bit radio signals, pin inputs & sensor loops";
       if (isPython) return "Linking Python conditional logic, list iterations & console scripts";
+      if (isAnimation) return "Linking frame-by-frame capture, lighting consistency & character rigs";
       if (isRobotics) return "Linking LEGO robotics motor speeds, ultrasonic sensors & gears";
       if (isEngineering) return "Linking catapult trajectory angles, tension physics & prototype build steps";
       if (isScience) return "Formulating hands-on lab experiments, molecular models & observation steps";
@@ -249,6 +377,7 @@ export default function App() {
       if (isCodeOrg) return "Synthesizing Code.org interactive game lab guide & smart quiz";
       if (isMicroBit) return "Synthesizing Micro:bit hardware coding guide & smart quiz";
       if (isPython) return "Synthesizing Python coding challenge, slide deck & smart quiz";
+      if (isAnimation) return "Synthesizing stop-motion shot list, slide deck & smart quiz";
       if (isRobotics) return "Synthesizing Robotics lab challenge, slide deck & smart quiz";
       if (isEngineering) return "Synthesizing hands-on engineering lab, slide deck & smart quiz";
       return "Synthesizing interactive slides, lab guide & smart quiz";
@@ -546,428 +675,107 @@ export default function App() {
   }, [lesson, selectedCategory, isCodingLesson, customContent, uploadedFileName]);
 
   // Retrieve 4 Google Search Grounded build prototype examples for the active hands-on activity / software
+  // Reference image searches, built from THIS lesson's own materials and steps.
+  //
+  // This previously returned a hardcoded table of Unsplash stock photos keyed by
+  // a coarse category guess, with fixed captions like "Full assembly overview
+  // showing base structure, mechanical linkages, and pivot points." Two problems:
+  // the photos had no relationship to the lesson, and the captions described
+  // things that were in neither the lesson nor the photograph. A balloon rocket
+  // race was classified as "rocket", which had no bucket in the table, so it fell
+  // through to "engineering" and rendered a factory machining photo.
+  //
+  // Nothing here is invented: every query and every line of copy is assembled
+  // from lesson.handsOnActivity. Generated diagrams are the other tab's job.
   const groundedPrototypeImages = React.useMemo(() => {
     if (!lesson) return [];
-    const title = lesson.handsOnActivity?.title || lesson.lessonTitle || "STEM Prototype Build";
-    const lower = title.toLowerCase();
 
-    let categoryTheme = "engineering";
-    if (identifiedSoftware) {
-      categoryTheme = identifiedSoftware;
-    } else if (lower.includes("catapult") || lower.includes("launch") || lower.includes("projectile") || lower.includes("siege")) {
-      categoryTheme = "catapult";
-    } else if (lower.includes("magnet") || lower.includes("electric") || lower.includes("circuit") || lower.includes("wire") || lower.includes("voltage")) {
-      categoryTheme = "circuitry";
-    } else if (lower.includes("bridge") || lower.includes("truss") || lower.includes("structure") || lower.includes("arch")) {
-      categoryTheme = "bridge";
-    } else if (lower.includes("rocket") || lower.includes("space") || lower.includes("thrust") || lower.includes("balloon")) {
-      categoryTheme = "rocket";
-    } else if (lower.includes("scratch") || lower.includes("code") || lower.includes("python") || lower.includes("robot") || lower.includes("algorithm")) {
-      categoryTheme = "robotics";
-    }
+    const activity = lesson.handsOnActivity;
+    const title = activity?.title || lesson.lessonTitle || "STEM Prototype Build";
+    const materials: string[] = Array.isArray(activity?.materials) ? activity!.materials : [];
+    const steps: string[] = Array.isArray(activity?.steps) ? activity!.steps : [];
 
-    const baseSearchQuery = `${identifiedSoftware ? identifiedSoftware + " " : ""}${title} STEM student build prototype classroom example`;
+    const platform = identifiedSoftware ? `${identifiedSoftware} ` : "";
+    const gradeHint = lesson.gradeLevel ? `${lesson.gradeLevel} ` : "";
 
-    const imageSets: Record<string, Array<{ url: string; title: string; caption: string; tag: string }>> = {
-      "Scratch JR": [
-        {
-          url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80",
-          title: "ScratchJR Green Flag & Event Trigger Stack",
-          caption: "Horizontal icon blocks snapping Green Flag, Start-on-Tap, and Message triggers for early learners (ages 5-7).",
-          tag: "ScratchJR Triggers"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1580894732413-a704936a0422?auto=format&fit=crop&w=800&q=80",
-          title: "ScratchJR Motion Grid & Hop Parameters",
-          caption: "Horizontal motion arrows specifying grid steps (Move Right 4, Hop 2, Go Home) for sprite navigation.",
-          tag: "ScratchJR Motion"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80",
-          title: "ScratchJR Character Paint & Voice Recorder",
-          caption: "Customizing sprite characters in the paint editor, adding speech bubbles, and recording voice audio.",
-          tag: "Paint & Voice"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=800&q=80",
-          title: "ScratchJR Multi-Page Scene & Repeat Forever",
-          caption: "Transitioning between story pages and repeating animation loops for interactive storybook projects.",
-          tag: "Page Transitions"
-        }
-      ],
-      "Minecraft Education": [
-        {
-          url: "https://images.unsplash.com/photo-1627856013091-fed6e4e30025?auto=format&fit=crop&w=800&q=80",
-          title: "Minecraft Code Builder Agent Wall Construction",
-          caption: "Programming the Minecraft Agent using block code to place blocks, turn, and build 3D structures.",
-          tag: "Agent Builder"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80",
-          title: "Minecraft Redstone Logic & Circuit Automation",
-          caption: "Building AND/OR logic gates and automated repeaters using Redstone dust and torches.",
-          tag: "Redstone Circuits"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
-          title: "Minecraft World Coordinates & Fill Commands",
-          caption: "Utilizing relative world coordinates (~ ~ ~) and repeat loops to terraform environments instantly.",
-          tag: "World Coordinates"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=800&q=80",
-          title: "Minecraft Chemistry Lab & Element Constructor",
-          caption: "Combining protons, neutrons, and electrons in Minecraft Education Chemistry to synthesize compounds.",
-          tag: "Chemistry Lab"
-        }
-      ],
-      "Scratch 3.0": [
-        {
-          url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80",
-          title: "Scratch 3.0 Sprite Coordinate & Motion Logic",
-          caption: "Vertical block scripts setting X/Y positions, point-in-direction angles, and smooth glides.",
-          tag: "Sprite Motion"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=800&q=80",
-          title: "Scratch Event Handlers & Variable Backpack",
-          caption: "Managing broadcast messages, 'When Green Flag Clicked', and updating global variable counters.",
-          tag: "Variables & Events"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80",
-          title: "Scratch Sensing & Collision Detection Loop",
-          caption: "Forever loops checking 'if touching color or mouse pointer' to trigger game over or victory states.",
-          tag: "Sensing Loops"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80",
-          title: "Scratch Stage Backdrop & Costume Animation",
-          caption: "Switching backdrop scenes and looping through sprite costumes for smooth frame-by-frame animation.",
-          tag: "Stage Animation"
-        }
-      ],
-      "EduBlocks": [
-        {
-          url: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80",
-          title: "EduBlocks Python Drag-and-Drop Workspace",
-          caption: "Bridging block coding to Python syntax with side-by-side block vs text code view.",
-          tag: "Block-to-Text"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80",
-          title: "EduBlocks Terminal Console Output & Logic Stacks",
-          caption: "Executing print statements, user inputs, and conditional branches in a simulated Python shell.",
-          tag: "Python Console"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
-          title: "EduBlocks Micro:bit Pin & Hardware Control",
-          caption: "Controlling digital read/write pins, servo motors, and sensor loops via EduBlocks Python blocks.",
-          tag: "Hardware Pins"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80",
-          title: "EduBlocks Module Import & Function Definition",
-          caption: "Importing Python libraries like random, math, and time inside drag-and-drop block definitions.",
-          tag: "Python Modules"
-        }
-      ],
-      "Thunkable": [
-        {
-          url: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=800&q=80",
-          title: "Thunkable Mobile Canvas & UI Component Layout",
-          caption: "Designing responsive phone app screens with buttons, labels, image pickers, and navigation bars.",
-          tag: "Mobile UI"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
-          title: "Thunkable Event Logic & Sound Player Blocks",
-          caption: "Connecting 'When Button Clicked' event block to 'Call Sound Play' action block.",
-          tag: "Event Handlers"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80",
-          title: "Thunkable Cloud DB & Variable Storage",
-          caption: "Saving student app data to cloud tables and reading stored app variables dynamically.",
-          tag: "Cloud Storage"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1555774698-0b77e0d5fac6?auto=format&fit=crop&w=800&q=80",
-          title: "Thunkable Live Companion Tablet Testing",
-          caption: "Testing mobile app prototypes live on tablets via QR code pairing for real-time iteration.",
-          tag: "Live Testing"
-        }
-      ],
-      "Code.org / Tynker": [
-        {
-          url: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=80",
-          title: "Code.org Maze Navigation & Repeat Loops",
-          caption: "Sequencing 'move forward' and 'turn' blocks with repeat loops to solve puzzle mazes.",
-          tag: "Puzzle Loops"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
-          title: "Code.org App Lab Event Listeners & Screen Controls",
-          caption: "Using onEvent('button1', 'click') blocks to change screen backgrounds and play audio clips.",
-          tag: "App Lab UI"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=800&q=80",
-          title: "Code.org Sprite Lab Interactive Behaviors",
-          caption: "Assigning behaviors like 'spinning', 'wandering', and collision event handlers to custom sprites.",
-          tag: "Sprite Lab"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80",
-          title: "Code.org Dance Party Audio Sync & Loops",
-          caption: "Syncing character dance moves to musical measure triggers and beat event blocks.",
-          tag: "Audio & Dance"
-        }
-      ],
-      "Micro:bit / MakeCode": [
-        {
-          url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
-          title: "Micro:bit 5x5 LED Grid Display & Icons",
-          caption: "Plotting X/Y coordinates and displaying custom LED pattern animations in MakeCode.",
-          tag: "LED Grid"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1581092162384-8987c1d64718?auto=format&fit=crop&w=800&q=80",
-          title: "Micro:bit Accelerometer & Gesture Inputs",
-          caption: "Programming 'on shake' and 'on button A+B pressed' event triggers for interactive projects.",
-          tag: "Gesture Sensors"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80",
-          title: "Micro:bit Radio Messaging & Sensor Logging",
-          caption: "Sending radio signals between Micro:bit boards to transmit temperature and tilt sensor data.",
-          tag: "Radio Mesh"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?auto=format&fit=crop&w=800&q=80",
-          title: "Micro:bit Motor Shield & Robot Servo Controls",
-          caption: "Wiring pin output signals to micro servos for steering motorized robot chassis.",
-          tag: "Servo Motors"
-        }
-      ],
-      "Roblox Studio": [
-        {
-          url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
-          title: "Roblox Studio 3D Part Builder & Terrain Grid",
-          caption: "Constructing 3D geometry with anchored parts, custom materials, and spawn locations.",
-          tag: "3D World"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80",
-          title: "Roblox Lua Scripting & Touched Event Handlers",
-          caption: "Writing Lua scripts attached to parts with script.Parent.Touched connections for checkpoints.",
-          tag: "Lua Events"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=800&q=80",
-          title: "Roblox Leaderstats & GUI HUD Elements",
-          caption: "Creating player leaderboard statistics and ScreenGui interfaces for score tracking.",
-          tag: "Leaderstats"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=800&q=80",
-          title: "Roblox Obby Obstacle Course Mechanics",
-          caption: "Designing lava brick kill triggers, disappearing platforms, and level completion teleporters.",
-          tag: "Obby Mechanics"
-        }
-      ],
-      "Python": [
-        {
-          url: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80",
-          title: "Python Syntax & Control Flow Workspace",
-          caption: "Writing clean Python code with indentation loops, functions, and conditional logic.",
-          tag: "Python Syntax"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=800&q=80",
-          title: "Python Turtle Graphics & Visual Math Loops",
-          caption: "Using the Turtle library to draw geometric patterns and fractal spirals using nested loops.",
-          tag: "Turtle Graphics"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80",
-          title: "Python Data Plotting & Matplotlib Charts",
-          caption: "Generating line graphs, scatter plots, and histograms from CSV sensor datasets.",
-          tag: "Data Science"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80",
-          title: "Python Terminal Console & Debugging Workstation",
-          caption: "Running interactive Python scripts, handling exceptions, and debugging code line-by-line.",
-          tag: "Debugging Console"
-        }
-      ],
-      "Visual Block-Based Coding": [
-        {
-          url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80",
-          title: "Visual Block Coding Stack & Logic Flow",
-          caption: "Drag-and-drop block coding workspace demonstrating event triggers, loops, and conditions.",
-          tag: "Block Logic"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1580894732413-a704936a0422?auto=format&fit=crop&w=800&q=80",
-          title: "Interactive Sprite Canvas & Coordinate Mapping",
-          caption: "Mapping X and Y screen coordinates to guide sprite movements and collision hitboxes.",
-          tag: "Sprite Canvas"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80",
-          title: "Variable Counter & Game State Manager",
-          caption: "Storing player score data, lives, and timer countdowns in block variable containers.",
-          tag: "State Management"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80",
-          title: "Classroom Code Review & Debugging Station",
-          caption: "Students testing block scripts, reviewing error logs, and refining software algorithms.",
-          tag: "Code Review"
-        }
-      ],
-      catapult: [
-        {
-          url: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
-          title: "Popsicle Stick & Rubber Band Lever Arm",
-          caption: "Classic 3-tier tension fulcrum build with hot-glue pivot joints and spoon launcher.",
-          tag: "Classic Build"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
-          title: "Recycled Cardboard Torsion Chassis",
-          caption: "Reinforced corrugated cardboard base featuring double rubber band torque loops.",
-          tag: "Recycled Materials"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
-          title: "Binder Clip & Dowel Precision Rig",
-          caption: "Adjustable trajectory model using wooden skewers and heavy binder clips.",
-          tag: "Advanced Precision"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80",
-          title: "Classroom Trajectory Testing Setup",
-          caption: "Calibrated target grid layout for recording angle vs distance metrics.",
-          tag: "Classroom Testing"
-        }
-      ],
-      circuitry: [
-        {
-          url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
-          title: "Coiled Wire Electromagnet Pickup Rig",
-          caption: "Enamel copper wire wrapped around iron core bolt connected to D-cell battery.",
-          tag: "Core Prototype"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1581092162384-8987c1d64718?auto=format&fit=crop&w=800&q=80",
-          title: "Interactive Circuit Board Test Bench",
-          caption: "Breadboard setup with LED indicators and momentary contact switch.",
-          tag: "Breadboard Setup"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80",
-          title: "Paper Circuit Copper Tape Prototype",
-          caption: "Conductive tape pathway with coin-cell battery for flexible lightweight projects.",
-          tag: "Low-Tech Paper Circuit"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?auto=format&fit=crop&w=800&q=80",
-          title: "Student Electromagnetic Crane Model",
-          caption: "Cardboard crane arm with switch-operated electromagnet lifting paperclips.",
-          tag: "Integrated Mechanics"
-        }
-      ],
-      robotics: [
-        {
-          url: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=800&q=80",
-          title: "Block Coding & Sprite Control Interface",
-          caption: "Visual block script stack demonstrating event triggers and conditional loops.",
-          tag: "Block Logic"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?auto=format&fit=crop&w=800&q=80",
-          title: "Micro-servo Motorized Chassis",
-          caption: "Lightweight wheeled robot powered by Micro:bit / Arduino board.",
-          tag: "Hardware Prototype"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1531746790731-6c087fecd65a?auto=format&fit=crop&w=800&q=80",
-          title: "Sensory Obstacle Avoidance Rig",
-          caption: "Ultrasonic sensor rig mounted on front bumper for maze navigation.",
-          tag: "Sensor Array"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80",
-          title: "Scratch Game Screen & Sprite Map",
-          caption: "Interactive coordinate grid layout showing start zone, maze walls, and target goal.",
-          tag: "Visual Workspace"
-        }
-      ],
-      bridge: [
-        {
-          url: "https://images.unsplash.com/photo-1545558014-8692077e9b5c?auto=format&fit=crop&w=800&q=80",
-          title: "Warren Truss Balsa Wood Structure",
-          caption: "Triangular lattice framework designed to evenly distribute compressive load.",
-          tag: "Truss Design"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80",
-          title: "Popsicle Stick Beam Assembly",
-          caption: "Multi-ply laminated beam deck clamped during wood glue curing phase.",
-          tag: "Classroom Assembly"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
-          title: "Suspension Cable & Tower Mockup",
-          caption: "Heavy twine cables anchored to wooden towers demonstrating tension dynamics.",
-          tag: "Cable Stayed"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=80",
-          title: "Bucket Load Testing Station",
-          caption: "Suspended bucket fixture with sand weights measuring structural point of failure.",
-          tag: "Load Test Station"
-        }
-      ],
-      engineering: [
-        {
-          url: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
-          title: `${title} - Primary Physical Model`,
-          caption: "Full assembly overview showing base structure, mechanical linkages, and pivot points.",
-          tag: "Model Assembly"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
-          title: `${title} - Recycled Materials Prototype`,
-          caption: "Cost-effective classroom build using cardboard, straws, rubber bands, and tape.",
-          tag: "Budget Friendly"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
-          title: `${title} - Modular Component Detail`,
-          caption: "Close-up of trigger mechanism, joints, and reinforced load-bearing connections.",
-          tag: "Component Detail"
-        },
-        {
-          url: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80",
-          title: `${title} - Student Testing & Data Station`,
-          caption: "Classroom workstation setup with measurement tape, stopwatch, and tally sheets.",
-          tag: "Testing Station"
-        }
-      ]
+    // Materials are written as classroom phrases ("nylon fishing line", "binder
+    // clip"). Trim to the noun so they read as search terms.
+    const asSearchTerm = (raw: string) =>
+      raw
+        .replace(/^\d+\s*(x|×)?\s*/i, "")
+        .replace(/\([^)]*\)/g, "")
+        .replace(/\b(per|for each|one|two|three|a|an|the)\b/gi, "")
+        .replace(/\s+/g, " ")
+        .trim();
+
+    const keyMaterials = materials.slice(0, 4).map(asSearchTerm).filter(Boolean);
+    const materialPhrase = keyMaterials.slice(0, 3).join(" ");
+
+    const search = (q: string) =>
+      `https://www.google.com/search?q=${encodeURIComponent(q)}&tbm=isch&safe=active`;
+
+    const cards: Array<{
+      url: string;
+      title: string;
+      caption: string;
+      tag: string;
+      query: string;
+      searchUrl: string;
+      softwarePlatform: string | null;
+    }> = [];
+
+    const push = (tag: string, cardTitle: string, caption: string, query: string) => {
+      cards.push({
+        url: "",
+        title: cardTitle,
+        caption,
+        tag,
+        query,
+        searchUrl: search(query),
+        softwarePlatform: identifiedSoftware || null,
+      });
     };
 
-    const selectedSet = imageSets[categoryTheme] || imageSets.engineering;
+    push(
+      "Finished Build",
+      `${title} — finished example`,
+      "What the completed build should look like before students start.",
+      `${platform}${title} ${materialPhrase} classroom build example`.trim()
+    );
 
-    return selectedSet.map(item => ({
-      ...item,
-      softwarePlatform: identifiedSoftware,
-      searchUrl: `https://www.google.com/search?q=${encodeURIComponent(item.title + " " + baseSearchQuery)}&tbm=isch&safe=active`
-    }));
+    if (keyMaterials.length) {
+      push(
+        "Materials",
+        "Materials laid out",
+        `Sourcing and setup for ${keyMaterials.slice(0, 3).join(", ")}${materials.length > 3 ? ` and ${materials.length - 3} more` : ""}.`,
+        `${keyMaterials.join(" ")} science activity supplies`
+      );
+    }
+
+    // The step most likely to be misread is the one worth an image.
+    const trickyStep =
+      steps.find((s) => /tape|attach|secure|tie|clamp|thread|connect|wrap|fold|glue/i.test(s)) ||
+      steps[1] ||
+      steps[0];
+
+    if (trickyStep) {
+      const short = trickyStep.length > 96 ? `${trickyStep.slice(0, 93).trim()}…` : trickyStep;
+      push(
+        "Assembly Detail",
+        "The step students get wrong",
+        short,
+        `${title} ${asSearchTerm(trickyStep).split(" ").slice(0, 8).join(" ")} how to`
+      );
+    }
+
+    push(
+      "In The Room",
+      "Running it with a group",
+      `Room setup and student positioning for ${gradeHint || "this age group"}.`.replace(/\s+/g, " "),
+      `${gradeHint}students doing ${title} classroom activity`.trim()
+    );
+
+    return cards;
   }, [lesson, identifiedSoftware]);
 
   // Reorder Active Curriculum Suite tabs based on learned instructor memory & category focus
@@ -1668,20 +1476,15 @@ export default function App() {
               className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink-0"
               onClick={() => setCurrentView("landing")}
             >
-              {/* Mascot in mini logo format */}
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center shrink-0 border border-teal-brand/40 group-hover:scale-105 transition-transform micro-glow-teal p-0.5">
-                <img 
-                  src="/src/assets/images/lyrah_logo_1786276082567.jpg" 
-                  alt="Lyrah Logo" 
-                  className="w-full h-full object-contain rounded-lg"
-                  referrerPolicy="no-referrer"
-                />
+              {/* The constellation, not a mascot */}
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-cyber-bg flex items-center justify-center shrink-0 border border-teal-brand/50 group-hover:scale-105 group-hover:border-teal-brand transition-all micro-glow-teal">
+                <LyraMark className="w-full h-full p-1 text-teal-brand" />
               </div>
-              <div>
-                <span className="font-display text-xl sm:text-2xl font-semibold tracking-tight text-teal-dark dark:text-teal-brand">
-                  Lyrah<span className="text-teal-brand font-sans">.</span>
+              <div className="leading-none">
+                <span className="brand-word block text-2xl sm:text-3xl">
+                  Lyrah
                 </span>
-                <p className="text-[9px] sm:text-[10px] text-secondary dark:text-slate-400 font-sans tracking-wide leading-none hidden xs:block">Afterschool STEM Copilot</p>
+                <p className="text-[9px] sm:text-[10px] text-secondary dark:text-slate-400 font-sans tracking-[0.18em] uppercase leading-none mt-1 hidden xs:block">Afterschool STEM Copilot</p>
               </div>
             </div>
 
@@ -1968,9 +1771,9 @@ export default function App() {
               </p>
             </div>
 
-            {/* Mascot float wrap on the right */}
-            <div className="self-center md:self-auto shrink-0 bg-teal-light/40 dark:bg-slate-800/60 border border-teal-brand/10 dark:border-teal-brand/30 rounded-2xl p-3 sm:p-4 shadow-3xs animate-float">
-              <RobotBunnyMascot className="w-20 h-20 sm:w-28 sm:h-28" />
+            {/* Lyra, plotted */}
+            <div className="star-field self-center md:self-auto shrink-0 bg-cyber-bg border border-teal-brand/25 dark:border-teal-brand/30 rounded-2xl p-3 sm:p-4 shadow-3xs">
+              <LyraMark className="w-20 h-20 sm:w-28 sm:h-28 text-teal-brand" />
             </div>
           </div>
 
@@ -2742,7 +2545,18 @@ export default function App() {
                     transition={{ duration: 0.25 }}
                     className="space-y-6 animate-fade-in"
                   >
-                    <InteractiveSlideshow slides={lesson.slides} />
+                    <InteractiveSlideshow
+                      slides={lesson.slides}
+                      dyslexiaMode={dyslexiaMode}
+                      antiGlare={antiGlare}
+                      readingRuler={readingRuler}
+                      bionicReading={bionicReading}
+                      ttsSpeed={ttsSpeed}
+                      speakText={speakText}
+                      stopSpeaking={stopSpeaking}
+                      isSpeaking={isSpeaking}
+                      formatBionicText={formatBionicText}
+                    />
 
                     {/* Scientific learning pillars */}
                     <div className="bg-surface-0/60 border border-black/[0.06] rounded-2xl p-5 space-y-4">
@@ -2890,72 +2704,41 @@ export default function App() {
                             </div>
                           </div>
 
-                          {/* MODE 1: Web Images Fetched */}
-                          {labVisualMode === "web" && groundedPrototypeImages[prototypeCarouselIndex] && (
-                            <div className="space-y-3">
-                              {/* Main Image View */}
-                              <div className="relative group rounded-xl overflow-hidden border border-black/[0.1] dark:border-slate-700 bg-slate-950 aspect-video flex items-center justify-center shadow-md">
-                                <img
-                                  src={groundedPrototypeImages[prototypeCarouselIndex].url}
-                                  alt={groundedPrototypeImages[prototypeCarouselIndex].title}
-                                  referrerPolicy="no-referrer"
-                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                />
-                                <div className="absolute top-2 left-2 bg-slate-950/80 backdrop-blur-md px-2 py-0.5 rounded-lg border border-white/20 text-white text-[9px] font-mono font-bold flex items-center gap-1">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
-                                  <span>{groundedPrototypeImages[prototypeCarouselIndex].tag}</span>
-                                </div>
+                          {/* MODE 1: Reference image searches for this lesson */}
+                          {labVisualMode === "web" && groundedPrototypeImages.length > 0 && (
+                            <div className="space-y-2.5">
+                              <p className="text-[10px] text-secondary dark:text-slate-400 font-sans leading-relaxed">
+                                Image searches built from this lesson's own materials and steps. Generated
+                                diagrams live in the next tab.
+                              </p>
 
+                              {groundedPrototypeImages.map((img, idx) => (
                                 <button
+                                  key={idx}
                                   type="button"
-                                  onClick={() => setZoomedPrototypeImage(groundedPrototypeImages[prototypeCarouselIndex])}
-                                  className="absolute bottom-2 right-2 bg-slate-950/80 hover:bg-slate-900 text-teal-brand px-2 py-1 rounded-lg border border-teal-brand/40 text-[9px] font-bold transition-all flex items-center gap-1 cursor-pointer opacity-90 hover:opacity-100"
+                                  onClick={() => window.open(img.searchUrl, "_blank", "noopener,noreferrer")}
+                                  className="w-full text-left p-3 rounded-xl border border-black/[0.08] dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-teal-brand/60 hover:bg-teal-light/30 dark:hover:bg-slate-800 transition-all cursor-pointer group"
                                 >
-                                  <Maximize2 className="w-3 h-3" />
-                                  <span>Zoom</span>
+                                  <div className="flex items-start justify-between gap-2">
+                                    <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-teal-brand shrink-0">
+                                      {img.tag}
+                                    </span>
+                                    <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-teal-brand transition-colors shrink-0" />
+                                  </div>
+
+                                  <h5 className="text-xs font-bold text-teal-dark dark:text-slate-100 font-sans leading-tight mt-1">
+                                    {img.title}
+                                  </h5>
+                                  <p className="text-[10px] text-secondary dark:text-slate-300 font-sans leading-relaxed mt-0.5">
+                                    {img.caption}
+                                  </p>
+
+                                  <div className="mt-2 flex items-center gap-1.5 text-[9px] font-mono text-slate-500 dark:text-slate-400">
+                                    <Search className="w-2.5 h-2.5 shrink-0" />
+                                    <span className="truncate">{img.query}</span>
+                                  </div>
                                 </button>
-                              </div>
-
-                              {/* Title & Caption */}
-                              <div className="space-y-1">
-                                <h5 className="text-xs font-bold text-teal-dark dark:text-slate-100 font-sans leading-tight">
-                                  {groundedPrototypeImages[prototypeCarouselIndex].title}
-                                </h5>
-                                <p className="text-[10px] text-secondary dark:text-slate-300 font-sans leading-relaxed">
-                                  {groundedPrototypeImages[prototypeCarouselIndex].caption}
-                                </p>
-                              </div>
-
-                              {/* Google Search Link Button */}
-                              <button
-                                type="button"
-                                onClick={() => window.open(groundedPrototypeImages[prototypeCarouselIndex].searchUrl, "_blank")}
-                                className="w-full py-1.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-500/30 rounded-xl text-[10px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                              >
-                                <Search className="w-3 h-3" />
-                                <span>Google Images Search</span>
-                                <ExternalLink className="w-3 h-3 opacity-70" />
-                              </button>
-
-                              {/* Thumbnails Row */}
-                              <div className="flex items-center justify-between gap-1 pt-1 border-t border-black/[0.05] dark:border-slate-800">
-                                <div className="grid grid-cols-4 gap-1.5 w-full">
-                                  {groundedPrototypeImages.map((img, idx) => (
-                                    <button
-                                      key={idx}
-                                      type="button"
-                                      onClick={() => setPrototypeCarouselIndex(idx)}
-                                      className={`relative rounded-lg overflow-hidden border-2 aspect-video transition-all cursor-pointer ${
-                                        prototypeCarouselIndex === idx
-                                          ? "border-teal-brand ring-2 ring-teal-brand/30 scale-105"
-                                          : "border-slate-300 dark:border-slate-700 opacity-60 hover:opacity-100"
-                                      }`}
-                                    >
-                                      <img src={img.url} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
+                              ))}
                             </div>
                           )}
 
@@ -3908,13 +3691,8 @@ export default function App() {
               {/* Modal Header */}
               <div className="bg-teal-dark px-5 py-4 text-white flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-teal-brand/20 border border-teal-brand/40 overflow-hidden flex items-center justify-center p-0.5 shrink-0">
-                    <img 
-                      src="/src/assets/images/lyrah_logo_1786276082567.jpg" 
-                      alt="Lyrah Mascot Logo" 
-                      className="w-full h-full object-contain rounded-lg"
-                      referrerPolicy="no-referrer"
-                    />
+                  <div className="w-8 h-8 rounded-xl bg-teal-brand/20 border border-teal-brand/40 flex items-center justify-center p-0.5 shrink-0">
+                    <LyraMark className="w-full h-full text-teal-brand" showLines={false} />
                   </div>
                   <div>
                     <h3 className="text-xs font-bold font-sans uppercase tracking-wide">Lyrah AI Co-Teacher</h3>
@@ -3954,12 +3732,11 @@ export default function App() {
             }`}
             id="lyra-copilot-sparkle-trigger"
           >
-            <div className="w-6 h-6 rounded-full overflow-hidden bg-teal-brand/20 border border-amber-300/60 shrink-0 p-0.5">
-              <img 
-                src="/src/assets/images/lyrah_logo_1786276082567.jpg" 
-                alt="Lyrah Avatar" 
-                className="w-full h-full object-contain rounded-full"
-                referrerPolicy="no-referrer"
+            <div className="w-7 h-7 rounded-full bg-cyber-bg border border-amber-300/60 shrink-0 p-0.5 flex items-center justify-center overflow-hidden">
+              <img
+                src="/lyrah_logo.jpg"
+                alt=""
+                className="w-full h-full object-contain rounded-full mix-blend-lighten"
               />
             </div>
             <span className="font-sans font-bold text-xs pr-0.5">
