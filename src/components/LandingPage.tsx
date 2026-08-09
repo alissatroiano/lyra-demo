@@ -29,7 +29,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span>XPRIZE · Education & Human Potential</span>
             </div>
 
-            <h1 className="font-serif text-3.5xl sm:text-5xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
+            <h1 className="font-display text-3.5xl sm:text-5xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
               Transform Plain STEM Lessons into <span className="text-teal-700 dark:text-teal-brand underline decoration-amber-400 dark:decoration-amber-500 underline-offset-6">Interactive Visual Adventures</span>
             </h1>
 
@@ -89,7 +89,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <div className="bg-teal-dark text-white rounded-3xl p-8 space-y-6 shadow-sm relative overflow-hidden" id="pipeline-section">
         <div className="text-center space-y-1.5">
           <span className="text-[10px] font-mono font-bold text-teal-brand uppercase tracking-widest">HOW LYRAH TRANSFORMS LESSONS</span>
-          <h3 className="font-serif text-2xl font-bold text-teal-light">The Interactive Pipeline</h3>
+          <h3 className="font-display text-2xl font-bold text-teal-light">The Interactive Pipeline</h3>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 pt-2 text-left">
@@ -117,7 +117,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <div className="space-y-6">
         <div className="text-center space-y-1.5">
           <span className="text-[10px] font-bold text-gold-brand uppercase tracking-widest font-sans">ACTIVE CURRICULUM SUITE</span>
-          <h3 className="font-serif text-2xl sm:text-3xl font-bold text-teal-dark dark:text-teal-brand">Everything Needed For An Active STEM Classroom</h3>
+          <h3 className="font-display text-2xl sm:text-3xl font-bold text-teal-dark dark:text-teal-brand">Everything Needed For An Active STEM Classroom</h3>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -125,7 +125,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-10 h-10 rounded-xl bg-teal-light dark:bg-teal-brand/20 text-teal-brand flex items-center justify-center font-bold">
               <Layers className="w-5 h-5" />
             </div>
-            <h4 className="font-serif font-bold text-slate-800 dark:text-slate-100 text-base">Interactive Smartboard Slides</h4>
+            <h4 className="font-display font-bold text-slate-800 dark:text-slate-100 text-base">Interactive Smartboard Slides</h4>
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
               Visual classroom slide decks with step-by-step teaching analogies, full-screen expansion mode, core takeaways, and instructor speaking notes.
             </p>
@@ -135,7 +135,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 flex items-center justify-center font-bold">
               <Activity className="w-5 h-5" />
             </div>
-            <h4 className="font-serif font-bold text-slate-800 dark:text-slate-100 text-base">Hands-On Engineering Labs</h4>
+            <h4 className="font-display font-bold text-slate-800 dark:text-slate-100 text-base">Hands-On Engineering Labs</h4>
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
               Step-by-step physical build instructions, material checklists with interactive checkmarks, and scientific principle breakdowns.
             </p>
@@ -145,7 +145,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-10 h-10 rounded-xl bg-yellow-100 dark:bg-yellow-500/20 text-yellow-800 dark:text-yellow-300 flex items-center justify-center font-bold">
               <Palette className="w-5 h-5" />
             </div>
-            <h4 className="font-serif font-bold text-slate-800 dark:text-slate-100 text-base">🎨 Visual Studio</h4>
+            <h4 className="font-display font-bold text-slate-800 dark:text-slate-100 text-base">🎨 Visual Studio</h4>
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
               Generates rich visual conceptual diagrams for hands-on experiments and lessons with custom art styles and high-yield prompts.
             </p>
@@ -155,7 +155,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 flex items-center justify-center font-bold">
               <HelpCircle className="w-5 h-5" />
             </div>
-            <h4 className="font-serif font-bold text-slate-800 dark:text-slate-100 text-base">Smartboard Trivia Quizzes</h4>
+            <h4 className="font-display font-bold text-slate-800 dark:text-slate-100 text-base">Smartboard Trivia Quizzes</h4>
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
               Gamified classroom quizzes with instant score tracking, correct answer explanations, and team participation modes.
             </p>
@@ -165,7 +165,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-950/60 text-red-800 dark:text-red-300 flex items-center justify-center font-bold">
               <Link2Off className="w-5 h-5" />
             </div>
-            <h4 className="font-serif font-bold text-slate-800 dark:text-slate-100 text-base">Google SafeSearch Media Recovery</h4>
+            <h4 className="font-display font-bold text-slate-800 dark:text-slate-100 text-base">Google SafeSearch Media Recovery</h4>
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
               Detects dead links in outdated lesson plans and instantly provides grounded, explicit-content-filtered Google SafeSearch video demonstrations.
             </p>
@@ -177,24 +177,24 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 space-y-6" id="metrics-section">
         <div className="text-center space-y-1.5">
           <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest font-sans">PROVEN PEDAGOGICAL METRICS</span>
-          <h3 className="font-serif text-2xl font-bold text-slate-900 dark:text-slate-100">Curriculum Efficiency Accomplished</h3>
+          <h3 className="font-display text-2xl font-bold text-slate-900 dark:text-slate-100">Curriculum Efficiency Accomplished</h3>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 text-center">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl space-y-1 shadow-3xs">
-            <span className="font-serif text-4xl font-bold text-teal-600 dark:text-teal-brand block leading-none">14,200+</span>
+            <span className="font-display text-4xl font-bold text-teal-600 dark:text-teal-brand block leading-none">14,200+</span>
             <span className="text-[10px] font-bold text-teal-900 dark:text-teal-brand uppercase font-sans tracking-wide">Instructor Hours Saved</span>
             <p className="text-xs text-slate-600 dark:text-slate-300 font-sans leading-normal">Unpaid prep time reduced to zero.</p>
           </div>
 
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl space-y-1 shadow-3xs">
-            <span className="font-serif text-4xl font-bold text-teal-600 dark:text-teal-brand block leading-none">250+</span>
+            <span className="font-display text-4xl font-bold text-teal-600 dark:text-teal-brand block leading-none">250+</span>
             <span className="text-[10px] font-bold text-teal-900 dark:text-teal-brand uppercase font-sans tracking-wide">Schools & Camps</span>
             <p className="text-xs text-slate-600 dark:text-slate-300 font-sans leading-normal">Active deployments across regions.</p>
           </div>
 
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl space-y-1 shadow-3xs">
-            <span className="font-serif text-4xl font-bold text-teal-600 dark:text-teal-brand block leading-none">$0</span>
+            <span className="font-display text-4xl font-bold text-teal-600 dark:text-teal-brand block leading-none">$0</span>
             <span className="text-[10px] font-bold text-teal-900 dark:text-teal-brand uppercase font-sans tracking-wide">District Friction</span>
             <p className="text-xs text-slate-600 dark:text-slate-300 font-sans leading-normal">Fully offline/cloud hybrid compatible.</p>
           </div>
@@ -207,7 +207,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <span className="text-[10px] font-bold text-amber-800 dark:text-amber-200 uppercase tracking-widest font-sans bg-amber-100/60 dark:bg-amber-950/60 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-800">
             STEM & STEAM EDUCATOR PLANS
           </span>
-          <h3 className="font-serif text-3xl font-bold text-slate-900 dark:text-slate-100">Simple, Transparent Pricing</h3>
+          <h3 className="font-display text-3xl font-bold text-slate-900 dark:text-slate-100">Simple, Transparent Pricing</h3>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-lg mx-auto font-sans">
             Transparent plans built for teachers, camps, and afterschool directors. Upgrade or cancel anytime.
           </p>
@@ -221,13 +221,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <span className="text-[10px] font-mono font-bold text-teal-900 dark:text-teal-brand uppercase tracking-wider bg-teal-50 dark:bg-teal-brand/20 px-2.5 py-1 rounded-md border border-teal-200 dark:border-teal-brand/30 inline-block">
                   INDIVIDUAL TEACHER
                 </span>
-                <h4 className="font-serif text-2xl font-bold text-slate-900 dark:text-slate-100">Educator Pro</h4>
+                <h4 className="font-display text-2xl font-bold text-slate-900 dark:text-slate-100">Educator Pro</h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">Designed for single STEM/STEAM classroom teachers & lab instructors.</p>
               </div>
 
               <div className="flex items-baseline gap-2 pt-2">
-                <span className="line-through text-slate-400 dark:text-slate-500 font-serif text-2xl font-normal">$12.99</span>
-                <span className="font-serif text-4xl font-extrabold text-teal-900 dark:text-teal-brand">$9.99</span>
+                <span className="line-through text-slate-400 dark:text-slate-500 font-display text-2xl font-normal">$12.99</span>
+                <span className="font-display text-4xl font-extrabold text-teal-900 dark:text-teal-brand">$9.99</span>
                 <span className="text-xs text-slate-500 dark:text-slate-400 font-sans font-medium">/ month</span>
               </div>
 
@@ -290,12 +290,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <span className="text-[10px] font-mono font-bold text-teal-900 dark:text-teal-brand uppercase tracking-wider bg-teal-50 dark:bg-teal-brand/20 px-2.5 py-1 rounded-md border border-teal-200 dark:border-teal-brand/30 inline-block">
                   ANNUAL PASS
                 </span>
-                <h4 className="font-serif text-2xl font-bold text-slate-900 dark:text-slate-100">Educator Yearly</h4>
+                <h4 className="font-display text-2xl font-bold text-slate-900 dark:text-slate-100">Educator Yearly</h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">Full annual access to all Lyrah STEM AI co-teacher tools ($8.25/mo).</p>
               </div>
 
               <div className="flex items-baseline gap-1.5 pt-2">
-                <span className="font-serif text-4xl font-extrabold text-teal-900 dark:text-teal-brand">$99.00</span>
+                <span className="font-display text-4xl font-extrabold text-teal-900 dark:text-teal-brand">$99.00</span>
                 <span className="text-xs text-slate-500 dark:text-slate-400 font-sans font-medium">/ year</span>
               </div>
 
@@ -350,12 +350,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <span className="text-[10px] font-mono font-bold text-amber-300 uppercase tracking-wider bg-black/30 px-2.5 py-1 rounded-md border border-amber-400/30 inline-block">
                   ONE TIME CHARGE
                 </span>
-                <h4 className="font-serif text-2xl font-bold text-white">Summer STEM Special</h4>
+                <h4 className="font-display text-2xl font-bold text-white">Summer STEM Special</h4>
                 <p className="text-xs text-teal-100/80 font-sans">Special summer offer for educators & camps. Full access for a single low charge.</p>
               </div>
 
               <div className="flex items-baseline gap-1.5 pt-2">
-                <span className="font-serif text-4xl font-bold text-amber-300">$12.99</span>
+                <span className="font-display text-4xl font-bold text-amber-300">$12.99</span>
                 <span className="text-xs text-teal-200 font-sans font-medium">one-time charge</span>
               </div>
 
@@ -405,7 +405,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <div className="border-t border-slate-200 dark:border-slate-800 pt-10 space-y-6" id="stack-section">
         <div className="text-center space-y-1.5">
           <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest font-sans">SECURE, SCALABLE FOUNDATION</span>
-          <h3 className="font-serif text-2xl font-bold text-slate-900 dark:text-slate-100">Modern Stack & Platform Standards</h3>
+          <h3 className="font-display text-2xl font-bold text-slate-900 dark:text-slate-100">Modern Stack & Platform Standards</h3>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">

@@ -1678,7 +1678,7 @@ export default function App() {
                 />
               </div>
               <div>
-                <span className="font-serif text-xl sm:text-2xl font-semibold tracking-tight text-teal-dark dark:text-teal-brand">
+                <span className="font-display text-xl sm:text-2xl font-semibold tracking-tight text-teal-dark dark:text-teal-brand">
                   Lyrah<span className="text-teal-brand font-sans">.</span>
                 </span>
                 <p className="text-[9px] sm:text-[10px] text-secondary dark:text-slate-400 font-sans tracking-wide leading-none hidden xs:block">Afterschool STEM Copilot</p>
@@ -1729,16 +1729,6 @@ export default function App() {
               >
                 {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
-
-              {/* Glowing Yellow Lyrah Name Logo in Top Right Corner */}
-              <div className="flex items-center shrink-0 pl-1 border-l border-slate-200 dark:border-slate-800">
-                <img 
-                  src="/lyrah_name_logo.jpg" 
-                  alt="Lyrah Neon Name Logo" 
-                  className="h-8 sm:h-9 w-auto object-contain rounded-lg drop-shadow-xs hover:scale-105 transition-transform"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
 
               {profile?.isSubscribed ? (
                 <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-600/50 text-emerald-800 dark:text-emerald-300 font-bold text-xs rounded-full shadow-3xs micro-glow-emerald">
@@ -1970,7 +1960,7 @@ export default function App() {
               <span className="inline-block text-[10px] font-extrabold tracking-widest text-amber-700 dark:text-amber-400 uppercase font-sans">
                 XPRIZE · Education & Human Potential
               </span>
-              <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
+              <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
                 Your AI copilot for <span className="text-teal-800 dark:text-teal-brand underline decoration-teal-brand/40 underline-offset-4">STEM lesson prep</span>
               </h1>
               <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-sans font-normal">
@@ -2696,7 +2686,7 @@ export default function App() {
                         {selectedCategory}
                       </span>
                     </div>
-                    <h2 className="font-serif text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-teal-dark dark:text-teal-brand">
+                    <h2 className="font-display text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-teal-dark dark:text-teal-brand">
                       {lesson.lessonTitle}
                     </h2>
                     <p className="text-xs sm:text-sm text-secondary dark:text-slate-300 leading-relaxed font-sans">
@@ -3426,7 +3416,7 @@ export default function App() {
                             <div className="w-16 h-16 rounded-full bg-teal-brand/10 border border-teal-brand/30 flex items-center justify-center text-teal-brand mx-auto shadow-sm">
                               <Award className="w-8 h-8" />
                             </div>
-                            <h4 className="text-xl font-serif font-bold text-white">Outstanding, Team!</h4>
+                            <h4 className="text-xl font-display font-bold text-white">Outstanding, Team!</h4>
                             <p className="text-xs text-teal-light/80 leading-relaxed font-sans">
                               Your classroom finished the interactive module. You scored <strong>{quizScore} out of {lesson.quiz.length}</strong> correct answers!
                             </p>
@@ -3657,7 +3647,7 @@ export default function App() {
                     <Sparkles className="w-5 h-5 text-amber-300" />
                   </div>
                   <div>
-                    <h4 className="font-serif font-bold text-base text-white">Educator Pro Subscription Active</h4>
+                    <h4 className="font-display font-bold text-base text-white">Educator Pro Subscription Active</h4>
                     <p className="text-xs text-emerald-100/80 font-sans">You have full unlocked access to AI lesson transformations, Cloud Firestore storage, Nana Banana Pro visual generator, and export channels.</p>
                   </div>
                 </div>
@@ -3674,7 +3664,7 @@ export default function App() {
                     <Crown className="w-5 h-5 text-amber-300" />
                   </div>
                   <div>
-                    <h4 className="font-serif font-bold text-base text-white">Unlock Full Educator Pro Access ($9.99/mo)</h4>
+                    <h4 className="font-display font-bold text-base text-white">Unlock Full Educator Pro Access ($9.99/mo)</h4>
                     <p className="text-xs text-teal-100/80 font-sans">Register and subscribe to access unlimited AI transformations, persistent Cloud Firestore lesson saving, and full curriculum suite tools.</p>
                   </div>
                 </div>
@@ -3737,7 +3727,7 @@ export default function App() {
                   <Sparkles className="w-3.5 h-3.5 text-gold-brand" />
                   <span>Lyrah AI Curriculum Alignment</span>
                 </div>
-                <h3 className="text-xl sm:text-2xl font-serif font-bold text-white">
+                <h3 className="text-xl sm:text-2xl font-display font-bold text-white">
                   Generation Plan & Confirmation
                 </h3>
                 <p className="text-xs text-teal-100/90 mt-1 font-sans leading-relaxed">
