@@ -274,54 +274,12 @@ export default function App() {
   const [deletingLessonId, setDeletingLessonId] = useState<string | null>(null);
 
   // Interactive Chip parameters state (for easy configuration)
+  const [selectedCategory, setSelectedCategory] = useState<string>("Science");
   const [selectedGrade, setSelectedGrade] = useState<string>("K-2nd");
   const [customGradeInput, setCustomGradeInput] = useState<string>("");
   const [selectedSize, setSelectedSize] = useState<string>("15-20 kids");
   const [selectedDuration, setSelectedDuration] = useState<string>("60 mins");
   const [selectedTech, setSelectedTech] = useState<string>("Smart Board");
-
-  // Redirect to studio whenever user logs in or creates account from landing
-  useEffect(() => {
-    if (user && currentView === "landing") {
-      setCurrentView("studio");
-    }
-  }, [user, currentView]);
-
-  const handleSignInAndRedirect = async () => {
-    try {
-      await signInWithGoogle();
-      setCurrentView("studio");
-    } catch (err: any) {
-      console.error("Sign in failed:", err);
-    }
-  };
-
-  // Sync selected preload into custom content textbox
-  useEffect(() => {
-    const found = PRELOADED_LESSONS.find(p => p.id === selectedPreload);
-    if (found) {
-      setCustomContent(found.rawContent);
-    }
-  }, [selectedPreload]);
-
-  // Reset quiz state when lesson changes
-  useEffect(() => {
-    setCurrentQuizIndex(0);
-    setSelectedQuizOption(null);
-    setQuizScore(0);
-    setQuizCompleted(false);
-    setShowExplanation(false);
-    
-    // Clear material checkmarks
-    const initialChecked: Record<string, boolean> = {};
-    if (lesson?.handsOnActivity?.materials) {
-      lesson.handsOnActivity.materials.forEach(m => {
-        initialChecked[m] = false;
-      });
-    }
-    setCheckedMaterials(initialChecked);
-    setStudentAnswers({});
-  }, [lesson]);
 
   // Detect if current lesson is a coding / computer science / Scratch / Python curriculum
   const isCodingLesson = React.useMemo(() => {
@@ -347,6 +305,81 @@ export default function App() {
     return codingKeywords.some(kw => textToScan.includes(kw));
   }, [lesson]);
 
+  // Reorder Active Curriculum Suite tabs based on learned instructor memory & category focus
+  const getInstructorDynamicTabs = React.useCallback(() => {
+    const learnedNotes = (
+      (profile?.instructorNotes || "") + " " + 
+      (profile?.customPreferences || "") + " " + 
+      (customPreferences || "") + " " + 
+      (selectedCategory || "") + " " +
+      (lesson?.lessonTitle || "")
+    ).toLowerCase();
+
+    const allTabs = [
+      { id: "slides", label: "Interactive Slides", icon: Layers },
+      { id: "lab", label: isCodingLesson ? "💻 Coding Blocks & Lab" : "Hands-On Lab", icon: isCodingLesson ? Terminal : Activity },
+      { id: "nana-banana", label: "🎨 Visual Studio", icon: Palette },
+      { id: "quiz", label: "Smartboard Quiz", icon: HelpCircle },
+      { id: "media", label: "Media Fixer", icon: Link2Off }
+    ];
+
+    const scores: Record<string, number> = {
+      slides: 0,
+      lab: 0,
+      "nana-banana": 0,
+      quiz: 0,
+      media: 0
+    };
+
+    // Category base weight
+    if (selectedCategory === "Technology" || selectedCategory === "Engineering") {
+      scores.lab += 20;
+      scores.slides += 8;
+    } else if (selectedCategory === "Art") {
+      scores["nana-banana"] += 20;
+      scores.slides += 8;
+    } else if (selectedCategory === "Math") {
+      scores.quiz += 20;
+      scores.slides += 8;
+    } else {
+      // Science
+      scores.slides += 20;
+      scores.lab += 10;
+    }
+
+    // Instructor Memory and Directives Boost
+    if (learnedNotes.includes("coding") || learnedNotes.includes("lab") || learnedNotes.includes("hands-on") || learnedNotes.includes("experiment") || learnedNotes.includes("scratch") || learnedNotes.includes("robot")) {
+      scores.lab += 15;
+    }
+    if (learnedNotes.includes("quiz") || learnedNotes.includes("assessment") || learnedNotes.includes("jeopardy") || learnedNotes.includes("test") || learnedNotes.includes("question")) {
+      scores.quiz += 15;
+    }
+    if (learnedNotes.includes("art") || learnedNotes.includes("visual") || learnedNotes.includes("diagram") || learnedNotes.includes("nana") || learnedNotes.includes("illustration") || learnedNotes.includes("draw")) {
+      scores["nana-banana"] += 15;
+    }
+    if (learnedNotes.includes("slide") || learnedNotes.includes("deck") || learnedNotes.includes("lecture") || learnedNotes.includes("presentation")) {
+      scores.slides += 15;
+    }
+
+    return [...allTabs].sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0));
+  }, [profile, customPreferences, selectedCategory, lesson?.lessonTitle, isCodingLesson]);
+
+  // Redirect to studio whenever user logs in or creates account from landing
+  useEffect(() => {
+    if (user && currentView === "landing") {
+      setCurrentView("studio");
+    }
+  }, [user, currentView]);
+
+  const handleSignInAndRedirect = async () => {
+    try {
+      await signInWithGoogle();
+      setCurrentView("studio");
+    } catch (err: any) {
+      console.error("Sign in failed:", err);
+    }
+  };
+
   const [codeCopied, setCodeCopied] = useState<boolean>(false);
 
   const handleCopyCodeBlocks = () => {
@@ -361,10 +394,10 @@ export default function App() {
   useEffect(() => {
     if (!isManuallyEdited) {
       const effectiveGrade = selectedGrade === "Custom" ? (customGradeInput.trim() || "Custom Age Range") : selectedGrade;
-      const specs = `Tailor for ${effectiveGrade} grade, class size of ${selectedSize}, duration of ${selectedDuration}, with ${selectedTech} available.`;
+      const specs = `Category: ${selectedCategory}. Tailor for ${effectiveGrade} grade, class size of ${selectedSize}, duration of ${selectedDuration}, with ${selectedTech} available.`;
       setCustomPreferences(specs);
     }
-  }, [selectedGrade, customGradeInput, selectedSize, selectedDuration, selectedTech, isManuallyEdited]);
+  }, [selectedCategory, selectedGrade, customGradeInput, selectedSize, selectedDuration, selectedTech, isManuallyEdited]);
 
   // Load preferences from Firebase Profile when logged in
   useEffect(() => {
@@ -382,7 +415,7 @@ export default function App() {
 
   const handleAutoGenerateFromChips = () => {
     const effectiveGrade = selectedGrade === "Custom" ? (customGradeInput.trim() || "Custom Age Range") : selectedGrade;
-    const specs = `Tailor for ${effectiveGrade} grade, class size of ${selectedSize}, duration of ${selectedDuration}, with ${selectedTech} available.`;
+    const specs = `Category: ${selectedCategory}. Tailor for ${effectiveGrade} grade, class size of ${selectedSize}, duration of ${selectedDuration}, with ${selectedTech} available.`;
     setCustomPreferences(specs);
     setIsManuallyEdited(false);
   };
@@ -588,7 +621,12 @@ export default function App() {
         }
       }
 
-      setActiveTab("slides");
+      const reorderedTabs = getInstructorDynamicTabs();
+      if (reorderedTabs.length > 0) {
+        setActiveTab(reorderedTabs[0].id as any);
+      } else {
+        setActiveTab("slides");
+      }
       setIsUploadExpanded(false);
       setTimeout(() => {
         document.getElementById("workspace-panel")?.scrollIntoView({ behavior: 'smooth' });
@@ -1211,10 +1249,46 @@ export default function App() {
             {/* Interactive chip context rows (Appends parameters directly) */}
             <div className="bg-surface-0 dark:bg-slate-950/80 border border-black/[0.05] dark:border-slate-800 rounded-xl p-4.5 space-y-4">
               <span className="text-[10px] font-bold font-mono tracking-widest text-teal-brand uppercase block border-b dark:border-slate-800 pb-1.5">
-                Target Classroom Parameters (Auto-Configurator)
+                Instructor Tool Bar
               </span>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Category Selection (Science, Technology, Engineering, Art, Math) */}
+                <div className="space-y-1.5 sm:col-span-2 border-b border-black/[0.05] dark:border-slate-800 pb-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-teal-dark dark:text-teal-brand uppercase font-sans flex items-center gap-1.5">
+                      <span>Curriculum Category</span>
+                      <span className="text-[9px] font-mono font-bold text-teal-brand bg-teal-light/50 dark:bg-teal-brand/20 px-1.5 py-0.2 rounded">
+                        Required
+                      </span>
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-mono">Select domain focus</span>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 items-center pt-0.5">
+                    {[
+                      { id: "Science", label: "Science", icon: "🔬" },
+                      { id: "Technology", label: "Technology", icon: "💻" },
+                      { id: "Engineering", label: "Engineering", icon: "⚙️" },
+                      { id: "Art", label: "Art", icon: "🎨" },
+                      { id: "Math", label: "Math", icon: "📐" }
+                    ].map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setSelectedCategory(cat.id)}
+                        className={`text-xs px-3 py-1.5 rounded-xl font-sans font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                          selectedCategory === cat.id 
+                            ? "bg-teal-dark dark:bg-teal-brand text-white dark:text-slate-950 border-teal-brand shadow-3xs micro-glow-teal scale-[1.02]" 
+                            : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:text-teal-dark dark:hover:text-white border-slate-200 dark:border-slate-700 hover:border-teal-brand/30"
+                        }`}
+                      >
+                        <span className="text-sm">{cat.icon}</span>
+                        <span>{cat.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 {/* Grade / Age Range */}
                 <div className="space-y-1 sm:col-span-2">
                   <span className="text-[10px] font-bold text-secondary dark:text-slate-300 uppercase font-sans">Age Range / Grade Level</span>
@@ -1677,15 +1751,20 @@ export default function App() {
                   className="p-4 sm:p-6 space-y-6"
                 >
 
-            {/* Touch-Friendly Mobile Scrollable Resource Pills Tabs */}
+            {/* Adaptive Reordering Indicator Banner */}
+            <div className="flex items-center justify-between gap-2 px-3.5 py-2 bg-teal-50/80 dark:bg-teal-brand/10 border border-teal-brand/20 rounded-xl mb-3 text-xs text-teal-dark dark:text-teal-brand font-sans">
+              <div className="flex items-center gap-2 font-semibold">
+                <Brain className="w-4 h-4 text-teal-brand shrink-0" />
+                <span>Suite tabs reordered based on learned instructor memory & <strong>{selectedCategory}</strong> category focus</span>
+              </div>
+              <span className="text-[10px] font-mono font-extrabold uppercase px-2 py-0.5 bg-teal-brand/20 text-teal-brand rounded shrink-0">
+                Adaptive Layout
+              </span>
+            </div>
+
+            {/* Touch-Friendly Mobile Scrollable Resource Pills Tabs (Dynamic Order) */}
             <div className="flex border border-black/[0.06] dark:border-slate-800 overflow-x-auto no-scrollbar scroll-smooth gap-1.5 bg-surface-0 dark:bg-slate-950/80 p-1.5 rounded-2xl mb-6 font-sans w-full">
-              {[
-                { id: "slides", label: "Interactive Slides", icon: Layers },
-                { id: "lab", label: isCodingLesson ? "💻 Coding Blocks & Lab" : "Hands-On Lab", icon: isCodingLesson ? Terminal : Activity },
-                { id: "nana-banana", label: "🎨 Visual Studio", icon: Palette },
-                { id: "quiz", label: "Smartboard Quiz", icon: HelpCircle },
-                { id: "media", label: "Media Fixer", icon: Link2Off }
-              ].map((tab) => {
+              {getInstructorDynamicTabs().map((tab) => {
                 const TabIcon = tab.icon;
                 const isSelected = activeTab === tab.id;
                 return (
@@ -1937,77 +2016,6 @@ export default function App() {
                                 }`}>
                                   {step}
                                 </p>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Interactive Code Simulator Bar */}
-                      <div className={`p-5 rounded-2xl border transition-all ${
-                        isDarkMode ? "bg-slate-900/90 border-teal-brand/30 liquid-glass-dark" : "bg-white border-teal-brand/20 liquid-glass-light"
-                      }`}>
-                        <div className="flex items-center justify-between border-b pb-3 mb-4 border-teal-brand/20">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-xl bg-teal-brand/20 text-teal-brand border border-teal-brand/30 flex items-center justify-center micro-glow-teal">
-                              <Terminal className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <h4 className="text-xs font-bold font-sans uppercase text-teal-dark dark:text-teal-brand flex items-center gap-2">
-                                <span>{isCodingLesson ? "Interactive Code Block Execution Engine" : "Scratch & Circuit Block Architect"}</span>
-                                <span className="text-[9px] font-mono px-1.5 py-0.2 bg-teal-light dark:bg-teal-brand/20 text-teal-brand rounded uppercase">2026 Interactive</span>
-                              </h4>
-                              <p className="text-[10px] text-secondary dark:text-slate-400 font-sans">
-                                Test active logic pathways with micro-delay execution feedback
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Haptic Simulate Run Button */}
-                          <button
-                            type="button"
-                            onClick={handleSimulateBlockRun}
-                            disabled={isSimulatingBlock}
-                            className="px-3.5 py-1.5 bg-teal-brand hover:bg-teal-mid text-slate-950 font-black text-xs rounded-xl transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer shadow-3xs micro-glow-teal disabled:opacity-50"
-                          >
-                            <Play className={`w-3.5 h-3.5 ${isSimulatingBlock ? "animate-spin" : ""}`} />
-                            <span>{isSimulatingBlock ? "Running..." : "Test Block Run"}</span>
-                          </button>
-                        </div>
-
-                        {/* Interactive Block Chain */}
-                        <div className="space-y-2 font-mono text-xs">
-                          {lesson.handsOnActivity.steps.map((stepText, idx) => {
-                            const isActive = simulatingBlockStep === idx;
-                            return (
-                              <div
-                                key={idx}
-                                className={`p-3 rounded-xl border transition-all duration-300 flex items-center gap-3 ${
-                                  isActive
-                                    ? "bg-teal-brand/20 border-teal-brand text-teal-brand font-bold micro-glow-teal scale-[1.01] translate-x-1"
-                                    : isDarkMode
-                                    ? "bg-slate-800/60 border-slate-700/60 text-slate-200"
-                                    : "bg-surface-0/80 border-black/[0.06] text-slate-700"
-                                }`}
-                              >
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${
-                                  isActive 
-                                    ? "bg-teal-brand text-slate-950" 
-                                    : "bg-amber-400/20 text-amber-600 dark:text-amber-300 border border-amber-400/30"
-                                }`}>
-                                  Block [{idx + 1}]
-                                </span>
-                                <span className="flex-1 font-sans text-xs truncate">{stepText}</span>
-                                {isActive ? (
-                                  <span className="text-[10px] font-mono text-teal-brand animate-pulse uppercase font-extrabold flex items-center gap-1">
-                                    <span className="w-2 h-2 rounded-full bg-teal-brand animate-ping" />
-                                    ▶ Signal Active
-                                  </span>
-                                ) : (
-                                  <span className="text-[9px] text-slate-400 dark:text-slate-500 font-mono">
-                                    Ready
-                                  </span>
-                                )}
                               </div>
                             );
                           })}
