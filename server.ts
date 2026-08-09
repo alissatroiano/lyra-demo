@@ -789,8 +789,15 @@ app.post("/api/create-checkout-session", async (req, res) => {
   const priceId = reqPriceId || (
     (plan === "yearly" || plan === "annual")
       ? (process.env.STRIPE_PROD_KEY_2 || "price_yearly_educator_99")
+      : (plan === "summer" || plan === "summer_1299" || plan === "summer_special")
+      ? "price_1U2YXoKExpIuZ5d51zCqxK1f"
       : (process.env.STRIPE_PROD_KEY_1 || "price_1U2OwBKExpIuZ5d5bmfH68py")
   );
+
+  const getProductIdForPrice = (pId: string) => {
+    if (pId === "price_1U2YXoKExpIuZ5d51zCqxK1f") return "prod_V2dpA5jan6W2L7";
+    return "prod_V2TrpJIKS5bF5O";
+  };
 
   const protocol = req.headers["x-forwarded-proto"] || "https";
   const host = req.headers.host || "localhost:3000";
@@ -823,7 +830,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
           uid,
           plan: plan || "intro",
           priceId,
-          productId: "prod_V2TrpJIKS5bF5O"
+          productId: getProductIdForPrice(priceId)
         },
       });
     } catch (modeErr: any) {
@@ -846,7 +853,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
           uid,
           plan: plan || "intro",
           priceId,
-          productId: "prod_V2TrpJIKS5bF5O"
+          productId: getProductIdForPrice(priceId)
         },
       });
     }

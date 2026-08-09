@@ -18,7 +18,7 @@ export default function SubscriptionModal({
   onClose,
   authLoading
 }: SubscriptionModalProps) {
-  const [selectedPlan, setSelectedPlan] = useState<"monthly" | "yearly">("monthly");
+  const [selectedPlan, setSelectedPlan] = useState<"intro" | "summer" | "yearly">("summer");
   const [cardName, setCardName] = useState(user?.displayName || "");
   const [cardNumber, setCardNumber] = useState("•••• •••• •••• 4242");
   const [expDate, setExpDate] = useState("12/28");
@@ -32,7 +32,11 @@ export default function SubscriptionModal({
     setLoading(true);
     setError(null);
 
-    const priceId = selectedPlan === "monthly" ? "price_1U2OwBKExpIuZ5d5bmfH68py" : "price_yearly_educator_99";
+    const priceId = selectedPlan === "summer" 
+      ? "price_1U2YXoKExpIuZ5d51zCqxK1f" 
+      : selectedPlan === "yearly" 
+      ? "price_yearly_educator_99" 
+      : "price_1U2OwBKExpIuZ5d5bmfH68py";
 
     try {
       // 1. First try creating real Stripe Checkout session
@@ -42,7 +46,7 @@ export default function SubscriptionModal({
         body: JSON.stringify({
           uid: user.uid,
           email: user.email,
-          plan: selectedPlan === "monthly" ? "intro_999" : "annual",
+          plan: selectedPlan === "summer" ? "summer_1299" : selectedPlan === "yearly" ? "annual" : "intro_999",
           priceId
         })
       });
@@ -62,7 +66,11 @@ export default function SubscriptionModal({
         body: JSON.stringify({
           uid: user.uid,
           email: user.email,
-          plan: selectedPlan === "monthly" ? "Demo Incentive ($9.99 One-Time Fee)" : "Lyrah Educator Pro (Annual)",
+          plan: selectedPlan === "summer" 
+            ? "Summer STEM Special ($12.99 One-Time Fee)" 
+            : selectedPlan === "yearly" 
+            ? "Lyrah Educator Pro (Annual)" 
+            : "Demo Incentive ($9.99 One-Time Fee)",
           priceId,
           cardName,
           cardNumber,
@@ -76,7 +84,7 @@ export default function SubscriptionModal({
         throw new Error(data.error || subData.error || "Failed to process Stripe subscription.");
       }
 
-      await onSubscribe(selectedPlan === "yearly" ? "annual" : "intro_999", { cardName });
+      await onSubscribe(selectedPlan === "yearly" ? "annual" : selectedPlan === "summer" ? "summer_1299" : "intro_999", { cardName });
     } catch (err: any) {
       console.error("Subscription payment error:", err);
       setError(err.message || "An error occurred while processing your payment. Please try again.");
@@ -167,48 +175,70 @@ export default function SubscriptionModal({
               {/* Plan Picker */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider block">Choose Plan</label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   <button
                     type="button"
-                    onClick={() => setSelectedPlan("monthly")}
-                    className={`p-4 rounded-xl border text-left transition-all relative cursor-pointer ${
-                      selectedPlan === "monthly"
+                    onClick={() => setSelectedPlan("summer")}
+                    className={`p-3.5 rounded-xl border text-left transition-all relative cursor-pointer ${
+                      selectedPlan === "summer"
+                        ? "border-amber-500 dark:border-amber-400 bg-amber-50/80 dark:bg-amber-950/30 shadow-sm ring-2 ring-amber-500/30"
+                        : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                    }`}
+                  >
+                    <span className="absolute -top-2.5 left-2 bg-amber-500 text-slate-950 text-[8px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs">
+                      Summer Special
+                    </span>
+                    <div className="flex justify-between items-start mt-1">
+                      <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100">Summer STEM Special</span>
+                      <input type="radio" checked={selectedPlan === "summer"} onChange={() => {}} className="accent-amber-600" />
+                    </div>
+                    <div className="mt-1.5 flex items-baseline gap-1">
+                      <p className="text-lg font-serif font-extrabold text-amber-900 dark:text-amber-300">$12.99<span className="text-[9px] font-sans font-normal text-slate-600 dark:text-slate-400"> one-time</span></p>
+                    </div>
+                    <p className="text-[9px] text-slate-600 dark:text-slate-400 mt-1 leading-tight">One-time charge (no subscription)</p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPlan("intro")}
+                    className={`p-3.5 rounded-xl border text-left transition-all relative cursor-pointer ${
+                      selectedPlan === "intro"
                         ? "border-teal-600 dark:border-teal-brand bg-teal-50 dark:bg-teal-brand/10 shadow-sm ring-2 ring-teal-500/30"
                         : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50"
                     }`}
                   >
-                    <span className="absolute -top-2.5 left-3 bg-teal-dark text-teal-brand text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs border border-teal-brand/40">
+                    <span className="absolute -top-2.5 left-2 bg-teal-dark text-teal-brand text-[8px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs border border-teal-brand/40">
                       Demo Incentive
                     </span>
                     <div className="flex justify-between items-start mt-1">
-                      <span className="text-xs font-bold text-slate-900 dark:text-slate-100">$9.99 Intro Access</span>
-                      <input type="radio" checked={selectedPlan === "monthly"} onChange={() => {}} className="accent-teal-700" />
+                      <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100">Demo Intro Access</span>
+                      <input type="radio" checked={selectedPlan === "intro"} onChange={() => {}} className="accent-teal-700" />
                     </div>
-                    <div className="mt-2 flex items-baseline gap-1.5">
-                      <span className="text-xs font-serif line-through text-slate-400 dark:text-slate-500 font-normal">$29.00</span>
-                      <p className="text-xl font-serif font-extrabold text-teal-900 dark:text-teal-brand">$9.99<span className="text-xs font-sans font-normal text-slate-600 dark:text-slate-400"> one-time</span></p>
+                    <div className="mt-1.5 flex items-baseline gap-1">
+                      <span className="text-[10px] font-serif line-through text-slate-400 dark:text-slate-500">$29.00</span>
+                      <p className="text-lg font-serif font-extrabold text-teal-900 dark:text-teal-brand">$9.99<span className="text-[9px] font-sans font-normal text-slate-600 dark:text-slate-400"> one-time</span></p>
                     </div>
-                    <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">One-time fee demo incentive</p>
+                    <p className="text-[9px] text-slate-600 dark:text-slate-400 mt-1 leading-tight">Introductory access fee</p>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setSelectedPlan("yearly")}
-                    className={`p-4 rounded-xl border text-left transition-all relative cursor-pointer ${
+                    className={`p-3.5 rounded-xl border text-left transition-all relative cursor-pointer ${
                       selectedPlan === "yearly"
                         ? "border-teal-600 dark:border-teal-brand bg-teal-50 dark:bg-teal-brand/10 shadow-sm ring-2 ring-teal-500/30"
                         : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50"
                     }`}
                   >
-                    <span className="absolute -top-2.5 right-3 bg-amber-500 text-slate-950 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs">
+                    <span className="absolute -top-2.5 right-2 bg-teal-700 text-white text-[8px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs">
                       Best Value
                     </span>
-                    <div className="flex justify-between items-start">
-                      <span className="text-xs font-bold text-slate-900 dark:text-slate-100">Educator Yearly</span>
+                    <div className="flex justify-between items-start mt-1">
+                      <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100">Educator Yearly</span>
                       <input type="radio" checked={selectedPlan === "yearly"} onChange={() => {}} className="accent-teal-700" />
                     </div>
-                    <p className="text-xl font-serif font-bold text-teal-900 dark:text-teal-brand mt-2">$99.00<span className="text-xs font-sans font-normal text-slate-600 dark:text-slate-400">/yr</span></p>
-                    <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">Billed annually ($8.25/mo)</p>
+                    <p className="text-lg font-serif font-bold text-teal-900 dark:text-teal-brand mt-1.5">$99.00<span className="text-[9px] font-sans font-normal text-slate-600 dark:text-slate-400">/yr</span></p>
+                    <p className="text-[9px] text-slate-600 dark:text-slate-400 mt-1 leading-tight">Annual educator plan ($8.25/mo)</p>
                   </button>
                 </div>
               </div>
@@ -289,7 +319,7 @@ export default function SubscriptionModal({
                 className="w-full py-3.5 bg-gradient-to-r from-teal-dark to-teal-800 hover:from-teal-800 hover:to-teal-dark text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <ShieldCheck className="w-4 h-4 text-teal-brand" />
-                <span>{loading ? "Processing Stripe Payment..." : `Pay ${selectedPlan === "yearly" ? "$99.00" : "$9.99"} & Subscribe`}</span>
+                <span>{loading ? "Processing Stripe Payment..." : `Pay ${selectedPlan === "summer" ? "$12.99" : selectedPlan === "yearly" ? "$99.00" : "$9.99"} & Activate`}</span>
               </button>
 
               <div className="text-center text-[10px] text-slate-500 dark:text-slate-400 flex items-center justify-center gap-2">

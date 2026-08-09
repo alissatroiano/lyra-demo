@@ -335,24 +335,24 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </button>
           </div>
 
-          {/* Plan 3: STEM Camp Director - $49.99 */}
+          {/* Plan 3: Summer STEM Special - $12.99 ONE TIME */}
           <div className="bg-gradient-to-b from-teal-dark via-teal-900 to-slate-900 text-white rounded-3xl p-6 space-y-6 flex flex-col justify-between shadow-lg relative border-2 border-teal-brand/40 overflow-hidden">
-            <div className="absolute top-0 right-0 bg-gold-brand text-slate-950 text-[10px] font-extrabold px-3.5 py-1 rounded-bl-xl uppercase tracking-wider font-mono shadow-xs">
-              DIRECTORS & CAMPS
+            <div className="absolute top-0 right-0 bg-amber-400 text-slate-950 text-[10px] font-extrabold px-3.5 py-1 rounded-bl-xl uppercase tracking-wider font-mono shadow-xs">
+              SUMMER SPECIAL
             </div>
 
             <div className="space-y-4">
               <div className="space-y-1">
                 <span className="text-[10px] font-mono font-bold text-amber-300 uppercase tracking-wider bg-black/30 px-2.5 py-1 rounded-md border border-amber-400/30 inline-block">
-                  CAMP & AFTERSCHOOL
+                  ONE TIME CHARGE
                 </span>
-                <h4 className="font-serif text-2xl font-bold text-white">STEM Camp Director</h4>
-                <p className="text-xs text-teal-100/80 font-sans">Built for multi-instructor STEM camps, summer programs & directors.</p>
+                <h4 className="font-serif text-2xl font-bold text-white">Summer STEM Special</h4>
+                <p className="text-xs text-teal-100/80 font-sans">Special summer offer for educators & camps. Full access for a single low charge.</p>
               </div>
 
               <div className="flex items-baseline gap-1.5 pt-2">
-                <span className="font-serif text-4xl font-bold text-amber-300">$49.99</span>
-                <span className="text-xs text-teal-200 font-sans font-medium">/ month</span>
+                <span className="font-serif text-4xl font-bold text-amber-300">$12.99</span>
+                <span className="text-xs text-teal-200 font-sans font-medium">one-time charge</span>
               </div>
 
               <div className="border-t border-white/10 pt-4 space-y-2.5 text-xs text-teal-100 font-sans">
@@ -362,19 +362,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-300 shrink-0" />
-                  <span>Multi-instructor team workspace & sharing</span>
+                  <span>Single $12.99 one-time payment (No subscription)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-300 shrink-0" />
-                  <span>Custom camp curriculum alignment templates</span>
+                  <span>Full access to Scratch & STEM lesson generators</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-300 shrink-0" />
-                  <span>Priority AI generation speed</span>
+                  <span>Summer curriculum & camp templates</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-300 shrink-0" />
-                  <span>Dedicated camp onboarding & setup support</span>
+                  <span>Instant activation & Stripe checkout</span>
                 </div>
               </div>
             </div>
@@ -390,7 +390,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               }}
               className="w-full py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 rounded-xl text-xs font-black transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>Choose Camp Director ($49.99/mo)</span>
+              <span>Get Summer STEM Special ($12.99 One-Time)</span>
               <ArrowRight className="w-4 h-4 text-slate-950" />
             </button>
           </div>
