@@ -796,16 +796,43 @@ app.post("/api/create-checkout-session", async (req, res) => {
     return res.status(400).json({ error: "Stripe is not configured on the server. Missing STRIPE_SECRET_KEY." });
   }
 
-  // Price ids come from configuration, never from the request body — a client
-  // supplied priceId lets anyone check out against a $0 price of their choosing.
-  const isYearly = plan === "yearly" || plan === "annual";
-  const priceId = isYearly ? process.env.STRIPE_PROD_KEY_2 : process.env.STRIPE_PROD_KEY_1;
+  // Prices are resolved server-side from the plan. Never from the request body:
+  // a client-supplied priceId lets anyone check out against a price of their
+  // choosing. An env override only wins if it actually looks like a price id —
+  // STRIPE_PROD_KEY_1 has been set to a prod_... product id before, and
+  // line_items[].price rejects those, so a bad value falls back rather than
+  // breaking live checkout.
+  const priceOverride = (envValue: string | undefined, fallback: string) => {
+    if (envValue && envValue.startsWith("price_")) return envValue;
+    if (envValue) {
+      console.warn(`Ignoring non-price id "${envValue}" (expected price_...); using configured default.`);
+    }
+    return fallback;
+  };
 
-  if (!priceId) {
-    const missing = isYearly ? "STRIPE_PROD_KEY_2" : "STRIPE_PROD_KEY_1";
-    console.error(`Checkout failed: ${missing} is not configured.`);
-    return res.status(500).json({ error: `Stripe price is not configured on the server (${missing}).` });
-  }
+  const PLAN_PRICES: Record<string, string> = {
+    // Educator Pro — $9.99
+    intro: priceOverride(process.env.STRIPE_PROD_KEY_1, "price_1U2OwBKExpIuZ5d5bmfH68py"),
+    // Camp Director Pro — $49.99
+    director: priceOverride(process.env.STRIPE_PROD_KEY_2, "price_1U2YXSKExpIuZ5d54aTeLf1u"),
+    // Summer Special — temporary offer
+    summer: priceOverride(process.env.STRIPE_PRICE_SUMMER, "price_1U2YXoKExpIuZ5d51zCqxK1f"),
+  };
+
+  const PRODUCT_IDS: Record<string, string> = {
+    intro: "prod_V2TrpJIKS5bF5O",
+    director: "prod_V2dpawIOFYkack",
+    summer: "prod_V2dpA5jan6W2L7",
+  };
+
+  const planKey =
+    plan === "summer" || plan === "summer_1299" || plan === "summer_special"
+      ? "summer"
+      : plan === "yearly" || plan === "annual" || plan === "director"
+      ? "director"
+      : "intro";
+
+  const priceId = PLAN_PRICES[planKey];
 
   const protocol = req.headers["x-forwarded-proto"] || "https";
   const host = req.headers.host || "localhost:3000";
@@ -827,9 +854,15 @@ app.post("/api/create-checkout-session", async (req, res) => {
       ? { discounts: [{ coupon: autoCoupon }] }
       : { allow_promotion_codes: true };
 
-    // Mode follows the price's own billing type. The previous retry-with-the-
-    // other-mode fallback masked real errors: a bad price id failed twice and
-    // surfaced whichever message came second.
+    // Ask Stripe what kind of price this is rather than guessing from the plan
+    // name. A price with `recurring` set must use subscription mode; a one-time
+    // price must use payment mode, and sending the wrong one is an API error.
+    // This replaces the old retry-with-the-other-mode fallback, which fired on
+    // any failure (including a bad price id) and reported whichever error came
+    // second.
+    const price = await stripe.prices.retrieve(priceId);
+    const mode = price.recurring ? "subscription" : "payment";
+
     const session = await stripe.checkout.sessions.create({
       line_items: [
         {
@@ -837,7 +870,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
           quantity: 1,
         },
       ],
-      mode: isYearly ? "subscription" : "payment",
+      mode,
       customer_email: email,
       client_reference_id: uid,
       success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
@@ -846,6 +879,7 @@ app.post("/api/create-checkout-session", async (req, res) => {
         uid,
         plan: plan || "intro",
         priceId,
+        productId: PRODUCT_IDS[planKey],
         coupon: autoCoupon || "promo_code_field",
       },
       ...discountOptions,
