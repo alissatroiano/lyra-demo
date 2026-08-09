@@ -412,6 +412,7 @@ export default function App() {
 
   // Prototype Carousel & Zoom Modal States for Google Search Grounded build examples
   const [prototypeCarouselIndex, setPrototypeCarouselIndex] = useState<number>(0);
+  const [labVisualMode, setLabVisualMode] = useState<"web" | "diagram">("web");
   const [zoomedPrototypeImage, setZoomedPrototypeImage] = useState<{ url: string; title: string; caption: string; searchUrl: string } | null>(null);
 
   // Helper to format supply selections into a clean comma-separated string
@@ -2847,77 +2848,292 @@ export default function App() {
                         )}
                       </div>
                     )}
-                    {/* Left Checklist panel */}
-                    <div className="md:col-span-5 bg-surface-0/40 dark:bg-slate-900/60 border border-black/[0.06] dark:border-slate-800 rounded-2xl p-5 space-y-4">
-                      <div className="border-b border-black/[0.05] dark:border-slate-800 pb-3 flex justify-between items-center">
-                        <div>
-                          <span className="text-[9px] font-mono font-bold text-secondary dark:text-teal-brand uppercase tracking-wider block">
-                            {isCodingLesson ? "SOFTWARE & PREREQUISITES" : "PRE-CLASS LOGISTICS"}
-                          </span>
-                          <h4 className="text-sm font-bold text-teal-dark dark:text-slate-100 font-sans flex items-center gap-1.5">
-                            {isCodingLesson ? <Laptop className="w-4 h-4 text-teal-brand" /> : <Activity className="w-4 h-4 text-teal-brand" />}
-                            <span>{isCodingLesson ? "Coding Software & Tools" : "Lab Bin Materials"}</span>
-                          </h4>
-                        </div>
-                        {isCodingLesson && (
-                          <span className="px-2 py-0.5 bg-amber-400/20 text-amber-600 dark:text-amber-300 border border-amber-400/30 text-[9px] font-mono font-extrabold rounded-lg uppercase">
-                            CODING CURRICULUM
-                          </span>
-                        )}
-                      </div>
+                    {/* Left Panel: Grounded Build Examples / SVG Diagrams & Logistics Checklist */}
+                    <div className="md:col-span-5 space-y-4">
+                      
+                      {/* Grounded Prototype Examples & Nana Banana Pro SVG Diagram Component (ON THE LEFT) */}
+                      {groundedPrototypeImages.length > 0 && (
+                        <div className="bg-surface-0/90 dark:bg-slate-900/90 border border-teal-brand/30 rounded-2xl p-4.5 space-y-3.5 shadow-xs relative overflow-hidden">
+                          <div className="space-y-2 border-b border-black/[0.06] dark:border-slate-800 pb-3">
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-lg bg-sky-500/20 text-sky-600 dark:text-sky-400 flex items-center justify-center">
+                                  <Search className="w-3.5 h-3.5" />
+                                </div>
+                                <h4 className="text-xs font-bold font-sans uppercase text-teal-dark dark:text-teal-brand flex items-center gap-1.5">
+                                  <span>Visual Diagrams & Grounded Images</span>
+                                </h4>
+                              </div>
+                              {identifiedSoftware && (
+                                <span className="text-[9px] font-mono px-2 py-0.5 bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 rounded-full font-extrabold flex items-center gap-1">
+                                  <Terminal className="w-2.5 h-2.5 text-amber-500" /> {identifiedSoftware}
+                                </span>
+                              )}
+                            </div>
 
-                      <div className="space-y-2">
-                        {lesson.handsOnActivity.materials.map((material, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => toggleMaterial(material)}
-                            className={`w-full flex items-start gap-3 p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                              checkedMaterials[material]
-                                ? "bg-teal-light/20 border-teal-brand/30 text-teal-dark dark:text-teal-brand font-medium"
-                                : "bg-white dark:bg-slate-800/80 border-black/[0.05] dark:border-slate-700 text-secondary dark:text-slate-300 hover:bg-surface-0 dark:hover:bg-slate-800"
-                            }`}
-                          >
-                            <div className={`w-4 h-4 rounded border shrink-0 mt-0.5 flex items-center justify-center transition-all ${
-                              checkedMaterials[material]
-                                ? "bg-teal-brand border-teal-brand text-slate-950"
-                                : "border-black/[0.15] dark:border-slate-600 bg-white dark:bg-slate-900"
-                            }`}>
-                              {checkedMaterials[material] && <Check className="w-3.5 h-3.5 stroke-[3.5]" />}
-                            </div>
-                            <span className="text-xs font-sans font-medium leading-tight">{material}</span>
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Computational Thinking Checklist for Coding Lessons */}
-                      {isCodingLesson && (
-                        <div className="p-3.5 bg-slate-900/90 text-slate-200 border border-teal-brand/30 rounded-xl space-y-2 text-[11px] font-sans">
-                          <span className="text-[9px] font-mono font-bold text-teal-brand uppercase tracking-wider block">COMPUTATIONAL CONCEPTS TESTED</span>
-                          <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono">
-                            <div className="flex items-center gap-1.5 text-amber-300">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                              <span>Event Triggers</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-sky-300">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                              <span>Loop Iterations</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-emerald-300">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                              <span>IF Logic</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-purple-300">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-                              <span>State Variables</span>
+                            {/* Mode Switcher: Web Images vs Nana Banana Pro Diagrams */}
+                            <div className="grid grid-cols-2 gap-1.5 bg-slate-950/80 p-1 rounded-xl border border-slate-800">
+                              <button
+                                type="button"
+                                onClick={() => setLabVisualMode("web")}
+                                className={`py-1.5 px-2 rounded-lg text-[10px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                  labVisualMode === "web"
+                                    ? "bg-teal-brand text-slate-950 shadow-xs font-extrabold"
+                                    : "text-slate-400 hover:text-white"
+                                }`}
+                              >
+                                <Search className="w-3 h-3" />
+                                <span>🌐 Web Images</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setLabVisualMode("diagram")}
+                                className={`py-1.5 px-2 rounded-lg text-[10px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+                                  labVisualMode === "diagram"
+                                    ? "bg-teal-brand text-slate-950 shadow-xs font-extrabold"
+                                    : "text-slate-400 hover:text-white"
+                                }`}
+                              >
+                                <Sparkles className="w-3 h-3 text-amber-400" />
+                                <span>🎨 Nana Banana Pro SVG</span>
+                              </button>
                             </div>
                           </div>
+
+                          {/* MODE 1: Web Images Fetched */}
+                          {labVisualMode === "web" && groundedPrototypeImages[prototypeCarouselIndex] && (
+                            <div className="space-y-3">
+                              {/* Main Image View */}
+                              <div className="relative group rounded-xl overflow-hidden border border-black/[0.1] dark:border-slate-700 bg-slate-950 aspect-video flex items-center justify-center shadow-md">
+                                <img
+                                  src={groundedPrototypeImages[prototypeCarouselIndex].url}
+                                  alt={groundedPrototypeImages[prototypeCarouselIndex].title}
+                                  referrerPolicy="no-referrer"
+                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                />
+                                <div className="absolute top-2 left-2 bg-slate-950/80 backdrop-blur-md px-2 py-0.5 rounded-lg border border-white/20 text-white text-[9px] font-mono font-bold flex items-center gap-1">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-sky-400 animate-pulse" />
+                                  <span>{groundedPrototypeImages[prototypeCarouselIndex].tag}</span>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => setZoomedPrototypeImage(groundedPrototypeImages[prototypeCarouselIndex])}
+                                  className="absolute bottom-2 right-2 bg-slate-950/80 hover:bg-slate-900 text-teal-brand px-2 py-1 rounded-lg border border-teal-brand/40 text-[9px] font-bold transition-all flex items-center gap-1 cursor-pointer opacity-90 hover:opacity-100"
+                                >
+                                  <Maximize2 className="w-3 h-3" />
+                                  <span>Zoom</span>
+                                </button>
+                              </div>
+
+                              {/* Title & Caption */}
+                              <div className="space-y-1">
+                                <h5 className="text-xs font-bold text-teal-dark dark:text-slate-100 font-sans leading-tight">
+                                  {groundedPrototypeImages[prototypeCarouselIndex].title}
+                                </h5>
+                                <p className="text-[10px] text-secondary dark:text-slate-300 font-sans leading-relaxed">
+                                  {groundedPrototypeImages[prototypeCarouselIndex].caption}
+                                </p>
+                              </div>
+
+                              {/* Google Search Link Button */}
+                              <button
+                                type="button"
+                                onClick={() => window.open(groundedPrototypeImages[prototypeCarouselIndex].searchUrl, "_blank")}
+                                className="w-full py-1.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-500/30 rounded-xl text-[10px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                              >
+                                <Search className="w-3 h-3" />
+                                <span>Google Images Search</span>
+                                <ExternalLink className="w-3 h-3 opacity-70" />
+                              </button>
+
+                              {/* Thumbnails Row */}
+                              <div className="flex items-center justify-between gap-1 pt-1 border-t border-black/[0.05] dark:border-slate-800">
+                                <div className="grid grid-cols-4 gap-1.5 w-full">
+                                  {groundedPrototypeImages.map((img, idx) => (
+                                    <button
+                                      key={idx}
+                                      type="button"
+                                      onClick={() => setPrototypeCarouselIndex(idx)}
+                                      className={`relative rounded-lg overflow-hidden border-2 aspect-video transition-all cursor-pointer ${
+                                        prototypeCarouselIndex === idx
+                                          ? "border-teal-brand ring-2 ring-teal-brand/30 scale-105"
+                                          : "border-slate-300 dark:border-slate-700 opacity-60 hover:opacity-100"
+                                      }`}
+                                    >
+                                      <img src={img.url} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* MODE 2: Nana Banana Pro SVG Diagram Generator */}
+                          {labVisualMode === "diagram" && (
+                            <div className="space-y-3">
+                              {/* Dynamic SVG Diagram for Software Block / STEM Lab */}
+                              <div className="w-full bg-slate-950 p-3 rounded-xl border border-teal-brand/30 space-y-2">
+                                <div className="flex items-center justify-between text-[10px] font-mono text-teal-brand">
+                                  <span className="font-bold flex items-center gap-1">
+                                    <Sparkles className="w-3 h-3 text-amber-400" />
+                                    {identifiedSoftware ? `${identifiedSoftware} SVG Block Diagram` : "STEM Lab Vector Diagram"}
+                                  </span>
+                                  <span className="px-1.5 py-0.5 bg-amber-400/20 text-amber-300 rounded font-bold text-[9px]">Nana Banana SVG</span>
+                                </div>
+
+                                {/* Custom SVG Diagram rendering based on identified software */}
+                                {(identifiedSoftware || "").toLowerCase().includes("scratch jr") || (identifiedSoftware || "").toLowerCase().includes("scratchjr") ? (
+                                  <svg viewBox="0 0 520 120" className="w-full h-auto drop-shadow-md">
+                                    <g transform="translate(10, 20)">
+                                      <rect x="0" y="0" width="110" height="70" rx="12" fill="#EAB308" stroke="#CA8A04" strokeWidth="2" />
+                                      <circle cx="35" cy="35" r="18" fill="#15803D" />
+                                      <polygon points="30,25 30,45 45,35" fill="#FFFFFF" />
+                                      <text x="62" y="40" fill="#FFFFFF" fontSize="11" fontWeight="bold">START</text>
+                                    </g>
+                                    <g transform="translate(130, 20)">
+                                      <rect x="0" y="0" width="110" height="70" rx="12" fill="#0284C7" stroke="#0369A1" strokeWidth="2" />
+                                      <path d="M 25 35 L 55 35 M 45 25 L 55 35 L 45 45" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                                      <rect x="65" y="42" width="22" height="20" rx="4" fill="#FFFFFF" />
+                                      <text x="72" y="56" fill="#0369A1" fontSize="12" fontWeight="bold" fontFamily="monospace">4</text>
+                                    </g>
+                                    <g transform="translate(250, 20)">
+                                      <rect x="0" y="0" width="110" height="70" rx="12" fill="#22C55E" stroke="#15803D" strokeWidth="2" />
+                                      <path d="M 25 45 Q 40 15 55 45" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" fill="none" />
+                                      <polyline points="50,38 55,45 60,38" stroke="#FFFFFF" strokeWidth="3" fill="none" />
+                                      <rect x="65" y="42" width="22" height="20" rx="4" fill="#FFFFFF" />
+                                      <text x="72" y="56" fill="#15803D" fontSize="12" fontWeight="bold" fontFamily="monospace">2</text>
+                                    </g>
+                                    <g transform="translate(370, 20)">
+                                      <rect x="0" y="0" width="130" height="70" rx="12" fill="#A855F7" stroke="#7E22CE" strokeWidth="2" />
+                                      <path d="M 30 35 A 15 15 0 1 1 50 20" stroke="#FFFFFF" strokeWidth="4" fill="none" strokeLinecap="round" />
+                                      <polygon points="52,12 52,28 64,20" fill="#FFFFFF" />
+                                      <text x="65" y="40" fill="#FFFFFF" fontSize="10" fontWeight="bold">REPEAT</text>
+                                    </g>
+                                  </svg>
+                                ) : isCodingLesson ? (
+                                  <svg viewBox="0 0 480 160" className="w-full h-auto drop-shadow-md">
+                                    <path d="M 10 25 Q 50 10 90 25 L 260 25 C 270 25 275 30 275 35 L 275 55 C 275 60 270 65 260 65 L 40 65 C 35 65 30 70 30 75 L 10 75 Z" fill="#FFBF00" stroke="#D9A000" strokeWidth="1.5" />
+                                    <text x="30" y="48" fill="#FFFFFF" fontSize="12" fontWeight="bold">when 🏁 clicked</text>
+                                    
+                                    <g transform="translate(10, 65)">
+                                      <rect x="0" y="0" width="280" height="38" rx="6" fill="#4C97FF" stroke="#3373CC" strokeWidth="1.5" />
+                                      <text x="15" y="24" fill="#FFFFFF" fontSize="12" fontWeight="bold">move</text>
+                                      <rect x="60" y="9" width="30" height="20" rx="10" fill="#FFFFFF" />
+                                      <text x="68" y="23" fill="#3373CC" fontSize="11" fontWeight="bold" fontFamily="monospace">10</text>
+                                      <text x="100" y="24" fill="#FFFFFF" fontSize="12" fontWeight="bold">steps</text>
+                                    </g>
+
+                                    <g transform="translate(10, 108)">
+                                      <rect x="0" y="0" width="280" height="38" rx="6" fill="#9966FF" stroke="#7742E6" strokeWidth="1.5" />
+                                      <text x="15" y="24" fill="#FFFFFF" fontSize="12" fontWeight="bold">play sound</text>
+                                      <rect x="95" y="9" width="80" height="20" rx="10" fill="#FFFFFF" />
+                                      <text x="105" y="23" fill="#7742E6" fontSize="11" fontWeight="bold">"Pop" 🔊</text>
+                                    </g>
+                                  </svg>
+                                ) : (
+                                  <svg viewBox="0 0 480 150" className="w-full h-auto drop-shadow-md">
+                                    <rect x="40" y="120" width="400" height="15" rx="4" fill="#334155" stroke="#475569" strokeWidth="2" />
+                                    <polygon points="180,120 210,75 240,120" fill="#0D9488" stroke="#14B8A6" strokeWidth="2" />
+                                    <rect x="80" y="90" width="300" height="10" rx="3" fill="#F59E0B" stroke="#D97706" strokeWidth="2" transform="rotate(-10, 210, 95)" />
+                                    <rect x="75" y="55" width="30" height="30" rx="6" fill="#EF4444" stroke="#B91C1C" strokeWidth="2" />
+                                    <text x="81" y="74" fill="#FFFFFF" fontSize="9" fontWeight="bold">LOAD</text>
+                                    <path d="M 370 30 L 370 70" stroke="#38BDF8" strokeWidth="3" strokeDasharray="4 2" />
+                                    <polygon points="365,70 370,80 375,70" fill="#38BDF8" />
+                                    <text x="330" y="22" fill="#38BDF8" fontSize="10" fontWeight="bold">FORCE</text>
+                                  </svg>
+                                )}
+                              </div>
+
+                              <p className="text-[10px] text-slate-300 font-sans leading-relaxed">
+                                <strong>Nana Banana Pro Diagram:</strong> Clean, vector-scaled visual schematic customized for {lesson.handsOnActivity.title || lesson.lessonTitle}.
+                              </p>
+
+                              <button
+                                type="button"
+                                onClick={() => setActiveTab("nana-banana")}
+                                className="w-full py-2 bg-gradient-to-r from-amber-500 to-teal-500 hover:from-amber-600 hover:to-teal-600 text-slate-950 font-extrabold rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
+                              >
+                                <Sparkles className="w-3.5 h-3.5 text-slate-950" />
+                                <span>🎨 Generate AI Diagram with Nana Banana Pro</span>
+                              </button>
+                            </div>
+                          )}
                         </div>
                       )}
 
-                      <div className="p-3 bg-teal-light/20 border border-teal-brand/10 rounded-xl text-[10px] text-teal-dark dark:text-slate-300 leading-relaxed font-sans flex gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-teal-brand shrink-0 mt-0.5" />
-                        <div>
-                          <strong>{isCodingLesson ? "Setup IDE & Devices" : "Check bins off"}</strong> to streamline pre-class preparation for {selectedGrade} grade.
+                      {/* Left Logistics & Checklist panel */}
+                      <div className="bg-surface-0/40 dark:bg-slate-900/60 border border-black/[0.06] dark:border-slate-800 rounded-2xl p-5 space-y-4">
+                        <div className="border-b border-black/[0.05] dark:border-slate-800 pb-3 flex justify-between items-center">
+                          <div>
+                            <span className="text-[9px] font-mono font-bold text-secondary dark:text-teal-brand uppercase tracking-wider block">
+                              {isCodingLesson ? "SOFTWARE & PREREQUISITES" : "PRE-CLASS LOGISTICS"}
+                            </span>
+                            <h4 className="text-sm font-bold text-teal-dark dark:text-slate-100 font-sans flex items-center gap-1.5">
+                              {isCodingLesson ? <Laptop className="w-4 h-4 text-teal-brand" /> : <Activity className="w-4 h-4 text-teal-brand" />}
+                              <span>{isCodingLesson ? "Coding Software & Tools" : "Lab Bin Materials"}</span>
+                            </h4>
+                          </div>
+                          {isCodingLesson && (
+                            <span className="px-2 py-0.5 bg-amber-400/20 text-amber-600 dark:text-amber-300 border border-amber-400/30 text-[9px] font-mono font-extrabold rounded-lg uppercase">
+                              CODING CURRICULUM
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          {lesson.handsOnActivity.materials.map((material, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => toggleMaterial(material)}
+                              className={`w-full flex items-start gap-3 p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                                checkedMaterials[material]
+                                  ? "bg-teal-light/20 border-teal-brand/30 text-teal-dark dark:text-teal-brand font-medium"
+                                  : "bg-white dark:bg-slate-800/80 border-black/[0.05] dark:border-slate-700 text-secondary dark:text-slate-300 hover:bg-surface-0 dark:hover:bg-slate-800"
+                              }`}
+                            >
+                              <div className={`w-4 h-4 rounded border shrink-0 mt-0.5 flex items-center justify-center transition-all ${
+                                checkedMaterials[material]
+                                  ? "bg-teal-brand border-teal-brand text-slate-950"
+                                  : "border-black/[0.15] dark:border-slate-600 bg-white dark:bg-slate-900"
+                              }`}>
+                                {checkedMaterials[material] && <Check className="w-3.5 h-3.5 stroke-[3.5]" />}
+                              </div>
+                              <span className="text-xs font-sans font-medium leading-tight">{material}</span>
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Computational Thinking Checklist for Coding Lessons */}
+                        {isCodingLesson && (
+                          <div className="p-3.5 bg-slate-900/90 text-slate-200 border border-teal-brand/30 rounded-xl space-y-2 text-[11px] font-sans">
+                            <span className="text-[9px] font-mono font-bold text-teal-brand uppercase tracking-wider block">COMPUTATIONAL CONCEPTS TESTED</span>
+                            <div className="grid grid-cols-2 gap-1.5 text-[10px] font-mono">
+                              <div className="flex items-center gap-1.5 text-amber-300">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                                <span>Event Triggers</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-sky-300">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                                <span>Loop Iterations</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-emerald-300">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                <span>IF Logic</span>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-purple-300">
+                                <CheckCircle2 className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                                <span>State Variables</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="p-3 bg-teal-light/20 border border-teal-brand/10 rounded-xl text-[10px] text-teal-dark dark:text-slate-300 leading-relaxed font-sans flex gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-teal-brand shrink-0 mt-0.5" />
+                          <div>
+                            <strong>{isCodingLesson ? "Setup IDE & Devices" : "Check bins off"}</strong> to streamline pre-class preparation for {selectedGrade} grade.
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -3045,135 +3261,6 @@ export default function App() {
                           {lesson.handsOnActivity.scientificPrinciple}
                         </p>
                       </div>
-
-                      {/* Grounded Prototype Build Examples Carousel */}
-                      {groundedPrototypeImages.length > 0 && (
-                        <div className="bg-surface-0/90 dark:bg-slate-900/90 border border-teal-brand/30 rounded-2xl p-5 space-y-4 shadow-xs relative overflow-hidden">
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-black/[0.06] dark:border-slate-800 pb-3">
-                            <div className="space-y-0.5">
-                              <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-lg bg-sky-500/20 text-sky-600 dark:text-sky-400 flex items-center justify-center">
-                                  <Search className="w-3.5 h-3.5" />
-                                </div>
-                                <h4 className="text-xs font-bold font-sans uppercase text-teal-dark dark:text-teal-brand flex flex-wrap items-center gap-2">
-                                  <span>Grounded Build Examples Carousel</span>
-                                  {identifiedSoftware && (
-                                    <span className="text-[9px] font-mono px-2.5 py-0.5 bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 rounded-full font-extrabold flex items-center gap-1 shadow-2xs">
-                                      <Terminal className="w-3 h-3 text-amber-500" /> Software Identified: {identifiedSoftware}
-                                    </span>
-                                  )}
-                                  <span className="text-[9px] font-mono px-2 py-0.5 bg-sky-500/10 text-sky-600 dark:text-sky-300 border border-sky-500/30 rounded-full font-bold flex items-center gap-1">
-                                    <Check className="w-3 h-3" /> Search Grounded
-                                  </span>
-                                </h4>
-                              </div>
-                              <p className="text-[11px] text-secondary dark:text-slate-400 font-sans">
-                                {identifiedSoftware ? (
-                                  <span>Software-tailored build models & examples for <strong className="text-teal-dark dark:text-teal-brand font-mono">{identifiedSoftware}</strong> in "{lesson.handsOnActivity.title || lesson.lessonTitle}"</span>
-                                ) : (
-                                  <span>Real-world classroom build models for "{lesson.handsOnActivity.title || lesson.lessonTitle}"</span>
-                                )}
-                              </p>
-                            </div>
-
-                            {/* Carousel Navigation Buttons */}
-                            <div className="flex items-center gap-2 shrink-0">
-                              <span className="text-[10px] font-mono font-bold text-slate-400">
-                                {prototypeCarouselIndex + 1} of {groundedPrototypeImages.length}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => setPrototypeCarouselIndex(prev => (prev === 0 ? groundedPrototypeImages.length - 1 : prev - 1))}
-                                className="p-1.5 bg-surface-1 dark:bg-slate-800 hover:bg-teal-brand/20 text-teal-dark dark:text-teal-brand border border-black/[0.08] dark:border-slate-700 rounded-xl transition-all cursor-pointer"
-                                title="Previous Example"
-                              >
-                                <ChevronLeft className="w-4 h-4" />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setPrototypeCarouselIndex(prev => (prev === groundedPrototypeImages.length - 1 ? 0 : prev + 1))}
-                                className="p-1.5 bg-surface-1 dark:bg-slate-800 hover:bg-teal-brand/20 text-teal-dark dark:text-teal-brand border border-black/[0.08] dark:border-slate-700 rounded-xl transition-all cursor-pointer"
-                                title="Next Example"
-                              >
-                                <ChevronRight className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Active Carousel Card Display */}
-                          {groundedPrototypeImages[prototypeCarouselIndex] && (
-                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
-                              {/* Image Box */}
-                              <div className="sm:col-span-7 relative group rounded-xl overflow-hidden border border-black/[0.1] dark:border-slate-700 bg-slate-950 aspect-video flex items-center justify-center shadow-md">
-                                <img
-                                  src={groundedPrototypeImages[prototypeCarouselIndex].url}
-                                  alt={groundedPrototypeImages[prototypeCarouselIndex].title}
-                                  referrerPolicy="no-referrer"
-                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                />
-                                <div className="absolute top-2 left-2 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/20 text-white text-[10px] font-mono font-bold flex items-center gap-1.5">
-                                  <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
-                                  <span>{groundedPrototypeImages[prototypeCarouselIndex].tag}</span>
-                                </div>
-
-                                <button
-                                  type="button"
-                                  onClick={() => setZoomedPrototypeImage(groundedPrototypeImages[prototypeCarouselIndex])}
-                                  className="absolute bottom-2 right-2 bg-slate-950/80 hover:bg-slate-900 text-teal-brand px-2.5 py-1 rounded-lg border border-teal-brand/40 text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer opacity-90 hover:opacity-100"
-                                >
-                                  <Maximize2 className="w-3 h-3" />
-                                  <span>Zoom</span>
-                                </button>
-                              </div>
-
-                              {/* Details Column */}
-                              <div className="sm:col-span-5 space-y-2.5 flex flex-col justify-between">
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-1.5">
-                                    <Search className="w-3.5 h-3.5 text-sky-500 shrink-0" />
-                                    <h5 className="text-xs font-bold text-teal-dark dark:text-slate-100 font-sans leading-snug">
-                                      {groundedPrototypeImages[prototypeCarouselIndex].title}
-                                    </h5>
-                                  </div>
-                                  <p className="text-[11px] text-secondary dark:text-slate-300 font-sans leading-relaxed">
-                                    {groundedPrototypeImages[prototypeCarouselIndex].caption}
-                                  </p>
-                                </div>
-
-                                <div className="pt-2 border-t border-black/[0.05] dark:border-slate-800 space-y-2">
-                                  <button
-                                    type="button"
-                                    onClick={() => window.open(groundedPrototypeImages[prototypeCarouselIndex].searchUrl, "_blank")}
-                                    className="w-full py-1.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-500/30 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-3xs"
-                                  >
-                                    <Search className="w-3 h-3" />
-                                    <span>Google Images Search</span>
-                                    <ExternalLink className="w-3 h-3 opacity-70" />
-                                  </button>
-
-                                  {/* Thumbnail Row */}
-                                  <div className="grid grid-cols-4 gap-1.5">
-                                    {groundedPrototypeImages.map((img, idx) => (
-                                      <button
-                                        key={idx}
-                                        type="button"
-                                        onClick={() => setPrototypeCarouselIndex(idx)}
-                                        className={`relative rounded-lg overflow-hidden border-2 aspect-video transition-all cursor-pointer ${
-                                          prototypeCarouselIndex === idx
-                                            ? "border-teal-brand ring-2 ring-teal-brand/30 scale-105"
-                                            : "border-slate-300 dark:border-slate-700 opacity-60 hover:opacity-100"
-                                        }`}
-                                      >
-                                        <img src={img.url} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
-                                      </button>
-                                    ))}
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
 
                       {/* Technical Feasibility Audit & Grounded Alternatives Section */}
                       {lesson.feasibilityAudit && (
