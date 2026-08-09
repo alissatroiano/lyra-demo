@@ -158,5 +158,31 @@ export const INITIAL_PROCESSED_LESSON: ProcessedLesson = {
       suggestedSearchQuery: "PhET Balloon Rocket Simulation physics html5",
       whyItHelps: "A high-quality interactive virtual simulation that allows kids to change rocket mass, thrust, and angle on a digital smart-board if physical materials are limited."
     }
-  ]
+  ],
+  feasibilityAudit: {
+    status: "Verified & Search Grounded Solution",
+    originalSolutionEvaluation: "The balloon rocket track setup using 15-ft fishing line and straw guide is a classic physics lab. The friction between plastic straw and nylon line is low, ensuring effective propulsion via momentum conservation.",
+    potentialFailurePoints: [
+      "Rough twine or yarn replacing smooth fishing line increases friction drastically, preventing the balloon from sliding.",
+      "Taping balloon crookedly causes off-axis thrust and twisting along the string line.",
+      "Over-inflating cheap latex balloons can cause premature popping during inflation."
+    ],
+    recommendedAlternatives: [
+      {
+        title: "2-Straw Dual Rail System",
+        description: "Use two parallel strings taped 2 inches apart or a smooth Monofilament line with 2 guide straws for high-speed stability.",
+        whyItWorksBetter: "Eliminates spinning and twisting, allowing 100% of thrust vector to push straight along the track."
+      },
+      {
+        title: "Paper Cone Nose Assembly",
+        description: "Attach a lightweight cardstock nose cone to the front of the balloon.",
+        whyItWorksBetter: "Reduces frontal air resistance (drag) by up to 25% and improves flight consistency."
+      }
+    ],
+    safetyAndTroubleshootingTips: [
+      "Ensure fishing line is pulled extremely taut between anchor points.",
+      "Use painter's tape or Scotch tape—avoid heavy duct tape which adds unnecessary mass.",
+      "For younger K-2 students, use a binder clip or clothespin to seal the nozzle instead of requiring kids to pinch with fingers."
+    ]
+  }
 };

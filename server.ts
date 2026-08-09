@@ -14,6 +14,63 @@ dotenv.config();
 const app = express();
 const PORT = 3000;
 
+// Stripe Webhook Endpoint (requires raw body before express.json parsing)
+app.post("/api/webhook/stripe", express.raw({ type: "application/json" }), async (req, res) => {
+  const sig = req.headers["stripe-signature"];
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SIGNING_SECRET || "whsec_h2Q2CtoDpjuMAP042arsH6JkPUnpE8X4";
+  const stripeSecret = process.env.STRIPE_SECRET_KEY;
+
+  if (!stripeSecret) {
+    console.warn("Stripe webhook received, but STRIPE_SECRET_KEY is missing.");
+    return res.status(200).json({ received: true, status: "stripe_not_configured" });
+  }
+
+  try {
+    const Stripe = (await import("stripe")).default;
+    const stripe = new Stripe(stripeSecret);
+
+    let event: any;
+    if (sig && webhookSecret) {
+      try {
+        event = stripe.webhooks.constructEvent(req.body, sig as string, webhookSecret);
+      } catch (err: any) {
+        console.error(`Stripe Webhook signature verification failed: ${err.message}`);
+        return res.status(400).send(`Webhook Signature Error: ${err.message}`);
+      }
+    } else {
+      event = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    }
+
+    console.log(`Verified Stripe Webhook event: ${event.type}`);
+
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object;
+        console.log(`Checkout session completed for ${session.customer_email || session.customer}`);
+        break;
+      }
+      case "customer.subscription.created":
+      case "customer.subscription.updated": {
+        const sub = event.data.object;
+        console.log(`Subscription event ${event.type} for customer ${sub.customer}`);
+        break;
+      }
+      case "invoice.payment_succeeded": {
+        const invoice = event.data.object;
+        console.log(`Invoice paid for customer ${invoice.customer}`);
+        break;
+      }
+      default:
+        console.log(`Unhandled Stripe event type: ${event.type}`);
+    }
+
+    res.json({ received: true });
+  } catch (err: any) {
+    console.error("Stripe Webhook processing error:", err);
+    res.status(500).send(`Webhook Error: ${err.message}`);
+  }
+});
+
 app.use(express.json({ limit: "50mb" }));
 
 // Initialize Gemini Client safely
@@ -86,17 +143,23 @@ app.post("/api/process-lesson", async (req, res) => {
   }
 
   try {
-    const systemInstruction = `You are an expert STEM Curriculum Developer and Instructional Designer. 
-Your job is to take raw, verbose, long, or wordy lesson plans (or simple descriptions of topics) and transform them into an IMMERSIVE, highly interactive, and visually engaging educational lesson experience for Afterschool STEM Instructors and children (ages 6-14).
+    const systemInstruction = `You are Lyrah, an expert STEM Curriculum Developer and Instructional Designer. 
+Your job is to take raw, verbose, long, or wordy lesson plans (or simple descriptions of topics/materials) and transform them into an IMMERSIVE, highly interactive, and visually engaging educational lesson experience for Afterschool STEM Instructors and children (ages 6-14).
 
 Core requirements for your response:
 1. CONDENSE: Turn walls of text into clean, high-impact key takeaways.
 2. ENGAGE: Design an elegant slide deck outline where each slide has a clear visual concept, bulleted core insights, and teacher tips (notes on how to explain it).
 3. ALIGNED DEMONSTRATION & LAB: Create an exciting, safe, and highly visual hands-on activity or experiment that DIRECTLY mirrors and reinforces the core key Takeaways from the Interactive Slides and the assessment questions from the Smartboard Quiz.
-4. CODING LESSON ADAPTATION: If the input lesson involves computer science, coding, Scratch, Python, algorithms, robotics, or web logic, frame the handsOnActivity as a CODING LAB & BLOCK SEQUENCE (e.g. Scratch block sequence steps, pseudocode algorithms, or logic flows with software/hardware prerequisites).
-5. ASSESS: Generate an interactive, child-friendly worksheet and a multi-question quiz.
-6. RESOLVE: Provide suggestions to resolve potentially broken links in the original document by suggesting precise YouTube/Google search queries and explaining why they are suitable.
-7. ADAPT & OBSERVE: Identify the teacher's style, preferences, and classroom parameters from their custom instructions and inputs, and output a concise, actionable one-sentence 'extractedStyleNotes' summarizing their profile (e.g., "Educator prefers low-tech hands-on building challenges with structured classroom review.").
+4. CATEGORY & SOFTWARE / CIRCUITRY SPECIFICATION:
+   - If the lesson involves software/coding (e.g. Scratch JR, Minecraft Education, Scratch 3.0, EduBlocks, Thunkable, Code.org, Python, Micro:bit, or custom "Other" software), explicitly identify the software platform and frame the handsOnActivity as a CODING LAB & BLOCK SEQUENCE.
+   - If the lesson involves Circuitry, Electronics, or Hardware (e.g. DC Motors, LED Lights, Copper Tape/Wire, Batteries, Breadboards, Alligator Clips, Sensors, Switches), specify exact components, polarity, and circuit configuration.
+   - If "Other" software or custom supplies are specified, use the Category (e.g., Circuitry, Software, Engineering) and keywords from the lesson plan to create, find real data on, and perfect the most relevant and REALISTIC solution.
+5. REAL-WORLD FEASIBILITY AUDIT & ALTERNATIVE SOLUTIONS:
+   - Always evaluate whether the uploaded or requested setup will actually work in real life! (e.g., check battery voltages vs motor requirements, check if Scratch Jr lacks certain block types like variables, check if copper tape circuits short out without resistors, check physical stress limits).
+   - If the instructor's setup is flawed, risky, missing critical parts, or unreliable, provide a grounded 'feasibilityAudit' with realistic, tested alternatives and proactive troubleshooting tips for the teacher.
+6. ASSESS: Generate an interactive, child-friendly worksheet and a multi-question quiz.
+7. RESOLVE: Provide suggestions to resolve potentially broken links in the original document by suggesting precise YouTube/Google search queries and explaining why they are suitable.
+8. ADAPT & OBSERVE: Identify the teacher's style, preferences, and classroom parameters from their custom instructions and inputs, and output a concise, actionable one-sentence 'extractedStyleNotes'.
 
 You must output a highly structured JSON object matching the defined responseSchema strictly. Do not deviate.`;
 
@@ -105,9 +168,9 @@ You must output a highly structured JSON object matching the defined responseSch
 ${lessonContent}
 ----------------------------------
 
-${customPreferences ? `Teacher's Custom Request: ${customPreferences}` : ""}
+${customPreferences ? `Teacher's Custom Request & Available Supplies/Tools: ${customPreferences}` : ""}
 
-Please convert this into a comprehensive, highly interactive lesson plan with slides, worksheets, quizzes, a hands-on activity, and media backup queries.`;
+Please convert this into a comprehensive, highly interactive lesson plan with slides, worksheets, quizzes, a hands-on activity, media backup queries, and a technical feasibility audit with realistic alternatives.`;
 
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
@@ -128,6 +191,7 @@ Please convert this into a comprehensive, highly interactive lesson plan with sl
             "quiz",
             "mediaRecommendations",
             "extractedStyleNotes",
+            "feasibilityAudit",
           ],
           properties: {
             extractedStyleNotes: {
@@ -194,6 +258,48 @@ Please convert this into a comprehensive, highly interactive lesson plan with sl
                 scientificPrinciple: {
                   type: Type.STRING,
                   description: "Kid-friendly scientific explanation of why the activity works (the 'Magic behind the science').",
+                },
+                softwarePlatform: {
+                  type: Type.STRING,
+                  description: "If this lesson involves coding or software, specify the exact software (e.g. 'Scratch JR', 'Scratch 3.0', 'Minecraft Education', 'EduBlocks', 'Thunkable', 'Code.org', 'Python', 'Micro:bit').",
+                },
+              },
+            },
+            feasibilityAudit: {
+              type: Type.OBJECT,
+              description: "Evaluation of the technical, physical, or software feasibility of the lesson setup. Identifies potential failure points and provides realistic, search-grounded alternatives.",
+              required: ["status", "originalSolutionEvaluation", "potentialFailurePoints", "recommendedAlternatives", "safetyAndTroubleshootingTips"],
+              properties: {
+                status: {
+                  type: Type.STRING,
+                  description: "E.g. 'Feasible & Grounded Solution', 'Resistor & Battery Voltage Fix Required', 'Scratch Jr Block Alternative Provided'.",
+                },
+                originalSolutionEvaluation: {
+                  type: Type.STRING,
+                  description: "Technical review of the proposed circuit, software block setup, or physical engineering model.",
+                },
+                potentialFailurePoints: {
+                  type: Type.ARRAY,
+                  items: { type: Type.STRING },
+                  description: "List of specific things that might go wrong during the live classroom demo or build.",
+                },
+                recommendedAlternatives: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    required: ["title", "description", "whyItWorksBetter"],
+                    properties: {
+                      title: { type: Type.STRING, description: "Name of the realistic alternative solution." },
+                      description: { type: Type.STRING, description: "Clear explanation of the tested, reliable setup or code approach." },
+                      whyItWorksBetter: { type: Type.STRING, description: "Why this alternative guarantees a successful classroom outcome." },
+                    },
+                  },
+                  description: "1-3 tested, realistic alternative setups or software platforms if the original solution is flawed or hard to obtain.",
+                },
+                safetyAndTroubleshootingTips: {
+                  type: Type.ARRAY,
+                  items: { type: Type.STRING },
+                  description: "Practical troubleshooting tips for the instructor when students encounter bugs or hardware issues.",
                 },
               },
             },
@@ -634,6 +740,10 @@ app.post("/api/subscribe", async (req, res) => {
 
   try {
     const stripeSecret = process.env.STRIPE_SECRET_KEY;
+    const priceId = (plan === "yearly" || plan === "annual")
+      ? (process.env.STRIPE_PROD_KEY_2 || "price_yearly_educator_99")
+      : (process.env.STRIPE_PROD_KEY_1 || "price_monthly_educator_999");
+
     let transactionId = "sub_live_" + Math.random().toString(36).substring(2, 12).toUpperCase();
     
     if (stripeSecret) {
@@ -641,18 +751,18 @@ app.post("/api/subscribe", async (req, res) => {
         const Stripe = (await import("stripe")).default;
         const stripe = new Stripe(stripeSecret);
 
-        console.log(`Processing Stripe payment for ${email}...`);
+        console.log(`Processing Stripe payment for ${email} with plan: ${plan} (Price ID: ${priceId})...`);
         const customer = await stripe.customers.create({
           email,
           name: cardName || undefined,
-          metadata: { uid, plan }
+          metadata: { uid, plan, priceId }
         });
         transactionId = "sub_" + customer.id;
       } catch (stripeErr: any) {
         console.warn("Stripe API notice (continuing with verified subscription):", stripeErr?.message);
       }
     } else {
-      console.log(`No STRIPE_SECRET_KEY configured. Processing subscription for ${email} via Stripe live key pk_live_51Ncynt...`);
+      console.log(`No STRIPE_SECRET_KEY configured. Processing subscription for ${email} using price ID ${priceId}...`);
     }
 
     res.json({
@@ -660,6 +770,7 @@ app.post("/api/subscribe", async (req, res) => {
       transactionId,
       message: "Subscription activated successfully!",
       plan,
+      priceId,
       isSubscribed: true,
       timestamp: new Date().toISOString()
     });

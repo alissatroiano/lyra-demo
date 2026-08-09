@@ -39,6 +39,20 @@ export interface MediaRecommendation {
   whyItHelps: string;
 }
 
+export interface FeasibilityAlternative {
+  title: string;
+  description: string;
+  whyItWorksBetter: string;
+}
+
+export interface FeasibilityAudit {
+  status: string;
+  originalSolutionEvaluation: string;
+  potentialFailurePoints: string[];
+  recommendedAlternatives: FeasibilityAlternative[];
+  safetyAndTroubleshootingTips: string[];
+}
+
 export interface SavedVisual {
   id: string;
   url: string;
@@ -60,6 +74,7 @@ export interface ProcessedLesson {
   mediaRecommendations: MediaRecommendation[];
   extractedStyleNotes?: string;
   generatedVisuals?: SavedVisual[];
+  feasibilityAudit?: FeasibilityAudit;
 }
 
 export interface PreloadedLesson {

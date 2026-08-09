@@ -154,10 +154,13 @@ export default function SubscriptionModal({
                     }`}
                   >
                     <div className="flex justify-between items-start">
-                      <span className="text-xs font-bold text-slate-900 dark:text-slate-100">Monthly Plan</span>
+                      <span className="text-xs font-bold text-slate-900 dark:text-slate-100">Educator Pro</span>
                       <input type="radio" checked={selectedPlan === "monthly"} onChange={() => {}} className="accent-teal-700" />
                     </div>
-                    <p className="text-xl font-serif font-bold text-teal-900 dark:text-teal-brand mt-2">$19.99<span className="text-xs font-sans font-normal text-slate-600 dark:text-slate-400">/mo</span></p>
+                    <div className="mt-2 flex items-baseline gap-1.5">
+                      <span className="text-xs font-serif line-through text-slate-400 dark:text-slate-500 font-normal">$12.99</span>
+                      <p className="text-xl font-serif font-extrabold text-teal-900 dark:text-teal-brand">$9.99<span className="text-xs font-sans font-normal text-slate-600 dark:text-slate-400">/mo</span></p>
+                    </div>
                     <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">Flexible, cancel anytime</p>
                   </button>
 
@@ -171,14 +174,14 @@ export default function SubscriptionModal({
                     }`}
                   >
                     <span className="absolute -top-2.5 right-3 bg-amber-500 text-slate-950 text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs">
-                      Save 30%
+                      Best Value
                     </span>
                     <div className="flex justify-between items-start">
-                      <span className="text-xs font-bold text-slate-900 dark:text-slate-100">Annual Plan</span>
+                      <span className="text-xs font-bold text-slate-900 dark:text-slate-100">Educator Yearly</span>
                       <input type="radio" checked={selectedPlan === "yearly"} onChange={() => {}} className="accent-teal-700" />
                     </div>
-                    <p className="text-xl font-serif font-bold text-teal-900 dark:text-teal-brand mt-2">$159<span className="text-xs font-sans font-normal text-slate-600 dark:text-slate-400">/yr</span></p>
-                    <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">Billed annually ($13.25/mo)</p>
+                    <p className="text-xl font-serif font-bold text-teal-900 dark:text-teal-brand mt-2">$99.00<span className="text-xs font-sans font-normal text-slate-600 dark:text-slate-400">/yr</span></p>
+                    <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">Billed annually ($8.25/mo)</p>
                   </button>
                 </div>
               </div>
@@ -259,7 +262,7 @@ export default function SubscriptionModal({
                 className="w-full py-3.5 bg-gradient-to-r from-teal-dark to-teal-800 hover:from-teal-800 hover:to-teal-dark text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <ShieldCheck className="w-4 h-4 text-teal-brand" />
-                <span>{loading ? "Processing Stripe Payment..." : `Pay ${selectedPlan === "yearly" ? "$159" : "$19.99"} & Subscribe`}</span>
+                <span>{loading ? "Processing Stripe Payment..." : `Pay ${selectedPlan === "yearly" ? "$99.00" : "$9.99"} & Subscribe`}</span>
               </button>
 
               <div className="text-center text-[10px] text-slate-500 dark:text-slate-400 flex items-center justify-center gap-2">
