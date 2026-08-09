@@ -21,8 +21,10 @@ import {
   ExternalLink,
   Printer,
   ChevronRight,
+  ChevronLeft,
   ChevronDown,
   ChevronUp,
+  Maximize2,
   RefreshCw,
   Sliders,
   Check,
@@ -279,7 +281,60 @@ export default function App() {
   const [customGradeInput, setCustomGradeInput] = useState<string>("");
   const [selectedSize, setSelectedSize] = useState<string>("15-20 kids");
   const [selectedDuration, setSelectedDuration] = useState<string>("60 mins");
-  const [selectedTech, setSelectedTech] = useState<string>("Smart Board");
+  const [selectedSupplies, setSelectedSupplies] = useState<string[]>(["Smart Board"]);
+  const [customSuppliesInput, setCustomSuppliesInput] = useState<string>("");
+
+  // Helper to toggle supply selection
+  const toggleSupply = (val: string) => {
+    setSelectedSupplies(prev => {
+      if (prev.includes(val)) {
+        const next = prev.filter(item => item !== val);
+        return next;
+      } else {
+        return [...prev, val];
+      }
+    });
+  };
+
+  // Curriculum Text Material fold state (Folded by default)
+  const [isTextMaterialOpen, setIsTextMaterialOpen] = useState<boolean>(false);
+  const textMaterialTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  // Briefly opens the text material dropdown upon upload/preset load to confirm success, then auto-closes
+  const triggerTempTextMaterialOpen = React.useCallback(() => {
+    setIsTextMaterialOpen(true);
+    if (textMaterialTimerRef.current) clearTimeout(textMaterialTimerRef.current);
+    textMaterialTimerRef.current = setTimeout(() => {
+      setIsTextMaterialOpen(false);
+    }, 2200);
+  }, []);
+
+  // Technology sub-category focus selection ("Hardware", "Software", "Circuitry")
+  const [selectedTechSubTypes, setSelectedTechSubTypes] = useState<string[]>(["Hardware"]);
+
+  const toggleTechSubType = (val: string) => {
+    setSelectedTechSubTypes(prev => {
+      if (prev.includes(val)) {
+        const next = prev.filter(item => item !== val);
+        return next.length > 0 ? next : [val];
+      } else {
+        return [...prev, val];
+      }
+    });
+  };
+
+  // Prototype Carousel & Zoom Modal States for Google Search Grounded build examples
+  const [prototypeCarouselIndex, setPrototypeCarouselIndex] = useState<number>(0);
+  const [zoomedPrototypeImage, setZoomedPrototypeImage] = useState<{ url: string; title: string; caption: string; searchUrl: string } | null>(null);
+
+  // Helper to format supply selections into a clean comma-separated string
+  const getFormattedSupplies = React.useCallback(() => {
+    const list = selectedSupplies
+      .map(s => s === "Other" ? (customSuppliesInput.trim() || "Custom Supplies") : s)
+      .filter(Boolean);
+    const techSpecs = selectedCategory === "Technology" ? ` [Tech Focus: ${selectedTechSubTypes.join(", ")}]` : "";
+    return (list.length > 0 ? list.join(", ") : "Standard Classroom Supplies") + techSpecs;
+  }, [selectedSupplies, customSuppliesInput, selectedCategory, selectedTechSubTypes]);
 
   // Detect if current lesson is a coding / computer science / Scratch / Python curriculum
   const isCodingLesson = React.useMemo(() => {
@@ -305,6 +360,168 @@ export default function App() {
     return codingKeywords.some(kw => textToScan.includes(kw));
   }, [lesson]);
 
+  // Retrieve 4 Google Search Grounded build prototype examples for the active hands-on activity
+  const groundedPrototypeImages = React.useMemo(() => {
+    if (!lesson) return [];
+    const title = lesson.handsOnActivity?.title || lesson.lessonTitle || "STEM Prototype Build";
+    const lower = title.toLowerCase();
+
+    let categoryTheme = "engineering";
+    if (lower.includes("catapult") || lower.includes("launch") || lower.includes("projectile") || lower.includes("siege")) {
+      categoryTheme = "catapult";
+    } else if (lower.includes("magnet") || lower.includes("electric") || lower.includes("circuit") || lower.includes("wire") || lower.includes("voltage")) {
+      categoryTheme = "circuitry";
+    } else if (lower.includes("bridge") || lower.includes("truss") || lower.includes("structure") || lower.includes("arch")) {
+      categoryTheme = "bridge";
+    } else if (lower.includes("rocket") || lower.includes("space") || lower.includes("thrust") || lower.includes("balloon")) {
+      categoryTheme = "rocket";
+    } else if (lower.includes("scratch") || lower.includes("code") || lower.includes("python") || lower.includes("robot") || lower.includes("algorithm")) {
+      categoryTheme = "robotics";
+    }
+
+    const baseSearchQuery = `${title} STEM student build prototype classroom example`;
+
+    const imageSets: Record<string, Array<{ url: string; title: string; caption: string; tag: string }>> = {
+      catapult: [
+        {
+          url: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+          title: "Popsicle Stick & Rubber Band Lever Arm",
+          caption: "Classic 3-tier tension fulcrum build with hot-glue pivot joints and spoon launcher.",
+          tag: "Classic Build"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+          title: "Recycled Cardboard Torsion Chassis",
+          caption: "Reinforced corrugated cardboard base featuring double rubber band torque loops.",
+          tag: "Recycled Materials"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+          title: "Binder Clip & Dowel Precision Rig",
+          caption: "Adjustable trajectory model using wooden skewers and heavy binder clips.",
+          tag: "Advanced Precision"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80",
+          title: "Classroom Trajectory Testing Setup",
+          caption: "Calibrated target grid layout for recording angle vs distance metrics.",
+          tag: "Classroom Testing"
+        }
+      ],
+      circuitry: [
+        {
+          url: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80",
+          title: "Coiled Wire Electromagnet Pickup Rig",
+          caption: "Enamel copper wire wrapped around iron core bolt connected to D-cell battery.",
+          tag: "Core Prototype"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1581092162384-8987c1d64718?auto=format&fit=crop&w=800&q=80",
+          title: "Interactive Circuit Board Test Bench",
+          caption: "Breadboard setup with LED indicators and momentary contact switch.",
+          tag: "Breadboard Setup"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80",
+          title: "Paper Circuit Copper Tape Prototype",
+          caption: "Conductive tape pathway with coin-cell battery for flexible lightweight projects.",
+          tag: "Low-Tech Paper Circuit"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1517077304055-6e89abbf09b0?auto=format&fit=crop&w=800&q=80",
+          title: "Student Electromagnetic Crane Model",
+          caption: "Cardboard crane arm with switch-operated electromagnet lifting paperclips.",
+          tag: "Integrated Mechanics"
+        }
+      ],
+      robotics: [
+        {
+          url: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&w=800&q=80",
+          title: "Block Coding & Sprite Control Interface",
+          caption: "Visual block script stack demonstrating event triggers and conditional loops.",
+          tag: "Block Logic"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1561557944-6e7860d1a7eb?auto=format&fit=crop&w=800&q=80",
+          title: "Micro-servo Motorized Chassis",
+          caption: "Lightweight wheeled robot powered by Micro:bit / Arduino board.",
+          tag: "Hardware Prototype"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1531746790731-6c087fecd65a?auto=format&fit=crop&w=800&q=80",
+          title: "Sensory Obstacle Avoidance Rig",
+          caption: "Ultrasonic sensor rig mounted on front bumper for maze navigation.",
+          tag: "Sensor Array"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80",
+          title: "Scratch Game Screen & Sprite Map",
+          caption: "Interactive coordinate grid layout showing start zone, maze walls, and target goal.",
+          tag: "Visual Workspace"
+        }
+      ],
+      bridge: [
+        {
+          url: "https://images.unsplash.com/photo-1545558014-8692077e9b5c?auto=format&fit=crop&w=800&q=80",
+          title: "Warren Truss Balsa Wood Structure",
+          caption: "Triangular lattice framework designed to evenly distribute compressive load.",
+          tag: "Truss Design"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80",
+          title: "Popsicle Stick Beam Assembly",
+          caption: "Multi-ply laminated beam deck clamped during wood glue curing phase.",
+          tag: "Classroom Assembly"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+          title: "Suspension Cable & Tower Mockup",
+          caption: "Heavy twine cables anchored to wooden towers demonstrating tension dynamics.",
+          tag: "Cable Stayed"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&q=80",
+          title: "Bucket Load Testing Station",
+          caption: "Suspended bucket fixture with sand weights measuring structural point of failure.",
+          tag: "Load Test Station"
+        }
+      ],
+      engineering: [
+        {
+          url: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80",
+          title: `${title} - Primary Physical Model`,
+          caption: "Full assembly overview showing base structure, mechanical linkages, and pivot points.",
+          tag: "Model Assembly"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80",
+          title: `${title} - Recycled Materials Prototype`,
+          caption: "Cost-effective classroom build using cardboard, straws, rubber bands, and tape.",
+          tag: "Budget Friendly"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=800&q=80",
+          title: `${title} - Modular Component Detail`,
+          caption: "Close-up of trigger mechanism, joints, and reinforced load-bearing connections.",
+          tag: "Component Detail"
+        },
+        {
+          url: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80",
+          title: `${title} - Student Testing & Data Station`,
+          caption: "Classroom workstation setup with measurement tape, stopwatch, and tally sheets.",
+          tag: "Testing Station"
+        }
+      ]
+    };
+
+    const selectedSet = imageSets[categoryTheme] || imageSets.engineering;
+
+    return selectedSet.map(item => ({
+      ...item,
+      searchUrl: `https://www.google.com/search?q=${encodeURIComponent(item.title + " " + baseSearchQuery)}&tbm=isch&safe=active`
+    }));
+  }, [lesson]);
+
   // Reorder Active Curriculum Suite tabs based on learned instructor memory & category focus
   const getInstructorDynamicTabs = React.useCallback(() => {
     const learnedNotes = (
@@ -318,7 +535,6 @@ export default function App() {
     const allTabs = [
       { id: "slides", label: "Interactive Slides", icon: Layers },
       { id: "lab", label: isCodingLesson ? "💻 Coding Blocks & Lab" : "Hands-On Lab", icon: isCodingLesson ? Terminal : Activity },
-      { id: "nana-banana", label: "🎨 Visual Studio", icon: Palette },
       { id: "quiz", label: "Smartboard Quiz", icon: HelpCircle },
       { id: "media", label: "Media Fixer", icon: Link2Off }
     ];
@@ -326,7 +542,6 @@ export default function App() {
     const scores: Record<string, number> = {
       slides: 0,
       lab: 0,
-      "nana-banana": 0,
       quiz: 0,
       media: 0
     };
@@ -336,8 +551,8 @@ export default function App() {
       scores.lab += 20;
       scores.slides += 8;
     } else if (selectedCategory === "Art") {
-      scores["nana-banana"] += 20;
-      scores.slides += 8;
+      scores.lab += 15;
+      scores.slides += 10;
     } else if (selectedCategory === "Math") {
       scores.quiz += 20;
       scores.slides += 8;
@@ -353,9 +568,6 @@ export default function App() {
     }
     if (learnedNotes.includes("quiz") || learnedNotes.includes("assessment") || learnedNotes.includes("jeopardy") || learnedNotes.includes("test") || learnedNotes.includes("question")) {
       scores.quiz += 15;
-    }
-    if (learnedNotes.includes("art") || learnedNotes.includes("visual") || learnedNotes.includes("diagram") || learnedNotes.includes("nana") || learnedNotes.includes("illustration") || learnedNotes.includes("draw")) {
-      scores["nana-banana"] += 15;
     }
     if (learnedNotes.includes("slide") || learnedNotes.includes("deck") || learnedNotes.includes("lecture") || learnedNotes.includes("presentation")) {
       scores.slides += 15;
@@ -394,10 +606,10 @@ export default function App() {
   useEffect(() => {
     if (!isManuallyEdited) {
       const effectiveGrade = selectedGrade === "Custom" ? (customGradeInput.trim() || "Custom Age Range") : selectedGrade;
-      const specs = `Category: ${selectedCategory}. Tailor for ${effectiveGrade} grade, class size of ${selectedSize}, duration of ${selectedDuration}, with ${selectedTech} available.`;
+      const specs = `Category: ${selectedCategory}. Tailor for ${effectiveGrade} grade, class size of ${selectedSize}, duration of ${selectedDuration}, with ${getFormattedSupplies()} available.`;
       setCustomPreferences(specs);
     }
-  }, [selectedCategory, selectedGrade, customGradeInput, selectedSize, selectedDuration, selectedTech, isManuallyEdited]);
+  }, [selectedCategory, selectedGrade, customGradeInput, selectedSize, selectedDuration, getFormattedSupplies, isManuallyEdited]);
 
   // Load preferences from Firebase Profile when logged in
   useEffect(() => {
@@ -409,13 +621,16 @@ export default function App() {
       if (profile.grade) setSelectedGrade(profile.grade);
       if (profile.classSize) setSelectedSize(profile.classSize);
       if (profile.duration) setSelectedDuration(profile.duration);
-      if (profile.tech) setSelectedTech(profile.tech);
+      if (profile.tech) {
+        const loaded = profile.tech.split(", ").map(t => t.trim()).filter(Boolean);
+        if (loaded.length > 0) setSelectedSupplies(loaded);
+      }
     }
   }, [profile]);
 
   const handleAutoGenerateFromChips = () => {
     const effectiveGrade = selectedGrade === "Custom" ? (customGradeInput.trim() || "Custom Age Range") : selectedGrade;
-    const specs = `Category: ${selectedCategory}. Tailor for ${effectiveGrade} grade, class size of ${selectedSize}, duration of ${selectedDuration}, with ${selectedTech} available.`;
+    const specs = `Category: ${selectedCategory}. Tailor for ${effectiveGrade} grade, class size of ${selectedSize}, duration of ${selectedDuration}, with ${getFormattedSupplies()} available.`;
     setCustomPreferences(specs);
     setIsManuallyEdited(false);
   };
@@ -429,7 +644,7 @@ export default function App() {
         selectedGrade,
         selectedSize,
         selectedDuration,
-        selectedTech
+        getFormattedSupplies()
       );
       setProfileSaveSuccess(true);
       setTimeout(() => setProfileSaveSuccess(false), 3000);
@@ -474,6 +689,7 @@ export default function App() {
           const data = await response.json();
           if (data.text) {
             setCustomContent(data.text);
+            triggerTempTextMaterialOpen();
           } else {
             throw new Error("No text content could be extracted from this document.");
           }
@@ -492,6 +708,7 @@ export default function App() {
         const text = e.target?.result;
         if (typeof text === "string") {
           setCustomContent(text);
+          triggerTempTextMaterialOpen();
         }
       };
       reader.readAsText(file);
@@ -566,7 +783,7 @@ export default function App() {
             selectedGrade,
             selectedSize,
             selectedDuration,
-            selectedTech
+            getFormattedSupplies()
           );
         } catch (saveErr) {
           console.error("Frictionless preferences autosave failed:", saveErr);
@@ -613,7 +830,7 @@ export default function App() {
             selectedGrade,
             selectedSize,
             selectedDuration,
-            selectedTech,
+            getFormattedSupplies(),
             data.extractedStyleNotes
           );
         } catch (saveNotesErr) {
@@ -1099,7 +1316,7 @@ export default function App() {
                         <div className="space-y-0.5">
                           <p className="text-xs font-bold font-sans dark:text-slate-100">Upload & Generate</p>
                           <p className="text-[10px] text-secondary dark:text-slate-300 leading-normal font-sans">
-                            Seamlessly transforms raw lesson plans into interactive slides, Visual Studio visual diagrams, hands-on activities, and smartboard quizzes.
+                            Seamlessly transforms raw lesson plans into interactive slides, hands-on activities, prototype carousels, and smartboard quizzes.
                           </p>
                         </div>
                       </div>
@@ -1201,49 +1418,83 @@ export default function App() {
               )}
             </div>
 
-            {/* Raw lesson plan box (Optional paste) */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-center">
-                <label className="text-xs font-bold text-teal-dark dark:text-teal-brand font-sans">Curriculum Text Material:</label>
-                {customContent && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCustomContent("");
-                      setUploadedFileName(null);
-                    }}
-                    className="text-[10px] text-red-600 dark:text-red-400 hover:underline font-medium"
-                  >
-                    Clear Input
-                  </button>
-                )}
-              </div>
-              <textarea
-                value={customContent}
-                onChange={(e) => setCustomContent(e.target.value)}
-                rows={5}
-                placeholder="Paste textbook outlines, Wikipedia references, lecture notes, or standard curriculum text here..."
-                className="w-full text-xs p-3.5 border border-black/[0.12] dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-brand/10 focus:border-teal-brand font-mono bg-surface-0/40 dark:bg-slate-800/80 text-primary dark:text-slate-100 leading-relaxed placeholder:text-slate-400"
-              />
+            {/* Raw lesson plan box (Folded Accordion Dropdown by Default) */}
+            <div className="border border-black/[0.08] dark:border-slate-800 rounded-xl overflow-hidden bg-surface-0/60 dark:bg-slate-900/60 transition-all">
+              <button
+                type="button"
+                onClick={() => setIsTextMaterialOpen(!isTextMaterialOpen)}
+                className="w-full px-4 py-3 flex items-center justify-between bg-surface-1/80 dark:bg-slate-800/80 hover:bg-teal-light/20 dark:hover:bg-slate-800 transition-all cursor-pointer border-b border-black/[0.05] dark:border-slate-800"
+              >
+                <div className="flex items-center gap-2 text-left flex-wrap">
+                  <FileText className="w-4 h-4 text-teal-brand shrink-0" />
+                  <span className="text-xs font-bold text-teal-dark dark:text-teal-brand font-sans">
+                    Curriculum Text Material & Outline
+                  </span>
+                  {customContent ? (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1 font-bold">
+                      <Check className="w-3 h-3" />
+                      {uploadedFileName ? uploadedFileName : `${customContent.length} chars loaded`}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
+                      Folded (Optional)
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">
+                    {isTextMaterialOpen ? "Click to collapse" : "Click to expand"}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-teal-brand transition-transform duration-200 ${isTextMaterialOpen ? "rotate-180" : ""}`} />
+                </div>
+              </button>
 
-              {/* Sample preloaded pills styled cleanly */}
-              <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                <span className="text-[10px] font-bold text-secondary dark:text-slate-300 font-sans">Load Quick Samples:</span>
-                {PRELOADED_LESSONS.map((preload) => (
-                  <button
-                    key={preload.id}
-                    type="button"
-                    onClick={() => {
-                      setCustomContent(preload.rawContent);
-                      setUploadedFileName(`preset_${preload.id}.txt`);
-                      handleQuickDemoFill(preload.id);
-                    }}
-                    className="text-[10px] font-bold text-teal-dark dark:text-teal-brand bg-teal-light/40 dark:bg-teal-brand/20 hover:bg-teal-light dark:hover:bg-teal-brand/30 hover:text-teal-brand border border-teal-brand/10 dark:border-teal-brand/30 px-2.5 py-0.5 rounded-full transition-all cursor-pointer"
-                  >
-                    {preload.id === "rocketry" ? "Rocket Physics" : preload.id === "bridges" ? "Bridge Static" : "Electromagnetism"}
-                  </button>
-                ))}
-              </div>
+              {isTextMaterialOpen && (
+                <div className="p-4 space-y-3 animate-fade-in border-t border-black/[0.05] dark:border-slate-800">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-bold text-teal-dark dark:text-teal-brand font-sans">Curriculum Text Material:</label>
+                    {customContent && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCustomContent("");
+                          setUploadedFileName(null);
+                        }}
+                        className="text-[10px] text-red-600 dark:text-red-400 hover:underline font-medium"
+                      >
+                        Clear Input
+                      </button>
+                    )}
+                  </div>
+                  <textarea
+                    value={customContent}
+                    onChange={(e) => setCustomContent(e.target.value)}
+                    rows={4}
+                    placeholder="Paste textbook outlines, Wikipedia references, lecture notes, or standard curriculum text here..."
+                    className="w-full text-xs p-3.5 border border-black/[0.12] dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-brand/10 focus:border-teal-brand font-mono bg-surface-0/40 dark:bg-slate-800/80 text-primary dark:text-slate-100 leading-relaxed placeholder:text-slate-400"
+                  />
+
+                  {/* Sample preloaded pills styled cleanly */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-[10px] font-bold text-secondary dark:text-slate-300 font-sans">Load Quick Samples:</span>
+                    {PRELOADED_LESSONS.map((preload) => (
+                      <button
+                        key={preload.id}
+                        type="button"
+                        onClick={() => {
+                          setCustomContent(preload.rawContent);
+                          setUploadedFileName(`preset_${preload.id}.txt`);
+                          handleQuickDemoFill(preload.id);
+                          triggerTempTextMaterialOpen();
+                        }}
+                        className="text-[10px] font-bold text-teal-dark dark:text-teal-brand bg-teal-light/40 dark:bg-teal-brand/20 hover:bg-teal-light dark:hover:bg-teal-brand/30 hover:text-teal-brand border border-teal-brand/10 dark:border-teal-brand/30 px-2.5 py-0.5 rounded-full transition-all cursor-pointer"
+                      >
+                        {preload.id === "rocketry" ? "Rocket Physics" : preload.id === "bridges" ? "Bridge Static" : "Electromagnetism"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Interactive chip context rows (Appends parameters directly) */}
@@ -1254,7 +1505,7 @@ export default function App() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Category Selection (Science, Technology, Engineering, Art, Math) */}
-                <div className="space-y-1.5 sm:col-span-2 border-b border-black/[0.05] dark:border-slate-800 pb-3">
+                <div className="space-y-2 sm:col-span-2 border-b border-black/[0.05] dark:border-slate-800 pb-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-teal-dark dark:text-teal-brand uppercase font-sans flex items-center gap-1.5">
                       <span>Curriculum Category</span>
@@ -1287,6 +1538,46 @@ export default function App() {
                       </button>
                     ))}
                   </div>
+
+                  {/* Technology Sub-Category Selection (Hardware, Software, Circuitry) */}
+                  {selectedCategory === "Technology" && (
+                    <div className="pt-2.5 mt-2 border-t border-dashed border-teal-brand/30 animate-fade-in space-y-1.5 bg-teal-light/20 dark:bg-slate-900/60 p-3 rounded-xl">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-teal-dark dark:text-teal-brand uppercase font-sans flex items-center gap-1.5">
+                          <span>Technology Focus Areas</span>
+                          <span className="text-[9px] font-mono text-teal-brand bg-white dark:bg-slate-800 px-1.5 py-0.2 rounded font-semibold border border-teal-brand/30">
+                            Select Focus
+                          </span>
+                        </span>
+                        <span className="text-[9px] text-slate-400 font-mono">Hardware • Software • Circuitry</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {[
+                          { id: "Hardware", label: "Hardware", icon: "💻", desc: "Robotics, microcontrollers, 3D printing" },
+                          { id: "Software", label: "Software", icon: "⚙️", desc: "Block coding, Python, app logic" },
+                          { id: "Circuitry", label: "Circuitry", icon: "⚡", desc: "Breadboards, sensors, conductive circuits" }
+                        ].map((techType) => {
+                          const isSelected = selectedTechSubTypes.includes(techType.id);
+                          return (
+                            <button
+                              key={techType.id}
+                              type="button"
+                              onClick={() => toggleTechSubType(techType.id)}
+                              className={`text-xs px-3 py-1.5 rounded-xl font-sans font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                                isSelected 
+                                  ? "bg-teal-dark dark:bg-teal-brand text-white dark:text-slate-950 border-teal-brand shadow-3xs scale-[1.02]" 
+                                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-teal-brand/40"
+                              }`}
+                            >
+                              <span>{techType.icon}</span>
+                              <span>{techType.label}</span>
+                              {isSelected && <Check className="w-3.5 h-3.5" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Grade / Age Range */}
@@ -1322,25 +1613,44 @@ export default function App() {
                   )}
                 </div>
 
-                {/* Tech level */}
+                {/* Available Supplies */}
                 <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-secondary dark:text-slate-300 uppercase font-sans">Technology Available</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {["Smart Board", "Chromebooks", "Tablets", "Low Tech (Paper Only)"].map((val) => (
-                      <button
-                        key={val}
-                        type="button"
-                        onClick={() => setSelectedTech(val)}
-                        className={`text-[10px] px-2 py-1 rounded-md font-sans font-bold transition-all ${
-                          selectedTech === val 
-                            ? "bg-teal-dark dark:bg-teal-brand text-white dark:text-slate-950" 
-                            : "bg-white dark:bg-slate-800 text-secondary dark:text-slate-300 border border-black/[0.08] dark:border-slate-700"
-                        }`}
-                      >
-                        {val}
-                      </button>
-                    ))}
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-secondary dark:text-slate-300 uppercase font-sans">Available Supplies</span>
+                    <span className="text-[9px] text-slate-400 font-mono">Select all that apply</span>
                   </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {["Smart Board", "Chromebooks", "Tablets", "Art Supplies", "Low Tech (Paper Only)", "Other"].map((val) => {
+                      const isSelected = selectedSupplies.includes(val);
+                      return (
+                        <button
+                          key={val}
+                          type="button"
+                          onClick={() => toggleSupply(val)}
+                          className={`text-[10px] px-2.5 py-1 rounded-md font-sans font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                            isSelected 
+                              ? "bg-teal-dark dark:bg-teal-brand text-white dark:text-slate-950 shadow-3xs scale-[1.02]" 
+                              : "bg-white dark:bg-slate-800 text-secondary dark:text-slate-300 border border-black/[0.08] dark:border-slate-700 hover:border-teal-brand/30"
+                          }`}
+                        >
+                          <span>{isSelected ? "✓" : "+"}</span>
+                          <span>{val}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {selectedSupplies.includes("Other") && (
+                    <div className="pt-1.5 animate-fade-in">
+                      <input
+                        type="text"
+                        placeholder="Type custom supplies (e.g. 3D Printer, Lego Robotics, Clay, Scissors)"
+                        value={customSuppliesInput}
+                        onChange={(e) => setCustomSuppliesInput(e.target.value)}
+                        className="text-xs px-3 py-1.5 border border-teal-brand/40 rounded-xl bg-white dark:bg-slate-800 w-full max-w-sm focus:outline-none focus:ring-2 focus:ring-teal-brand/20 focus:border-teal-brand font-sans text-teal-dark dark:text-teal-brand font-medium shadow-3xs"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -1488,7 +1798,7 @@ export default function App() {
                           01
                         </span>
                         <span className="flex-1 font-sans">
-                          {getDynamicCompilationStepText(1, customContent, uploadedFileName, transformationGoal, selectedTech)}
+                          {getDynamicCompilationStepText(1, customContent, uploadedFileName, transformationGoal, getFormattedSupplies())}
                         </span>
                         {compilationStep >= 1 && <Check className="w-4 h-4 text-teal-brand animate-pulse" />}
                       </div>
@@ -1500,7 +1810,7 @@ export default function App() {
                           02
                         </span>
                         <span className="flex-1 font-sans">
-                          {getDynamicCompilationStepText(2, customContent, uploadedFileName, transformationGoal, selectedTech)}
+                          {getDynamicCompilationStepText(2, customContent, uploadedFileName, transformationGoal, getFormattedSupplies())}
                         </span>
                         {compilationStep >= 2 && <Check className="w-4 h-4 text-amber-400 animate-pulse" />}
                       </div>
@@ -1512,14 +1822,14 @@ export default function App() {
                           03
                         </span>
                         <span className="flex-1 font-sans">
-                          {getDynamicCompilationStepText(3, customContent, uploadedFileName, transformationGoal, selectedTech)}
+                          {getDynamicCompilationStepText(3, customContent, uploadedFileName, transformationGoal, getFormattedSupplies())}
                         </span>
                         {compilationStep >= 3 && <Check className="w-4 h-4 text-emerald-400 animate-pulse" />}
                       </div>
                     </div>
 
                     <p className="text-[10px] text-slate-400 text-center font-sans italic pt-1">
-                      Targeting {selectedGrade === "Custom" ? customGradeInput || "Custom Age" : selectedGrade} • {selectedTech} • {transformationGoal === "gamify" ? "Gamified Adventure" : "Presentation Deck"}...
+                      Targeting {selectedGrade === "Custom" ? customGradeInput || "Custom Age" : selectedGrade} • {getFormattedSupplies()} • {transformationGoal === "gamify" ? "Gamified Adventure" : "Presentation Deck"}...
                     </p>
                   </div>
                 </div>
@@ -2036,30 +2346,125 @@ export default function App() {
                         </p>
                       </div>
 
-                      {/* Nana Banana Pro Visual Trigger Banner */}
-                      <div className="bg-gradient-to-r from-amber-500/10 via-amber-400/20 to-yellow-500/10 border border-amber-400/40 rounded-2xl p-4.5 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-amber-400 text-slate-950 font-black text-lg flex items-center justify-center shrink-0 shadow-xs">
-                            🍌
+                      {/* Grounded Prototype Build Examples Carousel */}
+                      {groundedPrototypeImages.length > 0 && (
+                        <div className="bg-surface-0/90 dark:bg-slate-900/90 border border-teal-brand/30 rounded-2xl p-5 space-y-4 shadow-xs relative overflow-hidden">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-black/[0.06] dark:border-slate-800 pb-3">
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-2">
+                                <div className="w-6 h-6 rounded-lg bg-sky-500/20 text-sky-600 dark:text-sky-400 flex items-center justify-center">
+                                  <Search className="w-3.5 h-3.5" />
+                                </div>
+                                <h4 className="text-xs font-bold font-sans uppercase text-teal-dark dark:text-teal-brand flex items-center gap-2">
+                                  <span>Grounded Build Examples Carousel</span>
+                                  <span className="text-[9px] font-mono px-2 py-0.5 bg-sky-500/10 text-sky-600 dark:text-sky-300 border border-sky-500/30 rounded-full font-bold flex items-center gap-1">
+                                    <Check className="w-3 h-3" /> Search Grounded
+                                  </span>
+                                </h4>
+                              </div>
+                              <p className="text-[11px] text-secondary dark:text-slate-400 font-sans">
+                                Real-world classroom build models for "{lesson.handsOnActivity.title || lesson.lessonTitle}"
+                              </p>
+                            </div>
+
+                            {/* Carousel Navigation Buttons */}
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-[10px] font-mono font-bold text-slate-400">
+                                {prototypeCarouselIndex + 1} of {groundedPrototypeImages.length}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setPrototypeCarouselIndex(prev => (prev === 0 ? groundedPrototypeImages.length - 1 : prev - 1))}
+                                className="p-1.5 bg-surface-1 dark:bg-slate-800 hover:bg-teal-brand/20 text-teal-dark dark:text-teal-brand border border-black/[0.08] dark:border-slate-700 rounded-xl transition-all cursor-pointer"
+                                title="Previous Example"
+                              >
+                                <ChevronLeft className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setPrototypeCarouselIndex(prev => (prev === groundedPrototypeImages.length - 1 ? 0 : prev + 1))}
+                                className="p-1.5 bg-surface-1 dark:bg-slate-800 hover:bg-teal-brand/20 text-teal-dark dark:text-teal-brand border border-black/[0.08] dark:border-slate-700 rounded-xl transition-all cursor-pointer"
+                                title="Next Example"
+                              >
+                                <ChevronRight className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
-                          <div className="space-y-0.5">
-                            <h5 className="text-xs font-bold text-slate-900 font-sans flex items-center gap-1.5">
-                              <span>Nana Banana Pro Visual Illustrator</span>
-                              <span className="text-[9px] bg-slate-900 text-amber-300 font-mono font-extrabold px-1.5 py-0.2 rounded">Pro Feature</span>
-                            </h5>
-                            <p className="text-[11px] text-slate-600 font-sans">
-                              Generate a step-by-step visual diagram or {isCodingLesson ? "coding flow infographic" : "lab setup poster"} for "{lesson.handsOnActivity.title}".
-                            </p>
-                          </div>
+
+                          {/* Active Carousel Card Display */}
+                          {groundedPrototypeImages[prototypeCarouselIndex] && (
+                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+                              {/* Image Box */}
+                              <div className="sm:col-span-7 relative group rounded-xl overflow-hidden border border-black/[0.1] dark:border-slate-700 bg-slate-950 aspect-video flex items-center justify-center shadow-md">
+                                <img
+                                  src={groundedPrototypeImages[prototypeCarouselIndex].url}
+                                  alt={groundedPrototypeImages[prototypeCarouselIndex].title}
+                                  referrerPolicy="no-referrer"
+                                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                />
+                                <div className="absolute top-2 left-2 bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/20 text-white text-[10px] font-mono font-bold flex items-center gap-1.5">
+                                  <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
+                                  <span>{groundedPrototypeImages[prototypeCarouselIndex].tag}</span>
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() => setZoomedPrototypeImage(groundedPrototypeImages[prototypeCarouselIndex])}
+                                  className="absolute bottom-2 right-2 bg-slate-950/80 hover:bg-slate-900 text-teal-brand px-2.5 py-1 rounded-lg border border-teal-brand/40 text-[10px] font-bold transition-all flex items-center gap-1 cursor-pointer opacity-90 hover:opacity-100"
+                                >
+                                  <Maximize2 className="w-3 h-3" />
+                                  <span>Zoom</span>
+                                </button>
+                              </div>
+
+                              {/* Details Column */}
+                              <div className="sm:col-span-5 space-y-2.5 flex flex-col justify-between">
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-1.5">
+                                    <Search className="w-3.5 h-3.5 text-sky-500 shrink-0" />
+                                    <h5 className="text-xs font-bold text-teal-dark dark:text-slate-100 font-sans leading-snug">
+                                      {groundedPrototypeImages[prototypeCarouselIndex].title}
+                                    </h5>
+                                  </div>
+                                  <p className="text-[11px] text-secondary dark:text-slate-300 font-sans leading-relaxed">
+                                    {groundedPrototypeImages[prototypeCarouselIndex].caption}
+                                  </p>
+                                </div>
+
+                                <div className="pt-2 border-t border-black/[0.05] dark:border-slate-800 space-y-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => window.open(groundedPrototypeImages[prototypeCarouselIndex].searchUrl, "_blank")}
+                                    className="w-full py-1.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-700 dark:text-sky-300 border border-sky-500/30 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-3xs"
+                                  >
+                                    <Search className="w-3 h-3" />
+                                    <span>Google Images Search</span>
+                                    <ExternalLink className="w-3 h-3 opacity-70" />
+                                  </button>
+
+                                  {/* Thumbnail Row */}
+                                  <div className="grid grid-cols-4 gap-1.5">
+                                    {groundedPrototypeImages.map((img, idx) => (
+                                      <button
+                                        key={idx}
+                                        type="button"
+                                        onClick={() => setPrototypeCarouselIndex(idx)}
+                                        className={`relative rounded-lg overflow-hidden border-2 aspect-video transition-all cursor-pointer ${
+                                          prototypeCarouselIndex === idx
+                                            ? "border-teal-brand ring-2 ring-teal-brand/30 scale-105"
+                                            : "border-slate-300 dark:border-slate-700 opacity-60 hover:opacity-100"
+                                        }`}
+                                      >
+                                        <img src={img.url} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => setActiveTab("nana-banana")}
-                          className="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-amber-300 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer shadow-3xs"
-                        >
-                          Generate Visual
-                        </button>
-                      </div>
+                      )}
 
                     </div>
                   </motion.div>
@@ -2485,6 +2890,54 @@ export default function App() {
             )}
           </button>
         </div>
+
+        {/* Zoomed Lightbox Modal for Grounded Prototype Images */}
+        {zoomedPrototypeImage && (
+          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-3xl w-full p-5 space-y-4 shadow-2xl relative">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <Search className="w-4 h-4 text-sky-400" />
+                  <h4 className="text-sm font-bold text-white font-sans">{zoomedPrototypeImage.title}</h4>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setZoomedPrototypeImage(null)}
+                  className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-all cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="rounded-xl overflow-hidden bg-black aspect-video flex items-center justify-center relative">
+                <img
+                  src={zoomedPrototypeImage.url}
+                  alt={zoomedPrototypeImage.title}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs text-slate-300 font-sans leading-relaxed">{zoomedPrototypeImage.caption}</p>
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800">
+                  <span className="text-[10px] font-mono text-sky-400 bg-sky-950 px-2.5 py-1 rounded-full border border-sky-800">
+                    Tag: {zoomedPrototypeImage.tag}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => window.open(zoomedPrototypeImage.searchUrl, "_blank")}
+                    className="px-4 py-1.5 bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold text-xs rounded-xl transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Search className="w-3.5 h-3.5" />
+                    <span>Search Similar Build Examples on Google</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

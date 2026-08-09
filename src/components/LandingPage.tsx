@@ -33,7 +33,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </h1>
 
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans font-normal">
-              Lyra automatically restructures dense science articles, raw textbooks, and outline PDFs into classroom-ready smartboard slides, hands-on engineering labs, Visual Studio visual diagrams, and interactive quizzes.
+              Lyra automatically restructures dense science articles, raw textbooks, and outline PDFs into classroom-ready smartboard slides, hands-on engineering labs, Nana Banana Pro visual diagrams, and interactive quizzes.
             </p>
 
             <div className="pt-2 flex flex-wrap items-center gap-3">
