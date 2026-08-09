@@ -1,7 +1,7 @@
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
-import { GoogleGenAI, Type, LiveServerMessage, Modality } from "@google/genai";
+import { GoogleGenAI, Type, LiveServerMessage, Modality, ThinkingLevel } from "@google/genai";
 import { createServer as createViteServer } from "vite";
 import { WebSocketServer } from "ws";
 import * as pdfParseModule from "pdf-parse";
@@ -468,7 +468,7 @@ app.post("/api/chat", async (req, res) => {
     return res.status(500).json({ error: "Gemini client not initialized." });
   }
 
-  const { messages, model, systemInstruction, useSearch } = req.body;
+  const { messages, model, systemInstruction, useSearch, thinkingLevel } = req.body;
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: "messages array is required" });
   }
@@ -486,13 +486,23 @@ app.post("/api/chat", async (req, res) => {
       tools.push({ googleSearch: {} });
     }
 
+    const baseSysInst = systemInstruction || "You are Lyra, a friendly, energetic, encouraging, and innovative AI teaching copilot.";
+    const fullSystemInstruction = `${baseSysInst}\n\n[SVG Diagram Rule]: Only generate or output raw inline SVG diagrams (<svg>...</svg>) if the user query or active demo path visibly depends on text-generated vector visuals. Otherwise, stick to clean Markdown text formatting and structured explanations.`;
+
+    const config: any = {
+      systemInstruction: fullSystemInstruction,
+      tools: tools.length > 0 ? tools : undefined
+    };
+
+    if (selectedModel === "gemini-3.1-pro-preview" || thinkingLevel === "HIGH") {
+      config.thinkingConfig = { thinkingLevel: ThinkingLevel.HIGH };
+      // Do NOT set maxOutputTokens when high thinking mode is enabled
+    }
+
     const response = await ai.models.generateContent({
       model: selectedModel,
       contents: contents,
-      config: {
-        systemInstruction: systemInstruction || "You are Lyra, a friendly, energetic, encouraging, and innovative AI teaching copilot.",
-        tools: tools.length > 0 ? tools : undefined
-      }
+      config: config
     });
 
     res.json({
@@ -573,7 +583,7 @@ app.post("/api/generate-image", async (req, res) => {
   }
 });
 
-// API endpoint for video content analysis (gemini-3.1-pro-preview)
+// API endpoint for video content analysis (gemini-3.1-pro-preview with High Thinking)
 app.post("/api/analyze-video", async (req, res) => {
   if (!ai) {
     return res.status(500).json({ error: "Gemini client not initialized." });
@@ -585,7 +595,7 @@ app.post("/api/analyze-video", async (req, res) => {
   }
 
   try {
-    console.log("Analyzing video with gemini-3.1-pro-preview...");
+    console.log("Analyzing video with gemini-3.1-pro-preview (ThinkingLevel.HIGH)...");
     const response = await ai.models.generateContent({
       model: "gemini-3.1-pro-preview",
       contents: [
@@ -598,7 +608,10 @@ app.post("/api/analyze-video", async (req, res) => {
         {
           text: prompt || "Analyze this video, summarize its contents, and provide pedagogical insights for a science/coding teacher."
         }
-      ]
+      ],
+      config: {
+        thinkingConfig: { thinkingLevel: ThinkingLevel.HIGH }
+      }
     });
 
     res.json({ analysis: response.text });

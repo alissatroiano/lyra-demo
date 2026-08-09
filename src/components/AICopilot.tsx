@@ -57,10 +57,10 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   const ROLES_SYSTEM_INSTRUCTIONS: Record<string, string> = {
-    "Pedagogical Advisor": "You are Lyra, an expert Pedagogical Advisor. Help instructors structure, pace, and scaffold their STEM/STEAM lessons. Advise on classroom management and physical engagement. Refer to the active lesson topic when appropriate.",
-    "Science Explainer": "You are Lyra, a Science Explainer. Explain complex scientific or technical topics using extremely clear, simple analogies and visual metaphors suitable for children ages 6-14.",
-    "Scratch Block Translator": "You are Lyra, a Scratch Block Translator. Deconstruct digital or block-based concepts (like Scratch, ScratchJr, or Code.org) into simple physical movements, text workflows, and engaging household metaphors (e.g., Scratch 'triggering blocks' are like 'magic start buttons').",
-    "Gamification Designer": "You are Lyra, a Gamification Designer. Suggest narrative quests, rewards, and gameplay elements to turn engineering and coding activities into interactive team missions."
+    "Pedagogical Advisor": "You are Lyra, an expert Pedagogical Advisor. Help instructors structure, pace, and scaffold their STEM/STEAM lessons. Advise on classroom management and physical engagement. SVG Diagram Rule: Only create or output raw inline SVG diagrams (<svg>...</svg>) if the demo path or user prompt visibly depends on text-generated vector visuals. Otherwise, answer using clear, structured text and Markdown.",
+    "Science Explainer": "You are Lyra, a Science Explainer. Explain complex scientific or technical topics using extremely clear, simple analogies and visual metaphors suitable for children ages 6-14. SVG Diagram Rule: Only create or output raw inline SVG diagrams if the demo path visibly depends on generated text.",
+    "Scratch Block Translator": "You are Lyra, a Scratch Block Translator. Deconstruct digital or block-based concepts (like Scratch, ScratchJr, or Code.org) into simple physical movements, text workflows, and engaging household metaphors (e.g., Scratch 'triggering blocks' are like 'magic start buttons'). SVG Diagram Rule: Only create SVG diagrams if explicitly requested or if the demo path visibly depends on text-generated vector visuals.",
+    "Gamification Designer": "You are Lyra, a Gamification Designer. Suggest narrative quests, rewards, and gameplay elements to turn engineering and coding activities into interactive team missions. SVG Diagram Rule: Only create SVG diagrams if the demo path visibly depends on generated text."
   };
 
   // Initial greeting
@@ -121,7 +121,8 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
           messages: chatHistoryForAPI,
           model: chatModel,
           systemInstruction,
-          useSearch
+          useSearch,
+          thinkingLevel: chatModel === "gemini-3.1-pro-preview" ? "HIGH" : undefined
         })
       });
 
@@ -517,9 +518,9 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
                     className="text-[10px] font-bold text-primary bg-transparent focus:outline-none cursor-pointer font-sans"
                     disabled={useSearch}
                   >
-                    <option value="gemini-3.1-flash-lite">Fast Helper (Flash Lite)</option>
-                    <option value="gemini-3.5-flash">General Assistant (Flash)</option>
-                    <option value="gemini-3.1-pro-preview">Expert Pedagogue (Pro)</option>
+                    <option value="gemini-3.1-flash-lite">Fast Helper (gemini-3.1-flash-lite)</option>
+                    <option value="gemini-3.5-flash">General Assistant (gemini-3.5-flash)</option>
+                    <option value="gemini-3.1-pro-preview">Expert Pedagogue (gemini-3.1-pro-preview + High Thinking)</option>
                   </select>
                 </div>
 
@@ -557,6 +558,34 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
                   <span>Google Search Grounding</span>
                 </button>
               </div>
+            </div>
+
+            {/* Active Gemini Intelligence Feature Indicator */}
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-teal-50/60 border border-teal-500/10 rounded-xl text-[10px] font-medium text-teal-dark font-sans">
+              {chatModel === "gemini-3.1-pro-preview" && (
+                <span className="flex items-center gap-1.5 text-purple-700 font-bold">
+                  <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                  High Thinking Mode Active: gemini-3.1-pro-preview (ThinkingLevel.HIGH for deep reasoning)
+                </span>
+              )}
+              {useSearch && (
+                <span className="flex items-center gap-1.5 text-sky-700 font-bold">
+                  <Search className="w-3.5 h-3.5 text-sky-600" />
+                  Google Search Grounding Active: gemini-3.5-flash with real-time web citations
+                </span>
+              )}
+              {!useSearch && chatModel === "gemini-3.5-flash" && (
+                <span className="flex items-center gap-1.5 text-teal-800 font-medium">
+                  <Cpu className="w-3.5 h-3.5 text-teal-600" />
+                  General Assistant: gemini-3.5-flash handling general teaching tasks
+                </span>
+              )}
+              {!useSearch && chatModel === "gemini-3.1-flash-lite" && (
+                <span className="flex items-center gap-1.5 text-amber-800 font-medium">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                  Fast Helper: gemini-3.1-flash-lite for instant, low-latency co-teaching responses
+                </span>
+              )}
             </div>
 
             {/* Chat Messages Thread */}
