@@ -35,7 +35,7 @@ export default function SubscriptionModal({
     const priceId = selectedPlan === "summer" 
       ? "price_1U2YXoKExpIuZ5d51zCqxK1f" 
       : selectedPlan === "yearly" 
-      ? "price_yearly_educator_99" 
+      ? "price_1U2YXSKExpIuZ5d54aTeLf1u" 
       : "price_1U2OwBKExpIuZ5d5bmfH68py";
 
     try {
@@ -69,7 +69,7 @@ export default function SubscriptionModal({
           plan: selectedPlan === "summer" 
             ? "Summer STEM Special ($12.99 One-Time Fee)" 
             : selectedPlan === "yearly" 
-            ? "Lyrah Educator Pro (Annual)" 
+            ? "Camp Director Pro ($49.99)" 
             : "Demo Incentive ($9.99 One-Time Fee)",
           priceId,
           cardName,
@@ -175,11 +175,13 @@ export default function SubscriptionModal({
               {/* Plan Picker */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider block">Choose Plan</label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {/* Summer Special leads: it spans the full row so it reads as
+                      the intended choice, not one option among equals. */}
                   <button
                     type="button"
                     onClick={() => setSelectedPlan("summer")}
-                    className={`p-3.5 rounded-xl border text-left transition-all relative cursor-pointer ${
+                    className={`sm:col-span-2 p-3.5 rounded-xl border text-left transition-all relative cursor-pointer ${
                       selectedPlan === "summer"
                         ? "border-amber-500 dark:border-amber-400 bg-amber-50/80 dark:bg-amber-950/30 shadow-sm ring-2 ring-amber-500/30"
                         : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50"
@@ -231,14 +233,14 @@ export default function SubscriptionModal({
                     }`}
                   >
                     <span className="absolute -top-2.5 right-2 bg-teal-700 text-white text-[8px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs">
-                      Best Value
+                      Multi-Site
                     </span>
                     <div className="flex justify-between items-start mt-1">
-                      <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100">Educator Yearly</span>
+                      <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100">Camp Director Pro</span>
                       <input type="radio" checked={selectedPlan === "yearly"} onChange={() => {}} className="accent-teal-700" />
                     </div>
-                    <p className="text-lg font-serif font-bold text-teal-900 dark:text-teal-brand mt-1.5">$99.00<span className="text-[9px] font-sans font-normal text-slate-600 dark:text-slate-400">/yr</span></p>
-                    <p className="text-[9px] text-slate-600 dark:text-slate-400 mt-1 leading-tight">Annual educator plan ($8.25/mo)</p>
+                    <p className="text-lg font-serif font-bold text-teal-900 dark:text-teal-brand mt-1.5">$49.99</p>
+                    <p className="text-[9px] text-slate-600 dark:text-slate-400 mt-1 leading-tight">For programs running several instructors</p>
                   </button>
                 </div>
               </div>
@@ -319,7 +321,7 @@ export default function SubscriptionModal({
                 className="w-full py-3.5 bg-gradient-to-r from-teal-dark to-teal-800 hover:from-teal-800 hover:to-teal-dark text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <ShieldCheck className="w-4 h-4 text-teal-brand" />
-                <span>{loading ? "Processing Stripe Payment..." : `Pay ${selectedPlan === "summer" ? "$12.99" : selectedPlan === "yearly" ? "$99.00" : "$9.99"} & Activate`}</span>
+                <span>{loading ? "Processing Stripe Payment..." : `Pay ${selectedPlan === "summer" ? "$12.99" : selectedPlan === "yearly" ? "$49.99" : "$9.99"} & Activate`}</span>
               </button>
 
               <div className="text-center text-[10px] text-slate-500 dark:text-slate-400 flex items-center justify-center gap-2">
