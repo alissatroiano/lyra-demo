@@ -141,11 +141,14 @@ export default function App() {
   });
 
   // 2026 Cyber STEM Lab Dark Mode state
+  // Dark is the default. Anyone who has already picked a theme keeps their
+  // choice — only an unset preference falls through to dark.
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('lyra_cyber_lab_dark') === 'true';
+      const stored = localStorage.getItem('lyra_cyber_lab_dark');
+      return stored === null ? true : stored === 'true';
     } catch {
-      return false;
+      return true;
     }
   });
 
