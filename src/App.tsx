@@ -69,12 +69,9 @@ import { LandingPage } from "./components/LandingPage";
 
 // Official Lyrah Robot Bunny Mascot Logo
 export const RobotBunnyMascot = ({ className = "w-28 h-28" }: { className?: string }) => (
-  <img 
-    src="/src/assets/images/lyrah_logo_1786276082567.jpg" 
-    alt="Lyrah AI Mascot Logo" 
-    className={`object-contain rounded-2xl drop-shadow-md ${className}`} 
-    referrerPolicy="no-referrer"
-  />
+  <div className={`flex items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500/20 via-teal-400/10 to-amber-500/20 border border-teal-brand/30 shadow-3xs ${className}`}>
+    <Sparkles className="w-1/2 h-1/2 text-teal-brand animate-pulse" />
+  </div>
 );
 
 export default function App() {
@@ -340,6 +337,9 @@ export default function App() {
   const [selectedSupplies, setSelectedSupplies] = useState<string[]>(["Smart Board"]);
   const [customSuppliesInput, setCustomSuppliesInput] = useState<string>("");
 
+  // Track if a curriculum plan is uploaded or text is provided
+  const hasPlanUploaded = Boolean((customContent && customContent.trim().length > 0) || uploadedFileName);
+
   // Helper to toggle supply selection (Restricted to max 1 item for single selection consistency)
   const toggleSupply = (val: string) => {
     setSelectedSupplies(prev => (prev.includes(val) ? [] : [val]));
@@ -372,6 +372,9 @@ export default function App() {
     });
   };
 
+  // Art sub-category focus selection ("Digital Art", "Fine Art")
+  const [selectedArtSubType, setSelectedArtSubType] = useState<"Digital Art" | "Fine Art">("Digital Art");
+
   // Active supply category key based on selected category and sub-focus
   const activeSupplyCategoryKey = React.useMemo(() => {
     if (selectedCategory === "Gaming") return "Gaming";
@@ -384,10 +387,12 @@ export default function App() {
       return "Software";
     }
     if (selectedCategory === "Engineering") return "Engineering";
-    if (selectedCategory === "Art") return "Art";
+    if (selectedCategory === "Art") {
+      return selectedArtSubType === "Digital Art" ? "DigitalArt" : "FineArt";
+    }
     if (selectedCategory === "Math") return "Math";
     return "Science";
-  }, [selectedCategory, selectedTechSubTypes]);
+  }, [selectedCategory, selectedTechSubTypes, selectedArtSubType]);
 
   // Available options for current category domain
   const currentSupplyOptions = React.useMemo(() => {
@@ -415,9 +420,8 @@ export default function App() {
     const list = selectedSupplies
       .map(s => s === "Other" ? (customSuppliesInput.trim() || "Custom Tools / Software") : s)
       .filter(Boolean);
-    const domainLabel = ` [Category Domain: ${activeSupplyCategoryKey}]`;
-    return (list.length > 0 ? list.join(", ") : "Standard Classroom Supplies") + domainLabel;
-  }, [selectedSupplies, customSuppliesInput, activeSupplyCategoryKey]);
+    return list.length > 0 ? list.join(", ") : "Standard Classroom Supplies";
+  }, [selectedSupplies, customSuppliesInput]);
 
   // Detect if current lesson is a coding / computer science / Scratch / Python curriculum
   const isCodingLesson = React.useMemo(() => {
@@ -1184,8 +1188,19 @@ export default function App() {
       detectedCat = "Engineering";
     } else if (combined.includes("math") || combined.includes("fraction") || combined.includes("geometry") || combined.includes("algebra")) {
       detectedCat = "Math";
-    } else if (combined.includes("art") || combined.includes("drawing") || combined.includes("design") || combined.includes("color")) {
+    } else if (combined.includes("canva") || combined.includes("poster") || combined.includes("infographic") || combined.includes("digital art") || combined.includes("graphic design") || combined.includes("procreate") || combined.includes("tinkercad")) {
       detectedCat = "Art";
+      setSelectedArtSubType("Digital Art");
+      detectedSupply = combined.includes("canva") ? "Canva" : "Digital Drawing Tablet";
+    } else if (combined.includes("art") || combined.includes("drawing") || combined.includes("painting") || combined.includes("clay") || combined.includes("sculpture") || combined.includes("fine art")) {
+      detectedCat = "Art";
+      if (combined.includes("digital") || combined.includes("software") || combined.includes("screen") || combined.includes("canva")) {
+        setSelectedArtSubType("Digital Art");
+        detectedSupply = "Canva";
+      } else {
+        setSelectedArtSubType("Fine Art");
+        detectedSupply = "Paints & Brushes";
+      }
     }
 
     setSelectedCategory(detectedCat);
@@ -1415,9 +1430,11 @@ export default function App() {
         }
       }
 
-      // Clear the user input field after each lesson plan generates
+      // Clear the user input field & instruction directive after each lesson plan generates
       setCustomContent("");
       setUploadedFileName(null);
+      setCustomPreferences("");
+      setIsManuallyEdited(true);
       const fileInputElem = document.getElementById("file-upload-input") as HTMLInputElement;
       if (fileInputElem) fileInputElem.value = "";
 
@@ -1698,20 +1715,11 @@ export default function App() {
               className="flex items-center gap-2 sm:gap-3 cursor-pointer group shrink-0"
               onClick={() => setCurrentView("landing")}
             >
-              {/* Mascot in mini logo format */}
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl overflow-hidden bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center shrink-0 border border-teal-brand/40 group-hover:scale-105 transition-transform micro-glow-teal p-0.5">
-                <img 
-                  src="/src/assets/images/lyrah_logo_1786276082567.jpg" 
-                  alt="Lyrah Logo" 
-                  className="w-full h-full object-contain rounded-lg"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
               <div>
-                <span className="font-display text-xl sm:text-2xl font-semibold tracking-tight text-teal-dark dark:text-teal-brand">
+                <span className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-teal-dark dark:text-teal-brand">
                   Lyrah<span className="text-teal-brand font-sans">.</span>
                 </span>
-                <p className="text-[9px] sm:text-[10px] text-secondary dark:text-slate-400 font-sans tracking-wide leading-none hidden xs:block">Afterschool STEM Copilot</p>
+                <p className="text-[9px] sm:text-[10px] text-secondary dark:text-slate-400 font-sans font-medium tracking-wide leading-none hidden xs:block">Afterschool STEM Copilot</p>
               </div>
             </div>
 
@@ -2290,7 +2298,7 @@ export default function App() {
                   </div>
 
                   {/* Technology Sub-Category Selection (Hardware, Software, Circuitry) */}
-                  {selectedCategory === "Technology" && (
+                  {hasPlanUploaded && selectedCategory === "Technology" && (
                     <div className="pt-2.5 mt-2 border-t border-dashed border-teal-brand/30 animate-fade-in space-y-1.5 bg-teal-light/20 dark:bg-slate-900/60 p-3 rounded-xl">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-bold text-teal-dark dark:text-teal-brand uppercase font-sans flex items-center gap-1.5">
@@ -2321,6 +2329,47 @@ export default function App() {
                             >
                               <span>{techType.icon}</span>
                               <span>{techType.label}</span>
+                              {isSelected && <Check className="w-3.5 h-3.5" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Art Sub-Category Selection (Digital Art, Fine Art) */}
+                  {hasPlanUploaded && selectedCategory === "Art" && (
+                    <div className="pt-2.5 mt-2 border-t border-dashed border-teal-brand/30 animate-fade-in space-y-1.5 bg-teal-light/20 dark:bg-slate-900/60 p-3 rounded-xl">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-teal-dark dark:text-teal-brand uppercase font-sans flex items-center gap-1.5">
+                          <span>Art Focus Areas</span>
+                          <span className="text-[9px] font-mono text-teal-brand bg-white dark:bg-slate-800 px-1.5 py-0.2 rounded font-semibold border border-teal-brand/30">
+                            Subcategory
+                          </span>
+                        </span>
+                        <span className="text-[9px] text-slate-400 font-mono">Digital Art • Fine Art</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {[
+                          { id: "Digital Art", label: "Digital Art (Canva & Digital Design)", icon: "🎨", desc: "Canva, Drawing Tablets, Tinkercad 3D, Procreate, Pixel Art" },
+                          { id: "Fine Art", label: "Fine Art & Crafts", icon: "🖌️", desc: "Cardstock, Clay, Paints, Markers, Sculpting" }
+                        ].map((artType) => {
+                          const isSelected = selectedArtSubType === artType.id;
+                          return (
+                            <button
+                              key={artType.id}
+                              type="button"
+                              onClick={() => {
+                                setSelectedArtSubType(artType.id as "Digital Art" | "Fine Art");
+                              }}
+                              className={`text-xs px-3 py-1.5 rounded-xl font-sans font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                                isSelected 
+                                  ? "bg-teal-dark dark:bg-teal-brand text-white dark:text-slate-950 border-teal-brand shadow-3xs scale-[1.02]" 
+                                  : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-teal-brand/40"
+                              }`}
+                            >
+                              <span>{artType.icon}</span>
+                              <span>{artType.label}</span>
                               {isSelected && <Check className="w-3.5 h-3.5" />}
                             </button>
                           );
@@ -2363,69 +2412,80 @@ export default function App() {
                   )}
                 </div>
 
-                {/* Available Supplies & Example Technologies (Dynamic based on Category & Focus) */}
-                <div className="space-y-2 sm:col-span-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-secondary dark:text-slate-300 uppercase font-sans">
-                        {activeSupplyCategoryKey === "Software" ? "Available Software & Platforms" : "Available Supplies & Components"}
-                      </span>
-                      <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-md bg-teal-brand/20 text-teal-dark dark:text-teal-brand border border-teal-brand/30">
-                        Domain: {activeSupplyCategoryKey}
-                      </span>
-                    </div>
-                    <span className="text-[9px] text-slate-400 font-mono">Select all that apply</span>
-                  </div>
-
-                  <div className="flex flex-wrap gap-1.5">
-                    {currentSupplyOptions.map((opt) => {
-                      const isSelected = selectedSupplies.includes(opt.id);
-                      return (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          onClick={() => toggleSupply(opt.id)}
-                          title={opt.description || opt.label}
-                          className={`text-xs px-2.5 py-1.5 rounded-xl font-sans font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
-                            isSelected 
-                              ? "bg-teal-dark dark:bg-teal-brand text-white dark:text-slate-950 border-teal-brand shadow-3xs micro-glow-teal scale-[1.02]" 
-                              : "bg-white dark:bg-slate-800 text-secondary dark:text-slate-300 border-black/[0.08] dark:border-slate-700 hover:border-teal-brand/30"
-                          }`}
-                        >
-                          <span>{opt.icon}</span>
-                          <span>{opt.label}</span>
-                          {isSelected ? <Check className="w-3.5 h-3.5 text-teal-brand dark:text-slate-950 font-bold" /> : <span className="text-slate-400 text-[10px]">+</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  {/* Custom Supply / Software Input if "Other" is selected */}
-                  {selectedSupplies.includes("Other") && (
-                    <div className="pt-2 space-y-2 animate-fade-in">
-                      <input
-                        type="text"
-                        placeholder={
-                          activeSupplyCategoryKey === "Software"
-                            ? "Type custom software/platform (e.g., Godot, Scratch JR, Scratch 3.0, Roblox, App Inventor)"
-                            : activeSupplyCategoryKey === "Circuitry"
-                            ? "Type custom circuitry/components (e.g., 555 Timer, Solar Panel, Transistors, 9V Motor)"
-                            : "Type custom tools/materials (e.g., 3D Printer, Lego Robotics, Clay, Water Pumps)"
-                        }
-                        value={customSuppliesInput}
-                        onChange={(e) => setCustomSuppliesInput(e.target.value)}
-                        className="text-xs px-3.5 py-2 border border-teal-brand/50 rounded-xl bg-white dark:bg-slate-800 w-full focus:outline-none focus:ring-2 focus:ring-teal-brand/30 focus:border-teal-brand font-sans text-teal-dark dark:text-teal-brand font-semibold shadow-3xs"
-                      />
-
-                      <div className="p-2.5 bg-sky-50 dark:bg-sky-950/40 border border-sky-300/40 dark:border-sky-800 rounded-xl text-[10px] text-sky-900 dark:text-sky-200 font-sans flex items-start gap-2">
-                        <Search className="w-3.5 h-3.5 text-sky-500 shrink-0 mt-0.5" />
-                        <p className="leading-snug">
-                          <strong>🔍 Google Search Grounding Active:</strong> Lyrah will search Google using <em>"{activeSupplyCategoryKey}"</em> + your custom keywords from the lesson plan to create, research real data on, and perfect the most realistic solution with technical feasibility checks & alternatives.
-                        </p>
+                {/* Available Supplies & Example Technologies (Dynamic based on Category & Focus) - Hidden until plan is uploaded */}
+                {hasPlanUploaded ? (
+                  <div className="space-y-2 sm:col-span-2 animate-fade-in">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-secondary dark:text-slate-300 uppercase font-sans">
+                          {activeSupplyCategoryKey === "Software" || activeSupplyCategoryKey === "DigitalArt" ? "Available Software & Platforms" : "Available Supplies & Components"}
+                        </span>
+                        <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-md bg-teal-brand/20 text-teal-dark dark:text-teal-brand border border-teal-brand/30">
+                          Domain: {activeSupplyCategoryKey === "DigitalArt" ? "Digital Art" : activeSupplyCategoryKey === "FineArt" ? "Fine Art" : activeSupplyCategoryKey}
+                        </span>
                       </div>
+                      <span className="text-[9px] text-slate-400 font-mono">Select option</span>
                     </div>
-                  )}
-                </div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                      {currentSupplyOptions.map((opt) => {
+                        const isSelected = selectedSupplies.includes(opt.id);
+                        return (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => toggleSupply(opt.id)}
+                            title={opt.description || opt.label}
+                            className={`text-xs px-2.5 py-1.5 rounded-xl font-sans font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
+                              isSelected 
+                                ? "bg-teal-dark dark:bg-teal-brand text-white dark:text-slate-950 border-teal-brand shadow-3xs micro-glow-teal scale-[1.02]" 
+                                : "bg-white dark:bg-slate-800 text-secondary dark:text-slate-300 border-black/[0.08] dark:border-slate-700 hover:border-teal-brand/30"
+                            }`}
+                          >
+                            <span>{opt.icon}</span>
+                            <span>{opt.label}</span>
+                            {isSelected ? <Check className="w-3.5 h-3.5 text-teal-brand dark:text-slate-950 font-bold" /> : <span className="text-slate-400 text-[10px]">+</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Custom Supply / Software Input if "Other" is selected */}
+                    {selectedSupplies.includes("Other") && (
+                      <div className="pt-2 space-y-2 animate-fade-in">
+                        <input
+                          type="text"
+                          placeholder={
+                            activeSupplyCategoryKey === "Software" || activeSupplyCategoryKey === "DigitalArt"
+                              ? "Type custom software/platform (e.g., Canva, Godot, Scratch JR, Scratch 3.0, Roblox, App Inventor)"
+                              : activeSupplyCategoryKey === "Circuitry"
+                              ? "Type custom circuitry/components (e.g., 555 Timer, Solar Panel, Transistors, 9V Motor)"
+                              : "Type custom tools/materials (e.g., 3D Printer, Lego Robotics, Clay, Water Pumps)"
+                          }
+                          value={customSuppliesInput}
+                          onChange={(e) => setCustomSuppliesInput(e.target.value)}
+                          className="text-xs px-3.5 py-2 border border-teal-brand/50 rounded-xl bg-white dark:bg-slate-800 w-full focus:outline-none focus:ring-2 focus:ring-teal-brand/30 focus:border-teal-brand font-sans text-teal-dark dark:text-teal-brand font-semibold shadow-3xs"
+                        />
+
+                        <div className="p-2.5 bg-sky-50 dark:bg-sky-950/40 border border-sky-300/40 dark:border-sky-800 rounded-xl text-[10px] text-sky-900 dark:text-sky-200 font-sans flex items-start gap-2">
+                          <Search className="w-3.5 h-3.5 text-sky-500 shrink-0 mt-0.5" />
+                          <p className="leading-snug">
+                            <strong>🔍 Google Search Grounding Active:</strong> Lyrah will search Google using <em>"{activeSupplyCategoryKey}"</em> + your custom keywords from the lesson plan to create, research real data on, and perfect the most realistic solution with technical feasibility checks & alternatives.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2 sm:col-span-2">
+                    <div className="p-3.5 bg-teal-light/20 dark:bg-teal-brand/10 border border-teal-brand/30 rounded-2xl text-center text-xs font-sans text-teal-dark dark:text-teal-brand flex items-center justify-center gap-2.5 animate-fade-in shadow-2xs">
+                      <Sparkles className="w-4 h-4 text-amber-500 shrink-0 animate-pulse" />
+                      <span className="font-semibold leading-relaxed">
+                        Upload or paste your curriculum plan above. Lyrah will read your document, auto-detect the domain, and reveal matching subcategories & supplies.
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Preferences editable showcase with adaptive memory */}
@@ -3957,13 +4017,8 @@ export default function App() {
               {/* Modal Header */}
               <div className="bg-teal-dark px-5 py-4 text-white flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-teal-brand/20 border border-teal-brand/40 overflow-hidden flex items-center justify-center p-0.5 shrink-0">
-                    <img 
-                      src="/src/assets/images/lyrah_logo_1786276082567.jpg" 
-                      alt="Lyrah Mascot Logo" 
-                      className="w-full h-full object-contain rounded-lg"
-                      referrerPolicy="no-referrer"
-                    />
+                  <div className="w-8 h-8 rounded-xl bg-teal-brand/20 border border-teal-brand/40 overflow-hidden flex items-center justify-center shrink-0">
+                    <Sparkles className="w-4 h-4 text-teal-brand" />
                   </div>
                   <div>
                     <h3 className="text-xs font-bold font-sans uppercase tracking-wide">Lyrah AI Co-Teacher</h3>
@@ -4003,13 +4058,8 @@ export default function App() {
             }`}
             id="lyra-copilot-sparkle-trigger"
           >
-            <div className="w-6 h-6 rounded-full overflow-hidden bg-teal-brand/20 border border-amber-300/60 shrink-0 p-0.5">
-              <img 
-                src="/src/assets/images/lyrah_logo_1786276082567.jpg" 
-                alt="Lyrah Avatar" 
-                className="w-full h-full object-contain rounded-full"
-                referrerPolicy="no-referrer"
-              />
+            <div className="w-6 h-6 rounded-full overflow-hidden bg-teal-brand/20 border border-amber-300/60 shrink-0 flex items-center justify-center">
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
             </div>
             <span className="font-sans font-bold text-xs pr-0.5">
               {copilotOpen ? "Close Lyrah AI" : "Ask Lyrah AI"}

@@ -76,14 +76,31 @@ export const CATEGORY_SUPPLIES: Record<string, SupplyOption[]> = {
     { id: "Other", label: "Other", icon: "➕", description: "Custom lab equipment" }
   ],
   Art: [
+    { id: "Canva", label: "Canva", icon: "🎨", description: "Digital design, graphics, slide decks & posters" },
     { id: "Cardstock & Paper", label: "Cardstock & Paper", icon: "📄", description: "Heavyweight craft paper" },
-    { id: "Clay & Playdough", label: "Clay & Playdough", icon: "🎨", description: "Sculpting & mold clay" },
-    { id: "Markers & Paint", label: "Markers & Paint", icon: "🖌️", description: "Washable tempera & acrylic" },
-    { id: "Scissors & Tape", label: "Scissors & Tape", icon: "✂️", description: "Safety scissors & masking tape" },
-    { id: "Googly Eyes & Decor", label: "Craft Decor", icon: "👀", description: "Feathers, sequins & pompoms" },
-    { id: "Pipe Cleaners", label: "Pipe Cleaners", icon: "➰", description: "Flexible chenille stems" },
-    { id: "Art Supplies", label: "Art Supplies", icon: "🎭", description: "General classroom art bin" },
+    { id: "Clay & Sculpting", label: "Clay & Sculpting", icon: "🏺", description: "Sculpting clay, air-dry clay & playdough" },
+    { id: "Paints & Brushes", label: "Paints & Brushes", icon: "🖌️", description: "Washable tempera & acrylic" },
+    { id: "Markers & Pastels", label: "Markers & Pastels", icon: "🖍️", description: "Coloring markers & oil pastels" },
+    { id: "Scissors & Adhesives", label: "Scissors & Adhesives", icon: "✂️", description: "Safety scissors & tape" },
     { id: "Other", label: "Other", icon: "➕", description: "Custom art materials" }
+  ],
+  DigitalArt: [
+    { id: "Canva", label: "Canva", icon: "🎨", description: "Digital design, graphics, slide decks & posters" },
+    { id: "Digital Drawing Tablet", label: "Drawing Tablet", icon: "✏️", description: "Stylus & digital canvas software" },
+    { id: "Tinkercad 3D Design", label: "Tinkercad 3D", icon: "🧊", description: "3D digital modeling & design" },
+    { id: "Procreate / Sketchbook", label: "Procreate / Sketchbook", icon: "🖌️", description: "Digital painting & illustration" },
+    { id: "Pixel Art / Piskel", label: "Pixel Art / Piskel", icon: "👾", description: "Sprite design & 2D pixel art" },
+    { id: "Scratch Vector Paint", label: "Scratch Paint Editor", icon: "🚀", description: "Vector graphic sprite customization" },
+    { id: "Other", label: "Other", icon: "➕", description: "Custom digital art application" }
+  ],
+  FineArt: [
+    { id: "Cardstock & Paper", label: "Cardstock & Paper", icon: "📄", description: "Heavyweight craft paper" },
+    { id: "Clay & Sculpting", label: "Clay & Sculpting", icon: "🏺", description: "Sculpting clay, air-dry clay & playdough" },
+    { id: "Paints & Brushes", label: "Paints & Brushes", icon: "🖌️", description: "Washable tempera & acrylics" },
+    { id: "Markers & Pastels", label: "Markers & Pastels", icon: "🖍️", description: "Coloring markers & oil pastels" },
+    { id: "Scissors & Adhesives", label: "Scissors & Adhesives", icon: "✂️", description: "Safety scissors, glue & tape" },
+    { id: "Craft Decor & Textiles", label: "Craft Decor", icon: "👀", description: "Felt, pipe cleaners, feathers & sequins" },
+    { id: "Other", label: "Other", icon: "➕", description: "Custom fine art supplies" }
   ],
   Math: [
     { id: "Graph Paper", label: "Graph Paper", icon: "📊", description: "Grid coordinate sheets" },
