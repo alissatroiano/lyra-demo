@@ -1,6 +1,7 @@
 import React from "react";
 import { Sparkles, ArrowRight, Layers, Activity, Palette, HelpCircle, Link2Off, Check, Database, FileCode, BookOpen, LogIn, Clock, Users, Briefcase } from "lucide-react";
-import { LyraMark } from "./LyraMark";
+import { RobotBunnyMascot } from "../App";
+import { CurriculumCorePillars } from "./CurriculumCorePillars";
 
 interface LandingPageProps {
   onLaunchStudio: () => void;
@@ -18,7 +19,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   return (
     <main className="px-6 sm:px-8 py-8 space-y-12 animate-fade-in flex-1 max-w-7xl mx-auto w-full">
       {/* Landing Hero Section */}
-      <header className="star-field chart-grid py-10 px-6 sm:px-10 relative overflow-hidden bg-gradient-to-b from-teal-light/30 via-teal-light/10 to-transparent dark:from-cyber-bg dark:via-cyber-bg/60 dark:to-transparent rounded-3xl border border-teal-brand/15 dark:border-slate-800 shadow-3xs">
+      <header className="py-10 px-6 sm:px-10 relative overflow-hidden bg-gradient-to-b from-teal-light/30 via-teal-light/10 to-transparent dark:from-slate-900/90 dark:via-slate-900/40 dark:to-transparent rounded-3xl border border-teal-brand/15 dark:border-slate-800 shadow-3xs">
         <div className="absolute top-0 right-0 w-64 h-64 bg-teal-brand/10 rounded-full blur-3xl pointer-events-none" />
         
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 relative z-10">
@@ -29,13 +30,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
 
             <h1 className="font-display text-3.5xl sm:text-5xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
-              Stop rebuilding your lesson <span className="text-teal-700 dark:text-teal-brand underline decoration-amber-400 dark:decoration-amber-500 underline-offset-6">every Sunday night</span>
+              Transform Plain STEM Lessons into <span className="text-teal-700 dark:text-teal-brand underline decoration-amber-400 dark:decoration-amber-500 underline-offset-6">Interactive Visual Adventures</span>
             </h1>
 
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans font-normal">
-              Paste in the curriculum you already have. Get slides, a hands-on lab checklist, a
-              printable worksheet with the answer key, and a review game — with the dead video
-              links already flagged. Ready to teach, not ready to edit for two hours.
+              Lyrah automatically restructures dense science articles, raw textbooks, and outline PDFs into classroom-ready smartboard slides, hands-on engineering labs, Nana Banana Pro visual diagrams, and interactive quizzes.
             </p>
 
             <div className="pt-2 flex flex-wrap items-center gap-3">
@@ -71,12 +70,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
           </div>
 
-          {/* The constellation the product is named for */}
-          <div className="star-field self-center md:self-auto shrink-0 bg-cyber-bg border border-teal-brand/25 rounded-3xl p-6 shadow-md relative">
-            <LyraMark className="w-32 h-32 sm:w-40 sm:h-40 text-teal-brand relative" />
-            <div className="mt-3 text-center relative">
-              <span className="text-[10px] font-extrabold font-mono text-teal-brand bg-teal-brand/15 border border-teal-brand/30 px-2.5 py-1 rounded-full uppercase tracking-[0.15em]">
-                Lyra &middot; α Lyrae
+          {/* Mascot Illustration */}
+          <div className="self-center md:self-auto shrink-0 bg-white/80 dark:bg-slate-900/90 border border-teal-brand/20 dark:border-slate-800 rounded-3xl p-6 shadow-md animate-float relative">
+            <RobotBunnyMascot className="w-32 h-32 sm:w-36 sm:h-36" />
+            <div className="mt-3 text-center">
+              <span className="text-[10px] font-extrabold font-mono text-teal-900 dark:text-teal-brand bg-teal-light/60 dark:bg-teal-brand/20 px-2.5 py-1 rounded-full uppercase tracking-wide">
+                Lyrah AI Co-Teacher
               </span>
             </div>
           </div>
@@ -188,6 +187,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           ))}
         </div>
       </section>
+
+      {/* Curriculum Core Pillars - Automatic Index Card Carousel */}
+      <CurriculumCorePillars />
 
       {/* Complete Lesson Suite Showcase */}
       <div className="space-y-6">

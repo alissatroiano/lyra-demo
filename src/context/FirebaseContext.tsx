@@ -47,6 +47,8 @@ interface FirebaseContextType {
     tech?: string,
     instructorNotes?: string
   ) => Promise<void>;
+  updateLyrahMemory: (memoryNote: string) => Promise<void>;
+  clearLyrahMemory: () => Promise<void>;
   subscribeUser: (plan: string) => Promise<void>;
 }
 
@@ -377,6 +379,66 @@ async function prepareLessonForFirestore(lessonData: ProcessedLesson, uid: strin
     }
   };
 
+  const updateLyrahMemory = async (memoryNote: string): Promise<void> => {
+    if (!auth.currentUser || !memoryNote.trim()) return;
+    setDbLoading(true);
+    try {
+      const userDocRef = doc(db, 'users', auth.currentUser.uid);
+      const existingHistory: string[] = profile?.learningHistory || [];
+      // Avoid duplicate exact notes
+      if (existingHistory.includes(memoryNote.trim())) return;
+
+      const newHistory = [...existingHistory, memoryNote.trim()];
+      const combinedNotes = newHistory.join(". ");
+
+      const updatedFields: any = {
+        learningHistory: newHistory,
+        instructorNotes: combinedNotes,
+        updatedAt: serverTimestamp()
+      };
+
+      await setDoc(userDocRef, updatedFields, { merge: true });
+
+      setProfile((prev: any) => ({
+        ...(prev || {}),
+        ...updatedFields,
+        uid: auth.currentUser ? auth.currentUser.uid : ''
+      }));
+    } catch (err: any) {
+      console.error("Error updating Lyrah's instructor memory:", err);
+      handleFirestoreError(err, OperationType.UPDATE, `users/${auth.currentUser.uid}`);
+    } finally {
+      setDbLoading(false);
+    }
+  };
+
+  const clearLyrahMemory = async (): Promise<void> => {
+    if (!auth.currentUser) return;
+    setDbLoading(true);
+    try {
+      const userDocRef = doc(db, 'users', auth.currentUser.uid);
+      const updatedFields: any = {
+        learningHistory: [],
+        instructorNotes: "",
+        extractedStyleNotes: "",
+        updatedAt: serverTimestamp()
+      };
+
+      await setDoc(userDocRef, updatedFields, { merge: true });
+
+      setProfile((prev: any) => ({
+        ...(prev || {}),
+        ...updatedFields,
+        uid: auth.currentUser ? auth.currentUser.uid : ''
+      }));
+    } catch (err: any) {
+      console.error("Error clearing Lyrah's instructor memory:", err);
+      handleFirestoreError(err, OperationType.UPDATE, `users/${auth.currentUser.uid}`);
+    } finally {
+      setDbLoading(false);
+    }
+  };
+
   const subscribeUser = async (plan: string): Promise<void> => {
     if (!auth.currentUser) {
       throw new Error("You must be signed in to subscribe.");
@@ -426,6 +488,8 @@ async function prepareLessonForFirestore(lessonData: ProcessedLesson, uid: strin
         deleteLessonFromCloud,
         loadLessons,
         saveInstructorPreferences,
+        updateLyrahMemory,
+        clearLyrahMemory,
         subscribeUser
       }}
     >

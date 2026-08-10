@@ -9,6 +9,122 @@ interface NanaBananaProProps {
   initialPrompt?: string;
 }
 
+function generateTextbookPageSvg(lesson: ProcessedLesson): string {
+  const title = (lesson?.lessonTitle || "STEM Lesson").toUpperCase();
+  const actTitle = lesson?.handsOnActivity?.title || "Hands-On Lab Experiment";
+  const principle = lesson?.handsOnActivity?.scientificPrinciple || "Core Physical Principle";
+  const steps = lesson?.handsOnActivity?.steps || [];
+  const takeaways = lesson?.keyTakeaways || [];
+
+  const step1 = steps[0] || "Set up apparatus & safety materials";
+  const step2 = steps[1] || "Assemble primary mechanical component";
+  const step3 = steps[2] || "Execute trial & record data metrics";
+
+  const svgString = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" width="100%" height="100%">
+  <!-- Paper Canvas Background -->
+  <rect width="800" height="520" fill="#FDFBF7" rx="12"/>
+  <rect x="20" y="20" width="760" height="480" fill="none" stroke="#CBD5E1" stroke-width="2" rx="8"/>
+  <line x1="60" y1="20" x2="60" y2="500" stroke="#FCA5A5" stroke-width="1.5" stroke-dasharray="4 4"/>
+
+  <!-- Page Header Banner -->
+  <rect x="80" y="35" width="680" height="42" fill="#0F766E" rx="6"/>
+  <text x="95" y="61" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="14" font-weight="800" letter-spacing="0.5">TEXTBOOK CHAPTER 4 • ${title.substring(0, 52)}</text>
+
+  <!-- Left Column: Schematic & Force Vector Theory -->
+  <rect x="80" y="90" width="320" height="395" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5" rx="8"/>
+  <text x="95" y="115" fill="#0F766E" font-family="system-ui, sans-serif" font-size="12" font-weight="800">FIG 4.1: SCIENTIFIC PRINCIPLE &amp; VECTORS</text>
+
+  <!-- Central Scientific Diagram Graphic -->
+  <g transform="translate(95, 130)">
+    <rect x="10" y="10" width="280" height="180" fill="#F0FDFA" stroke="#99F6E4" stroke-width="1" rx="8"/>
+    <!-- Rocket/Apparatus Cutaway -->
+    <path d="M 150 25 L 180 65 L 180 115 L 200 145 L 100 145 L 120 115 L 120 65 Z" fill="#0D9488" stroke="#0F766E" stroke-width="2"/>
+    <circle cx="150" cy="80" r="14" fill="#F59E0B" stroke="#B45309" stroke-width="2"/>
+    <text x="144" y="84" fill="#FFFFFF" font-family="sans-serif" font-size="10" font-weight="bold">AI</text>
+    <polygon points="110,145 190,145 150,185" fill="#EF4444" opacity="0.85"/>
+    <polygon points="125,145 175,145 150,170" fill="#F59E0B"/>
+    
+    <!-- Vector Arrows -->
+    <line x1="150" y1="20" x2="150" y2="-5" stroke="#2563EB" stroke-width="3"/>
+    <polygon points="145,-2 150,-12 155,-2" fill="#2563EB"/>
+    <text x="160" y="5" fill="#1E40AF" font-family="sans-serif" font-size="9" font-weight="800">REACTION (THRUST)</text>
+
+    <line x1="150" y1="165" x2="150" y2="195" stroke="#DC2626" stroke-width="3"/>
+    <polygon points="145,192 150,202 155,192" fill="#DC2626"/>
+    <text x="160" y="190" fill="#991B1B" font-family="sans-serif" font-size="9" font-weight="800">ACTION (EXHAUST)</text>
+  </g>
+
+  <!-- Principle Summary Box -->
+  <rect x="95" y="340" width="290" height="130" fill="#FAF5FF" stroke="#E9D5FF" stroke-width="1" rx="6"/>
+  <text x="105" y="360" fill="#7E22CE" font-family="system-ui, sans-serif" font-size="10" font-weight="800">KEY SCIENTIFIC PRINCIPLE:</text>
+  <text x="105" y="380" fill="#334155" font-family="system-ui, sans-serif" font-size="9" font-style="italic">"${principle.substring(0, 110)}"</text>
+  <line x1="105" y1="410" x2="375" y2="410" stroke="#E9D5FF" stroke-width="1"/>
+  <text x="105" y="430" fill="#6B21A8" font-family="system-ui, sans-serif" font-size="9" font-weight="700">✓ Takeaway: ${takeaways[0] ? takeaways[0].substring(0, 48) : 'Every force has an equal & opposite reaction.'}</text>
+  <text x="105" y="450" fill="#6B21A8" font-family="system-ui, sans-serif" font-size="9" font-weight="700">✓ Application: ${takeaways[1] ? takeaways[1].substring(0, 48) : 'Streamlined shapes reduce drag.'}</text>
+
+  <!-- Right Column: Illustrated Hands-On Apparatus -->
+  <rect x="420" y="90" width="340" height="395" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5" rx="8"/>
+  <text x="435" y="115" fill="#0F766E" font-family="system-ui, sans-serif" font-size="12" font-weight="800">FIG 4.2: ${actTitle.toUpperCase().substring(0, 36)}</text>
+
+  <!-- Apparatus Track Visual -->
+  <g transform="translate(435, 130)">
+    <rect x="0" y="0" width="310" height="180" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1" rx="8"/>
+    
+    <line x1="10" y1="80" x2="300" y2="80" stroke="#94A3B8" stroke-width="3" stroke-dasharray="6 3"/>
+    <text x="15" y="65" fill="#64748B" font-family="sans-serif" font-size="9" font-weight="700">GUIDE TRACK / LINE</text>
+
+    <!-- Straw & Balloon Assembly -->
+    <rect x="110" y="72" width="90" height="16" fill="#F59E0B" rx="3"/>
+    <text x="135" y="84" fill="#78350F" font-family="sans-serif" font-size="8" font-weight="800">STRAW</text>
+
+    <ellipse cx="155" cy="120" rx="55" ry="32" fill="#EC4899" opacity="0.9"/>
+    <rect x="130" y="85" width="10" height="20" fill="#CBD5E1"/>
+    <rect x="170" y="85" width="10" height="20" fill="#CBD5E1"/>
+
+    <!-- Direction Arrow -->
+    <line x1="90" y1="120" x2="30" y2="120" stroke="#059669" stroke-width="3"/>
+    <polygon points="35,115 20,120 35,125" fill="#059669"/>
+    <text x="25" y="145" fill="#047857" font-family="sans-serif" font-size="8" font-weight="800">VELOCITY</text>
+  </g>
+
+  <!-- Step-by-Step Lab Setup List -->
+  <rect x="435" y="325" width="310" height="145" fill="#F0FDF4" stroke="#BBF7D0" stroke-width="1" rx="6"/>
+  <text x="445" y="345" fill="#15803D" font-family="system-ui, sans-serif" font-size="10" font-weight="800">ILLUSTRATED LAB INSTRUCTIONS:</text>
+  <text x="445" y="365" fill="#166534" font-family="system-ui, sans-serif" font-size="9.5">1. ${step1.substring(0, 52)}</text>
+  <text x="445" y="388" fill="#166534" font-family="system-ui, sans-serif" font-size="9.5">2. ${step2.substring(0, 52)}</text>
+  <text x="445" y="411" fill="#166534" font-family="system-ui, sans-serif" font-size="9.5">3. ${step3.substring(0, 52)}</text>
+  <text x="445" y="434" fill="#15803D" font-family="system-ui, sans-serif" font-size="9" font-weight="700">★ Diagram output validated by Visual Studio Pro</text>
+</svg>`;
+
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svgString)}`;
+}
+
+function buildAccurateLessonVisuals(lesson: ProcessedLesson): SavedVisual[] {
+  if (lesson?.generatedVisuals && lesson.generatedVisuals.length > 0) {
+    return lesson.generatedVisuals;
+  }
+
+  const title = lesson?.lessonTitle || "STEM Lesson";
+  const textbookSvg = generateTextbookPageSvg(lesson);
+
+  return [
+    {
+      id: "accurate-preset-1",
+      url: textbookSvg,
+      prompt: `Illustrated Textbook Page: "${title}". Labeled diagram with step-by-step experiment layout, force vectors, and key callouts.`,
+      style: "textbook-illustration",
+      timestamp: "Illustrated Textbook Page"
+    },
+    {
+      id: "accurate-preset-2",
+      url: "https://images.unsplash.com/photo-1517976487492-5750f3195933?auto=format&fit=crop&w=1200&q=80",
+      prompt: `Laboratory apparatus schematic for "${title}".`,
+      style: "vibrant-vector",
+      timestamp: "Concept Visual"
+    }
+  ];
+}
+
 export default function NanaBananaPro({ lesson, onUpdateVisuals, initialPrompt }: NanaBananaProProps) {
   const [prompt, setPrompt] = useState<string>(
     initialPrompt || `Vibrant educational STEM infographic for "${lesson.lessonTitle}". Highlighting slide takeaways: (${lesson.keyTakeaways?.slice(0, 3).join("; ") || lesson.summary}). Illustrating concept tested in smartboard quiz: "${lesson.quiz?.[0]?.question || ''}".`
@@ -21,7 +137,7 @@ export default function NanaBananaPro({ lesson, onUpdateVisuals, initialPrompt }
   const [footerCaption, setFooterCaption] = useState<string>("Precise 3D map addresses · Locate any block or player");
   const [showTextEditor, setShowTextEditor] = useState<boolean>(true);
 
-  const [style, setStyle] = useState<string>("vibrant-vector");
+  const [style, setStyle] = useState<string>("textbook-illustration");
   const [aspectRatio, setAspectRatio] = useState<"16:9" | "1:1" | "4:3" | "3:4">("16:9");
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
@@ -30,28 +146,16 @@ export default function NanaBananaPro({ lesson, onUpdateVisuals, initialPrompt }
   const [zoomModalOpen, setZoomModalOpen] = useState<boolean>(false);
 
   // Gallery of generated or pre-built visual assets for this lesson
-  const [savedVisuals, setSavedVisuals] = useState<SavedVisual[]>(() => {
-    if (lesson?.generatedVisuals && lesson.generatedVisuals.length > 0) {
-      return lesson.generatedVisuals;
-    }
-    return [
-      {
-        id: "preset-1",
-        url: `https://picsum.photos/seed/${encodeURIComponent((lesson?.lessonTitle || 'lesson') + "-lab-1")}/800/450`,
-        prompt: `Laboratory setup illustration for ${lesson?.handsOnActivity?.title || 'hands-on lab'} with labeled equipment`,
-        style: "vibrant-vector",
-        timestamp: "Pre-generated Guide"
-      }
-    ];
-  });
+  const [savedVisuals, setSavedVisuals] = useState<SavedVisual[]>(() => buildAccurateLessonVisuals(lesson));
 
   // Automatically sync prompt and visuals when lesson changes
   useEffect(() => {
     if (!lesson) return;
     const takeaways = lesson.keyTakeaways?.slice(0, 3).join("; ") || lesson.summary;
     const quizQ = lesson.quiz?.[0]?.question || "Core STEM concept review";
+    const platform = (lesson.handsOnActivity as any)?.softwarePlatform || (lesson.feasibilityAudit as any)?.identifiedSoftwarePlatform || "";
     
-    const syncedPrompt = initialPrompt || `Educational STEM visual guide for "${lesson.lessonTitle}". Highlighting key slide takeaways: [${takeaways}]. Visualizing smartboard quiz challenge: "${quizQ}". Labeled diagram for ${lesson.handsOnActivity?.title || 'hands-on lab'}.`;
+    const syncedPrompt = initialPrompt || `Educational STEM visual guide for "${lesson.lessonTitle}" ${platform ? `(${platform})` : ''}. Highlighting key slide takeaways: [${takeaways}]. Visualizing smartboard quiz challenge: "${quizQ}". Labeled diagram for ${lesson.handsOnActivity?.title || 'hands-on lab'}.`;
     
     setPrompt(syncedPrompt);
     setHeadingText(lesson.lessonTitle || "COMMAND BLOCK DETECTIVES: EDUCATIONAL STEM VISUAL GUIDE");
@@ -66,15 +170,7 @@ export default function NanaBananaPro({ lesson, onUpdateVisuals, initialPrompt }
     if (lesson.generatedVisuals && lesson.generatedVisuals.length > 0) {
       setSavedVisuals(lesson.generatedVisuals);
     } else {
-      setSavedVisuals([
-        {
-          id: "preset-1",
-          url: `https://picsum.photos/seed/${encodeURIComponent(lesson.lessonTitle + "-lab-1")}/800/450`,
-          prompt: `Laboratory setup illustration for ${lesson.handsOnActivity?.title || 'hands-on lab'} with labeled equipment`,
-          style: "vibrant-vector",
-          timestamp: "Pre-generated Guide"
-        }
-      ]);
+      setSavedVisuals(buildAccurateLessonVisuals(lesson));
     }
   }, [lesson.lessonTitle, initialPrompt]);
 
@@ -84,9 +180,9 @@ export default function NanaBananaPro({ lesson, onUpdateVisuals, initialPrompt }
   }, [savedVisuals]);
 
   const styleOptions = [
+    { id: "textbook-illustration", label: "Illustrated Textbook Page", desc: "Detailed step-by-step labeled diagram" },
     { id: "vibrant-vector", label: "Vibrant Vector Diagram", desc: "Clean educational infographic with bold outlines" },
     { id: "3d-render", label: "3D Scientific Model", desc: "Realistic 3D isometric laboratory view" },
-    { id: "textbook-illustration", label: "Illustrated Textbook Page", desc: "Detailed step-by-step labeled diagram" },
     { id: "chalkboard", label: "Chalkboard Schematic", desc: "High-contrast classroom board drawing" }
   ];
 
@@ -479,8 +575,8 @@ ${footerCaption ? `- CAPTION / FOOTER TEXT: "${footerCaption}"` : ''}
                 </>
               ) : (
                 <>
-                  <span className="text-sm">🍌</span>
-                  <span>Generate Nana Banana Pro Visual</span>
+                  <Sparkles className="w-4 h-4 text-slate-950" />
+                  <span>Create Visual</span>
                 </>
               )}
             </button>

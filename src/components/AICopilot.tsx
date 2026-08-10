@@ -25,6 +25,7 @@ import {
   PhoneOff
 } from "lucide-react";
 import { ProcessedLesson } from "../types";
+import { useFirebase } from "../context/FirebaseContext";
 
 interface AICopilotProps {
   lesson: ProcessedLesson;
@@ -41,6 +42,8 @@ interface ChatMessage {
 }
 
 export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps) {
+  const { profile, updateLyrahMemory, clearLyrahMemory } = useFirebase();
+
   // Main Tab within AI Workspace
   const [activeSubTab, setActiveSubTab] = useState<"chat" | "images" | "video" | "voice">("chat");
 
@@ -102,7 +105,23 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
     setChatError("");
 
     try {
-      const systemInstruction = `${ROLES_SYSTEM_INSTRUCTIONS[chatRole]}\n\nActive Lesson Context:\n- Title: ${lesson.lessonTitle}\n- Summary: ${lesson.summary}\n- Takeaways: ${lesson.keyTakeaways.join(", ")}`;
+      const instructorMemoryString = [
+        profile?.instructorNotes,
+        profile?.extractedStyleNotes,
+        ...(profile?.learningHistory || [])
+      ].filter(Boolean).join(". ");
+
+      const systemInstruction = `${ROLES_SYSTEM_INSTRUCTIONS[chatRole]}
+
+Learned Instructor Directives & Style:
+${instructorMemoryString ? `"${instructorMemoryString}"` : "First session with this instructor. Observe and adapt to their preferences."}
+Target Grade: ${profile?.grade || "K-12"}
+Classroom Tech: ${profile?.tech || "Standard STEM Lab"}
+
+Active Lesson Context:
+- Title: ${lesson.lessonTitle}
+- Summary: ${lesson.summary}
+- Takeaways: ${lesson.keyTakeaways.join(", ")}`;
 
       const chatHistoryForAPI = [...messages, userMsg].map(m => ({
         role: m.role,
@@ -454,21 +473,9 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
     <div className="grid grid-cols-1 xl:grid-cols-12 gap-6" id="ai-copilot-container">
       {/* LEFT NAVIGATION SUBTABS COLUMN */}
       <div className="xl:col-span-3 flex flex-row xl:flex-col gap-2.5 bg-surface-0 border border-black/[0.05] rounded-2xl p-4 xl:p-4.5 overflow-x-auto shrink-0">
-        {/* Lyrah herself. The constellation is the logo; the mascot is the
-            character you talk to, so she lives with the copilot. She is holding
-            a lyre, which is the constellation. */}
-        <div className="hidden xl:flex items-center gap-3 border-b border-black/[0.05] pb-3 mb-2.5">
-          <div className="w-12 h-12 rounded-2xl bg-cyber-bg border border-teal-brand/40 flex items-center justify-center shrink-0 p-1 micro-glow-teal">
-            <img
-              src="/lyrah_logo.jpg"
-              alt="Lyrah, the AI co-teacher"
-              className="w-full h-full object-contain rounded-xl mix-blend-lighten"
-            />
-          </div>
-          <div>
-            <span className="text-[10px] font-bold text-teal-brand uppercase tracking-wider font-mono">Lyrah Copilot Hub</span>
-            <h4 className="text-xs font-bold text-teal-dark dark:text-slate-100 font-sans">AI Assistant Suite</h4>
-          </div>
+        <div className="hidden xl:block border-b border-black/[0.05] pb-3 mb-2.5">
+          <span className="text-[10px] font-bold text-teal-brand uppercase tracking-wider font-mono">Lyrah Copilot Hub</span>
+          <h4 className="text-xs font-bold text-teal-dark font-sans">AI Assistant Suite</h4>
         </div>
 
         {[
