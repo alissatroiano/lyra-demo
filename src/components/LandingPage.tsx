@@ -1,6 +1,7 @@
 import React from "react";
 import { Sparkles, ArrowRight, Layers, Activity, Palette, HelpCircle, Link2Off, Check, Database, FileCode, BookOpen, LogIn } from "lucide-react";
 import { RobotBunnyMascot } from "../App";
+import { CurriculumCorePillars } from "./CurriculumCorePillars";
 
 interface LandingPageProps {
   onLaunchStudio: () => void;
@@ -108,6 +109,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Curriculum Core Pillars - Automatic Index Card Carousel */}
+      <CurriculumCorePillars />
 
       {/* Complete Lesson Suite Showcase */}
       <div className="space-y-6">

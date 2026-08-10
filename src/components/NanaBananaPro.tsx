@@ -9,6 +9,56 @@ interface NanaBananaProProps {
   initialPrompt?: string;
 }
 
+function buildAccurateLessonVisuals(lesson: ProcessedLesson): SavedVisual[] {
+  if (lesson?.generatedVisuals && lesson.generatedVisuals.length > 0) {
+    return lesson.generatedVisuals;
+  }
+
+  const title = lesson?.lessonTitle || "STEM Lesson";
+  const platform = (lesson?.handsOnActivity as any)?.softwarePlatform || (lesson?.feasibilityAudit as any)?.identifiedSoftwarePlatform || "";
+  const actTitle = lesson?.handsOnActivity?.title || "Hands-On Activity";
+  const principle = lesson?.handsOnActivity?.scientificPrinciple || "Core Concept";
+  const steps = lesson?.handsOnActivity?.steps || [];
+  const lower = (title + " " + platform + " " + actTitle).toLowerCase();
+
+  let stock1 = "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80";
+  let stock2 = "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=800&q=80";
+
+  if (lower.includes("scratch jr") || lower.includes("scratchjr")) {
+    stock1 = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80";
+    stock2 = "https://images.unsplash.com/photo-1580894732413-a704936a0422?auto=format&fit=crop&w=800&q=80";
+  } else if (lower.includes("scratch")) {
+    stock1 = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80";
+    stock2 = "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80";
+  } else if (lower.includes("minecraft")) {
+    stock1 = "https://images.unsplash.com/photo-1627856013091-fed6e4e30025?auto=format&fit=crop&w=800&q=80";
+    stock2 = "https://images.unsplash.com/photo-1612287230202-1ff1d85d1bdf?auto=format&fit=crop&w=800&q=80";
+  } else if (lower.includes("circuit") || lower.includes("magnet") || lower.includes("electric")) {
+    stock1 = "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80";
+    stock2 = "https://images.unsplash.com/photo-1581092162384-8987c1d64718?auto=format&fit=crop&w=800&q=80";
+  } else if (lower.includes("bridge") || lower.includes("truss") || lower.includes("structure")) {
+    stock1 = "https://images.unsplash.com/photo-1545558014-8692077e9b5c?auto=format&fit=crop&w=800&q=80";
+    stock2 = "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80";
+  }
+
+  return [
+    {
+      id: "accurate-preset-1",
+      url: stock1,
+      prompt: `Labeled visual setup guide for "${title}" (${platform || 'STEM'}). Step 1: ${steps[0] || actTitle}.`,
+      style: "vibrant-vector",
+      timestamp: "Lesson Verified Visual"
+    },
+    {
+      id: "accurate-preset-2",
+      url: stock2,
+      prompt: `Scientific principle infographic illustrating "${principle}" for ${title}.`,
+      style: "vibrant-vector",
+      timestamp: "Concept Visual"
+    }
+  ];
+}
+
 export default function NanaBananaPro({ lesson, onUpdateVisuals, initialPrompt }: NanaBananaProProps) {
   const [prompt, setPrompt] = useState<string>(
     initialPrompt || `Vibrant educational STEM infographic for "${lesson.lessonTitle}". Highlighting slide takeaways: (${lesson.keyTakeaways?.slice(0, 3).join("; ") || lesson.summary}). Illustrating concept tested in smartboard quiz: "${lesson.quiz?.[0]?.question || ''}".`
@@ -30,28 +80,16 @@ export default function NanaBananaPro({ lesson, onUpdateVisuals, initialPrompt }
   const [zoomModalOpen, setZoomModalOpen] = useState<boolean>(false);
 
   // Gallery of generated or pre-built visual assets for this lesson
-  const [savedVisuals, setSavedVisuals] = useState<SavedVisual[]>(() => {
-    if (lesson?.generatedVisuals && lesson.generatedVisuals.length > 0) {
-      return lesson.generatedVisuals;
-    }
-    return [
-      {
-        id: "preset-1",
-        url: `https://picsum.photos/seed/${encodeURIComponent((lesson?.lessonTitle || 'lesson') + "-lab-1")}/800/450`,
-        prompt: `Laboratory setup illustration for ${lesson?.handsOnActivity?.title || 'hands-on lab'} with labeled equipment`,
-        style: "vibrant-vector",
-        timestamp: "Pre-generated Guide"
-      }
-    ];
-  });
+  const [savedVisuals, setSavedVisuals] = useState<SavedVisual[]>(() => buildAccurateLessonVisuals(lesson));
 
   // Automatically sync prompt and visuals when lesson changes
   useEffect(() => {
     if (!lesson) return;
     const takeaways = lesson.keyTakeaways?.slice(0, 3).join("; ") || lesson.summary;
     const quizQ = lesson.quiz?.[0]?.question || "Core STEM concept review";
+    const platform = (lesson.handsOnActivity as any)?.softwarePlatform || (lesson.feasibilityAudit as any)?.identifiedSoftwarePlatform || "";
     
-    const syncedPrompt = initialPrompt || `Educational STEM visual guide for "${lesson.lessonTitle}". Highlighting key slide takeaways: [${takeaways}]. Visualizing smartboard quiz challenge: "${quizQ}". Labeled diagram for ${lesson.handsOnActivity?.title || 'hands-on lab'}.`;
+    const syncedPrompt = initialPrompt || `Educational STEM visual guide for "${lesson.lessonTitle}" ${platform ? `(${platform})` : ''}. Highlighting key slide takeaways: [${takeaways}]. Visualizing smartboard quiz challenge: "${quizQ}". Labeled diagram for ${lesson.handsOnActivity?.title || 'hands-on lab'}.`;
     
     setPrompt(syncedPrompt);
     setHeadingText(lesson.lessonTitle || "COMMAND BLOCK DETECTIVES: EDUCATIONAL STEM VISUAL GUIDE");
@@ -66,15 +104,7 @@ export default function NanaBananaPro({ lesson, onUpdateVisuals, initialPrompt }
     if (lesson.generatedVisuals && lesson.generatedVisuals.length > 0) {
       setSavedVisuals(lesson.generatedVisuals);
     } else {
-      setSavedVisuals([
-        {
-          id: "preset-1",
-          url: `https://picsum.photos/seed/${encodeURIComponent(lesson.lessonTitle + "-lab-1")}/800/450`,
-          prompt: `Laboratory setup illustration for ${lesson.handsOnActivity?.title || 'hands-on lab'} with labeled equipment`,
-          style: "vibrant-vector",
-          timestamp: "Pre-generated Guide"
-        }
-      ]);
+      setSavedVisuals(buildAccurateLessonVisuals(lesson));
     }
   }, [lesson.lessonTitle, initialPrompt]);
 

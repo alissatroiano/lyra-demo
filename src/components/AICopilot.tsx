@@ -25,6 +25,7 @@ import {
   PhoneOff
 } from "lucide-react";
 import { ProcessedLesson } from "../types";
+import { useFirebase } from "../context/FirebaseContext";
 
 interface AICopilotProps {
   lesson: ProcessedLesson;
@@ -41,6 +42,8 @@ interface ChatMessage {
 }
 
 export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps) {
+  const { profile, updateLyrahMemory, clearLyrahMemory } = useFirebase();
+
   // Main Tab within AI Workspace
   const [activeSubTab, setActiveSubTab] = useState<"chat" | "images" | "video" | "voice">("chat");
 
@@ -102,7 +105,23 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
     setChatError("");
 
     try {
-      const systemInstruction = `${ROLES_SYSTEM_INSTRUCTIONS[chatRole]}\n\nActive Lesson Context:\n- Title: ${lesson.lessonTitle}\n- Summary: ${lesson.summary}\n- Takeaways: ${lesson.keyTakeaways.join(", ")}`;
+      const instructorMemoryString = [
+        profile?.instructorNotes,
+        profile?.extractedStyleNotes,
+        ...(profile?.learningHistory || [])
+      ].filter(Boolean).join(". ");
+
+      const systemInstruction = `${ROLES_SYSTEM_INSTRUCTIONS[chatRole]}
+
+Learned Instructor Directives & Style:
+${instructorMemoryString ? `"${instructorMemoryString}"` : "First session with this instructor. Observe and adapt to their preferences."}
+Target Grade: ${profile?.grade || "K-12"}
+Classroom Tech: ${profile?.tech || "Standard STEM Lab"}
+
+Active Lesson Context:
+- Title: ${lesson.lessonTitle}
+- Summary: ${lesson.summary}
+- Takeaways: ${lesson.keyTakeaways.join(", ")}`;
 
       const chatHistoryForAPI = [...messages, userMsg].map(m => ({
         role: m.role,

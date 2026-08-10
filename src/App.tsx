@@ -87,6 +87,8 @@ export default function App() {
     saveLessonToCloud, 
     deleteLessonFromCloud, 
     saveInstructorPreferences,
+    updateLyrahMemory,
+    clearLyrahMemory,
     subscribeUser,
     authLoading, 
     dbLoading 
@@ -338,16 +340,9 @@ export default function App() {
   const [selectedSupplies, setSelectedSupplies] = useState<string[]>(["Smart Board"]);
   const [customSuppliesInput, setCustomSuppliesInput] = useState<string>("");
 
-  // Helper to toggle supply selection
+  // Helper to toggle supply selection (Restricted to max 1 item for single selection consistency)
   const toggleSupply = (val: string) => {
-    setSelectedSupplies(prev => {
-      if (prev.includes(val)) {
-        const next = prev.filter(item => item !== val);
-        return next;
-      } else {
-        return [...prev, val];
-      }
-    });
+    setSelectedSupplies(prev => (prev.includes(val) ? [] : [val]));
   };
 
   // Curriculum Text Material fold state (Folded by default)
@@ -405,7 +400,7 @@ export default function App() {
     if (prevCategoryKeyRef.current !== activeSupplyCategoryKey) {
       prevCategoryKeyRef.current = activeSupplyCategoryKey;
       const available = CATEGORY_SUPPLIES[activeSupplyCategoryKey] || CATEGORY_SUPPLIES["Science"];
-      const defaultInit = available.slice(0, 3).map(s => s.id);
+      const defaultInit = available.slice(0, 1).map(s => s.id);
       setSelectedSupplies(defaultInit);
     }
   }, [activeSupplyCategoryKey]);
@@ -1148,53 +1143,62 @@ export default function App() {
       setSelectedGrade("9-12");
     }
 
-    // 2. Domain Category & Software/Platform Auto-Selection
-    const newSupplies: string[] = [];
+    // 2. Domain Category & Software/Platform Auto-Selection (Guarantees strictly ONE category and ONE software)
+    let detectedCat = "Science";
+    let detectedSupply: string | null = null;
 
     if (combined.includes("scratch jr") || combined.includes("scratchjr") || combined.includes("junior scratch")) {
-      setSelectedCategory("Gaming");
-      newSupplies.push("Scratch JR");
+      detectedCat = "Gaming";
+      detectedSupply = "Scratch JR";
     } else if (combined.includes("scratch 3") || combined.includes("scratch 3.0") || combined.includes("scratch") || combined.includes("sprite") || combined.includes("costume")) {
-      setSelectedCategory("Gaming");
-      newSupplies.push("Scratch 3.0");
+      detectedCat = "Gaming";
+      detectedSupply = "Scratch 3.0";
     } else if (combined.includes("minecraft") || combined.includes("redstone") || combined.includes("makecode agent") || combined.includes("creeper")) {
-      setSelectedCategory("Gaming");
-      newSupplies.push("Minecraft Education");
+      detectedCat = "Gaming";
+      detectedSupply = "Minecraft Education";
     } else if (combined.includes("roblox") || combined.includes("lua")) {
-      setSelectedCategory("Gaming");
-      newSupplies.push("Roblox Studio");
+      detectedCat = "Gaming";
+      detectedSupply = "Roblox Studio";
     } else if (combined.includes("edublocks") || combined.includes("edu blocks")) {
-      setSelectedCategory("Software");
-      newSupplies.push("EduBlocks");
+      detectedCat = "Software";
+      detectedSupply = "EduBlocks";
     } else if (combined.includes("thunkable") || combined.includes("app inventor")) {
-      setSelectedCategory("Software");
-      newSupplies.push("Thunkable");
+      detectedCat = "Software";
+      detectedSupply = "Thunkable";
     } else if (combined.includes("code.org") || combined.includes("game lab") || combined.includes("sprite lab")) {
-      setSelectedCategory("Gaming");
-      newSupplies.push("Code.org Game Lab");
+      detectedCat = "Gaming";
+      detectedSupply = "Code.org Game Lab";
     } else if (combined.includes("micro:bit") || combined.includes("microbit")) {
-      setSelectedCategory("Circuitry");
-      newSupplies.push("Micro:bit / MakeCode");
+      detectedCat = "Circuitry";
+      detectedSupply = "Micro:bit / MakeCode";
     } else if (combined.includes("python")) {
-      setSelectedCategory("Software");
-      newSupplies.push("Python / IDE");
+      detectedCat = "Software";
+      detectedSupply = "Python / IDE";
     } else if (combined.includes("lego") || combined.includes("spike prime") || combined.includes("wedo") || combined.includes("robot")) {
-      setSelectedCategory("Engineering");
-      newSupplies.push("LEGO Robotics");
+      detectedCat = "Engineering";
+      detectedSupply = "LEGO Robotics";
     } else if (combined.includes("circuit") || combined.includes("led") || combined.includes("breadboard") || combined.includes("battery")) {
-      setSelectedCategory("Circuitry");
-      newSupplies.push("Snap Circuits");
-      newSupplies.push("LEDs & Breadboard");
+      detectedCat = "Circuitry";
+      detectedSupply = "Snap Circuits";
+    } else if (combined.includes("bridge") || combined.includes("truss") || combined.includes("catapult") || combined.includes("tower")) {
+      detectedCat = "Engineering";
+    } else if (combined.includes("math") || combined.includes("fraction") || combined.includes("geometry") || combined.includes("algebra")) {
+      detectedCat = "Math";
+    } else if (combined.includes("art") || combined.includes("drawing") || combined.includes("design") || combined.includes("color")) {
+      detectedCat = "Art";
     }
 
-    if (newSupplies.length > 0) {
-      setSelectedSupplies(newSupplies);
+    setSelectedCategory(detectedCat);
+    if (detectedSupply) {
+      setSelectedSupplies([detectedSupply]);
+    } else {
+      setSelectedSupplies([]);
     }
 
     // Auto-update generated instruction directive if not manually edited
     if (!isManuallyEdited) {
       const effectiveGrade = selectedGrade === "Custom" ? (customGradeInput.trim() || "Custom Age Range") : selectedGrade;
-      const detectedPlatformText = newSupplies.length > 0 ? newSupplies.join(", ") : "Standard STEM Tools";
+      const detectedPlatformText = detectedSupply ? detectedSupply : "Standard STEM Tools";
       const specs = `Auto-aligned for ${effectiveGrade} grade using ${detectedPlatformText}. Class size ${selectedSize}, duration ${selectedDuration}. Focus on interactive hands-on gamification.`;
       setCustomPreferences(specs);
     }
@@ -1356,6 +1360,12 @@ export default function App() {
         ? "Objective: Gamify this lesson. Emphasize active gamification, gamified team-building exercises, interactive smart quizzes, and kid-friendly hands-on classroom experiments. Make it highly engaging, playful, and extremely interactive." 
         : "Objective: Create Presentation. Focus on building highly visual, conceptual slides with comprehensive step-by-step teaching guidelines, analogies, clear explanations, and structured classroom lecture summaries.";
 
+      const combinedMemory = [
+        profile?.instructorNotes,
+        profile?.extractedStyleNotes,
+        ...(profile?.learningHistory || [])
+      ].filter(Boolean).join(". ");
+
       const response = await fetch("/api/process-lesson", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1363,7 +1373,8 @@ export default function App() {
           lessonContent: customContent,
           customPreferences: customPreferences 
             ? `${customPreferences}. ${goalDirective}` 
-            : goalDirective
+            : goalDirective,
+          instructorMemory: combinedMemory
         }),
       });
 
@@ -1384,21 +1395,31 @@ export default function App() {
         console.error("Failed to store free lesson count:", e);
       }
 
+      // Save lesson plan to cloud Firestore if user is authenticated
+      if (user) {
+        try {
+          await saveLessonToCloud(data);
+          setSaveStatus("Autosaved to Cloud");
+          setTimeout(() => setSaveStatus(null), 3000);
+        } catch (cloudErr) {
+          console.error("Autosaving lesson plan to cloud failed:", cloudErr);
+        }
+      }
+
       // Save extractedStyleNotes from Gemini into instructor's profile memory
       if (user && data.extractedStyleNotes) {
         try {
-          await saveInstructorPreferences(
-            customPreferences,
-            selectedGrade,
-            selectedSize,
-            selectedDuration,
-            getFormattedSupplies(),
-            data.extractedStyleNotes
-          );
+          await updateLyrahMemory(data.extractedStyleNotes);
         } catch (saveNotesErr) {
           console.error("Autosaving Lyrah's extracted style notes failed:", saveNotesErr);
         }
       }
+
+      // Clear the user input field after each lesson plan generates
+      setCustomContent("");
+      setUploadedFileName(null);
+      const fileInputElem = document.getElementById("file-upload-input") as HTMLInputElement;
+      if (fileInputElem) fileInputElem.value = "";
 
       const reorderedTabs = getInstructorDynamicTabs();
       if (reorderedTabs.length > 0) {
