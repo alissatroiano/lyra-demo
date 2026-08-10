@@ -349,6 +349,16 @@ export default function App() {
   const [isTextMaterialOpen, setIsTextMaterialOpen] = useState<boolean>(false);
   const textMaterialTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
+  // Instructor Tool Bar fold state (Collapsible, auto-opens when user inputs a lesson)
+  const [isInstructorToolBarOpen, setIsInstructorToolBarOpen] = useState<boolean>(false);
+
+  // Auto-open Instructor Tool Bar when a lesson plan is inputted or uploaded
+  useEffect(() => {
+    if (hasPlanUploaded) {
+      setIsInstructorToolBarOpen(true);
+    }
+  }, [hasPlanUploaded]);
+
   // Briefly opens the text material dropdown upon upload/preset load to confirm success, then auto-closes
   const triggerTempTextMaterialOpen = React.useCallback(() => {
     setIsTextMaterialOpen(true);
@@ -2252,14 +2262,34 @@ export default function App() {
               )}
             </div>
 
-            {/* Interactive chip context rows (Appends parameters directly) */}
-            <div className="bg-surface-0 dark:bg-slate-950/80 border border-black/[0.05] dark:border-slate-800 rounded-xl p-4.5 space-y-4">
-              <span className="text-[10px] font-bold font-mono tracking-widest text-teal-brand uppercase block border-b dark:border-slate-800 pb-1.5">
-                Instructor Tool Bar
-              </span>
+            {/* Interactive chip context rows (Appends parameters directly) - Collapsible Instructor Tool Bar */}
+            <div className="border border-black/[0.08] dark:border-slate-800 rounded-xl overflow-hidden bg-surface-0/60 dark:bg-slate-900/60 transition-all">
+              <button
+                type="button"
+                onClick={() => setIsInstructorToolBarOpen(!isInstructorToolBarOpen)}
+                className="w-full px-4 py-3 flex items-center justify-between bg-surface-1/80 dark:bg-slate-800/80 hover:bg-teal-light/20 dark:hover:bg-slate-800 transition-all cursor-pointer border-b border-black/[0.05] dark:border-slate-800"
+              >
+                <div className="flex items-center gap-2 text-left flex-wrap">
+                  <Sliders className="w-4 h-4 text-teal-brand shrink-0" />
+                  <span className="text-xs font-bold text-teal-dark dark:text-teal-brand font-sans uppercase tracking-wider">
+                    Instructor Tool Bar
+                  </span>
+                  <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-teal-brand/10 dark:bg-teal-brand/20 text-teal-dark dark:text-teal-brand border border-teal-brand/20 font-bold">
+                    {selectedCategory} • {selectedGrade} • {selectedDuration}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[10px] font-mono text-slate-400 hidden sm:inline">
+                    {isInstructorToolBarOpen ? "Click to collapse" : "Click to expand"}
+                  </span>
+                  <ChevronDown className={`w-4 h-4 text-teal-brand transition-transform duration-200 ${isInstructorToolBarOpen ? "rotate-180" : ""}`} />
+                </div>
+              </button>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Category Selection (Science, Technology, Engineering, Art, Math) */}
+              {isInstructorToolBarOpen && (
+                <div className="p-4.5 space-y-4 animate-fade-in border-t border-black/[0.05] dark:border-slate-800">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Category Selection (Science, Technology, Engineering, Art, Math) */}
                 <div className="space-y-2 sm:col-span-2 border-b border-black/[0.05] dark:border-slate-800 pb-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-teal-dark dark:text-teal-brand uppercase font-sans flex items-center gap-1.5">
@@ -2562,7 +2592,7 @@ export default function App() {
                     {profile?.instructorNotes ? (
                       <div className="space-y-1">
                         <p className="text-[10px] text-slate-800 dark:text-slate-300 font-sans leading-relaxed">
-                          "I've learned that you focus on: <span className="font-semibold text-teal-900 dark:text-teal-brand">{profile.instructorNotes}</span>"
+                          &quot;I&apos;ve learned that you focus on: <span className="font-semibold text-teal-900 dark:text-teal-brand">{profile.instructorNotes}</span>&quot;
                         </p>
                         <span className="text-[8px] text-teal-700 dark:text-teal-brand font-medium block">
                           💡 Lyrah automatically synthesizes these pedagogical preferences into new plans.
@@ -2576,11 +2606,13 @@ export default function App() {
                   </div>
                 ) : (
                   <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl p-2.5 text-[9px] text-amber-950 dark:text-amber-200 leading-normal font-sans font-medium">
-                    🔒 <span className="font-bold">Sign In</span> to enable Lyrah's adaptive memory. Lyrah will save your instructions and learn your pedagogical style across sessions!
+                    🔒 <span className="font-bold">Sign In</span> to enable Lyrah&apos;s adaptive memory. Lyrah will save your instructions and learn your pedagogical style across sessions!
                   </div>
                 )}
               </div>
             </div>
+          )}
+        </div>
 
             {/* Action CTA Trigger Button with haptic styling */}
             <div className="pt-2">
