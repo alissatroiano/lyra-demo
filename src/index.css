@@ -1,105 +1,62 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Oswald:wght@200..700&family=Zen+Loop:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Oswald:wght@200..700&family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&family=Xanh+Mono:ital@0;1&family=Zen+Loop:ital@0;1&display=swap');
 
 @import "tailwindcss";
 
 @variant dark (&:where(.dark, .dark *));
 
 @theme {
-  /* DM Sans carries body copy — a modern geometric grotesque that stays
-     readable at 11pm. Oswald is the display face: condensed, high-impact,
-     and legible on a projector, which Zen Loop's single hairline weight
-     was not. PT Serif is no longer loaded, so --font-serif points at DM
-     Sans; leaving it aliased to a missing family silently fell back to
-     Georgia everywhere `font-serif` is used. */
-  --font-sans: "DM Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-serif: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Oswald", "DM Sans", ui-sans-serif, sans-serif;
-  --font-script: "Zen Loop", cursive;
-  --font-mono: ui-monospace, "JetBrains Mono", SFMono-Regular, Menlo, monospace;
+  --font-sans: "Montserrat", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-serif: "PT Serif", Georgia, Cambria, serif;
+  --font-display:  "Zen Loop", cursive;
+  --font-mono: "JetBrains Mono", monospace;
 
-  /* ------------------------------------------------------------------
-     Lyrah palette — a star chart.
-     Lyra is a constellation, so the system is celestial: a deep indigo
-     night ground with a single warm star as the accent. Orange sits
-     opposite indigo on the wheel, so the accent reads as a point of
-     light rather than a competing field.
+  --color-primary: #0f1117;
+  --color-secondary: #5a6478;
+  --color-muted: #9ca3af;
 
-     Token NAMES are unchanged on purpose. Hundreds of components already
-     reference `teal-brand` and `gold-brand`; remapping the values reskins
-     the whole app without touching a single className. The names are
-     inaccurate now — that rename is a follow-up, not a launch blocker.
-     ------------------------------------------------------------------ */
-
-  /* Neutrals are pulled toward indigo rather than sitting at true grey,
-     so they read as chosen rather than inherited. */
-  --color-primary: #14162b;
-  --color-secondary: #4a4e6b;
-  --color-muted: #8d8aab;
-
-  --color-surface-0: #e9ecf4;
-  --color-surface-1: #f4f6fa;
+  --color-surface-0: #f4f6fb;
+  --color-surface-1: #eef1f8;
   --color-surface-2: #ffffff;
 
-  /* "teal-*" is now the star: accent, primary action, links. */
-  --color-teal-brand: #ff6a2b;
-  --color-teal-dark: #12142a;
-  --color-teal-light: #ffe9de;
-  --color-teal-mid: #ff9257;
+  --color-teal-brand: #1a968c;
+  --color-teal-dark: #1a4a45;
+  --color-teal-light: #e0faf8;
+  --color-teal-mid: #2ec4b8;
 
-  /* "gold-*" is now the ray: secondary emphasis, badges. */
-  --color-gold-brand: #d99000;
-  --color-gold-light: #fff2d4;
+  --color-gold-brand: #c97d10;
+  --color-gold-light: #fef3c7;
 
-  /* Meridian — the cool counterweight, for data and quiet chrome. */
-  --color-meridian: #9184d9;
-
-  --color-cyber-bg: #0e1024;
-  --color-cyber-card: #1a1d38;
-}
-
-/* Oswald is condensed, so headings need a little tracking to breathe and
-   look better slightly tightened at large sizes. */
-.font-display {
-  font-weight: 500;
-  letter-spacing: 0.01em;
-}
-
-/* The wordmark: the one place the brand gets to be loud. */
-.brand-word {
-  font-family: var(--font-display);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  background-image: linear-gradient(100deg, #ff6a2b 0%, #ffc24a 55%, #ff8a4b 100%);
-  -webkit-background-clip: text;
-          background-clip: text;
-  color: transparent;
+  --color-cyber-bg: #0b0f19;
+  --color-cyber-card: #131929;
 }
 
 /* 2026 Liquid Glass & Micro Glow Utilities */
+.font-display {
+  font-weight: 400;
+}
 
 .liquid-glass-light {
   background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 106, 43, 0.18);
-  box-shadow: 0 8px 32px 0 rgba(255, 106, 43, 0.08);
+  border: 1px solid rgba(0, 194, 178, 0.18);
+  box-shadow: 0 8px 32px 0 rgba(0, 194, 178, 0.08);
 }
 
 .liquid-glass-dark {
-  background: rgba(18, 20, 42, 0.86);
+  background: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 106, 43, 0.25);
+  border: 1px solid rgba(0, 194, 178, 0.25);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
 .micro-glow-teal {
-  box-shadow: 0 0 18px -3px rgba(255, 106, 43, 0.35);
+  box-shadow: 0 0 18px -3px rgba(0, 194, 178, 0.35);
 }
 
 .micro-glow-amber {
-  box-shadow: 0 0 18px -3px rgba(217, 144, 0, 0.35);
+  box-shadow: 0 0 18px -3px rgba(245, 158, 11, 0.35);
 }
 
 .micro-glow-emerald {
@@ -108,104 +65,6 @@
 
 .micro-glow-indigo {
   box-shadow: 0 0 18px -3px rgba(99, 102, 241, 0.35);
-}
-
-/* ====================================================================
-   Assistive reading
-   Applied to lesson body copy when dyslexia mode is on. The gains come
-   from spacing rather than a novelty typeface: wider letter and word
-   spacing plus generous line height reduce crowding, which is the
-   effect with the best evidence behind it.
-   ==================================================================== */
-.dyslexia-mode-styles {
-  font-family: "DM Sans", ui-sans-serif, system-ui, -apple-system, sans-serif !important;
-  font-weight: 500 !important;
-  letter-spacing: 0.12em !important;
-  word-spacing: 0.22em !important;
-  line-height: 1.95 !important;
-  text-align: left !important; /* never justify — rivers of whitespace hurt tracking */
-  text-shadow: 0.3px 0.3px 0 rgba(0, 0, 0, 0.06) !important;
-}
-
-/* ====================================================================
-   Star chart surfaces
-   Lyra is a constellation, so the product's surfaces are drawn like a
-   planisphere: a faint declination grid, scattered magnitude dots, and
-   the accent used as a single point of light. All generated in CSS —
-   no image requests, nothing to 404 on a new domain.
-   ==================================================================== */
-
-/* Faint coordinate grid. Masked to fade at the edges so it reads as a
-   chart plate rather than graph paper. */
-.chart-grid {
-  position: relative;
-  isolation: isolate;
-}
-
-.chart-grid::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image:
-    linear-gradient(to right, rgba(145, 132, 217, 0.16) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(145, 132, 217, 0.16) 1px, transparent 1px);
-  background-size: 56px 56px;
-  -webkit-mask-image: radial-gradient(ellipse 78% 68% at 70% 38%, #000 18%, transparent 76%);
-          mask-image: radial-gradient(ellipse 78% 68% at 70% 38%, #000 18%, transparent 76%);
-}
-
-.dark .chart-grid::before {
-  background-image:
-    linear-gradient(to right, rgba(145, 132, 217, 0.22) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(145, 132, 217, 0.22) 1px, transparent 1px);
-}
-
-/* Scattered stars at three magnitudes. Fixed positions, not random, so
-   the field is stable between renders. */
-.star-field {
-  position: relative;
-  isolation: isolate;
-}
-
-.star-field::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image:
-    radial-gradient(1.6px 1.6px at 12% 22%, rgba(255, 194, 74, 0.9), transparent),
-    radial-gradient(1.2px 1.2px at 84% 16%, rgba(236, 234, 242, 0.8), transparent),
-    radial-gradient(1px 1px   at 32% 68%, rgba(236, 234, 242, 0.55), transparent),
-    radial-gradient(1.8px 1.8px at 68% 78%, rgba(255, 106, 43, 0.75), transparent),
-    radial-gradient(1px 1px   at 52% 34%, rgba(145, 132, 217, 0.7), transparent),
-    radial-gradient(1.2px 1.2px at 92% 58%, rgba(236, 234, 242, 0.5), transparent),
-    radial-gradient(1px 1px   at 22% 88%, rgba(255, 194, 74, 0.6), transparent);
-  opacity: 0.55;
-}
-
-.dark .star-field::after { opacity: 1; }
-
-/* A star that breathes. Used sparingly — Vega only. */
-@keyframes twinkle {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.62; }
-}
-
-.animate-twinkle {
-  animation: twinkle 4.5s ease-in-out infinite;
-  transform-origin: center;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .animate-twinkle,
-  .animate-float,
-  .animate-pulse-slow,
-  .animate-scanline {
-    animation: none;
-  }
 }
 
 /* Float animations for mascot and interactive cards */
