@@ -110,7 +110,7 @@ export default function SubscriptionModal({
               <div>
                 <h3 className="font-serif font-bold text-amber-950 dark:text-amber-200 text-lg">Step 1: Sign In First</h3>
                 <p className="text-xs text-amber-900/90 dark:text-amber-300 mt-1 max-w-md mx-auto">
-                  You must be logged in to connect your Stripe subscription to your Lyrah account.
+                  Signing in links your purchase to your account, so your lessons are waiting for you next time.
                 </p>
               </div>
               <button
@@ -120,8 +120,13 @@ export default function SubscriptionModal({
                 className="px-6 py-3 bg-teal-dark hover:bg-teal-900 text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 mx-auto cursor-pointer"
               >
                 <LogIn className="w-4 h-4 text-teal-brand" />
-                <span>{authLoading ? "Connecting..." : "Sign In with Google / Email"}</span>
+                <span>{authLoading ? "Connecting..." : "Sign In with Google"}</span>
               </button>
+              {/* Instructors read "no password" as "no real account", and hesitate
+                  to pay. Naming the choice turns an absence into a reason. */}
+              <p className="text-[11px] text-amber-900/80 dark:text-amber-300/80 max-w-sm mx-auto leading-relaxed">
+                No new password to remember — your Google account signs you in and keeps your lessons secure.
+              </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -240,6 +245,13 @@ export default function SubscriptionModal({
                   {error}
                 </div>
               )}
+
+              {/* Ties the charge to a named account. Someone unsure whether they
+                  "really have an account" is being asked for money — showing whose
+                  purchase this is answers that at the moment it matters. */}
+              <p className="text-center text-[11px] text-slate-600 dark:text-slate-400">
+                Purchasing as <span className="font-bold text-slate-800 dark:text-slate-200">{user.email}</span>
+              </p>
 
               {/* Submit CTA */}
               <button

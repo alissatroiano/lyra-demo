@@ -69,6 +69,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <span>View Pricing Plans</span>
               </button>
             </div>
+
+            {/* Instructors read "no password" as "no real account" and hesitate at
+                checkout. Saying why there is no password turns it into a reason
+                to trust the sign-in rather than a gap in it. */}
+            {!user && (
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans pt-1">
+                No new password to remember — sign in with the Google account you already use.
+              </p>
+            )}
           </div>
 
           {/* Mascot Illustration */}
