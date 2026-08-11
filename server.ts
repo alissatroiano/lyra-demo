@@ -944,6 +944,10 @@ app.post("/api/create-checkout-session", async (req, res) => {
           },
         ],
         mode: defaultMode as any,
+        // Lets instructors redeem a promotion code at checkout. Without this
+        // Stripe renders no code box at all, so coupons created in the
+        // dashboard would silently never apply.
+        allow_promotion_codes: true,
         customer_email: email,
         client_reference_id: uid,
         success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
@@ -967,6 +971,10 @@ app.post("/api/create-checkout-session", async (req, res) => {
           },
         ],
         mode: altMode as any,
+        // Lets instructors redeem a promotion code at checkout. Without this
+        // Stripe renders no code box at all, so coupons created in the
+        // dashboard would silently never apply.
+        allow_promotion_codes: true,
         customer_email: email,
         client_reference_id: uid,
         success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
@@ -1022,6 +1030,63 @@ app.get("/api/verify-checkout-session", async (req, res) => {
     res.status(500).json({
       error: "Failed to verify Stripe payment session.",
       details: error?.message || String(error)
+    });
+  }
+});
+
+/**
+ * Stripe billing portal.
+ *
+ * Instructors on the recurring tiers need somewhere to update a card, see what
+ * they were charged and cancel without emailing anyone. Stripe hosts all of
+ * that; this only has to find the customer and hand back a link.
+ *
+ * Checkout is created with `customer_email`, so the customer is looked up by
+ * email rather than requiring a stored customer ID.
+ */
+app.post("/api/billing-portal", async (req, res) => {
+  const { email } = req.body || {};
+
+  if (!email) {
+    return res.status(400).json({ error: "An email address is required to open the billing portal." });
+  }
+
+  const stripeSecret = process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecret) {
+    return res.status(400).json({ error: "STRIPE_SECRET_KEY not configured on server." });
+  }
+
+  const protocol = req.headers["x-forwarded-proto"] || "https";
+  const host = req.headers.host || "localhost:3000";
+  const origin = `${protocol}://${host}`;
+
+  try {
+    const Stripe = (await import("stripe")).default;
+    const stripe = new Stripe(stripeSecret);
+
+    const customers = await stripe.customers.list({ email, limit: 1 });
+    const customer = customers.data[0];
+
+    if (!customer) {
+      // A one-time Summer Special buyer has no subscription to manage, and
+      // saying so is more useful than dropping them into an empty portal.
+      return res.status(404).json({
+        error: "No billing record found for this account.",
+        details: "If you paid the one-time Summer STEM Special there is no subscription to manage — nothing will be charged again.",
+      });
+    }
+
+    const portal = await stripe.billingPortal.sessions.create({
+      customer: customer.id,
+      return_url: `${origin}/`,
+    });
+
+    res.json({ url: portal.url });
+  } catch (error: any) {
+    console.error("Stripe billing portal error:", error);
+    res.status(500).json({
+      error: "Could not open the billing portal.",
+      details: error?.message || String(error),
     });
   }
 });

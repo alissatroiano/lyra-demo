@@ -47,6 +47,7 @@ import {
   Brain,
   Save,
   Crown,
+  CreditCard,
   Palette,
   Sun,
   Moon,
@@ -210,6 +211,8 @@ export default function App() {
   const [mediaSearchQuery, setMediaSearchQuery] = useState<string>("");
   const [showSubscriptionModal, setShowSubscriptionModal] = useState<boolean>(false);
   const [showPlanConfirmationModal, setShowPlanConfirmationModal] = useState<boolean>(false);
+  const [billingPortalLoading, setBillingPortalLoading] = useState<boolean>(false);
+  const [billingPortalError, setBillingPortalError] = useState<string | null>(null);
   const [generatedCount, setGeneratedCount] = useState<number>(() => {
     try {
       return Number(localStorage.getItem('lyra_free_lessons_count') || '0');
@@ -464,6 +467,34 @@ export default function App() {
   const toggleSupply = (val: string) => {
     userSetSuppliesRef.current = true;
     setSelectedSupplies(prev => (prev.includes(val) ? [] : [val]));
+  };
+
+  // Hand the instructor over to Stripe's own billing portal, where they can
+  // update a card, download receipts or cancel without having to email anyone.
+  const openBillingPortal = async () => {
+    if (!user?.email || billingPortalLoading) return;
+
+    setBillingPortalLoading(true);
+    setBillingPortalError(null);
+
+    try {
+      const res = await fetch("/api/billing-portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.details || data.error || "Could not open the billing portal.");
+      }
+
+      window.location.href = data.url;
+    } catch (err: any) {
+      setBillingPortalError(err.message || String(err));
+    } finally {
+      setBillingPortalLoading(false);
+    }
   };
 
   // Curriculum Text Material fold state (Folded by default)
@@ -3384,13 +3415,25 @@ export default function App() {
                     <Sparkles className="w-5 h-5 text-amber-300" />
                   </div>
                   <div>
-                    <h4 className="font-display font-bold text-base text-white">Educator Pro Subscription Active</h4>
+                    <h4 className="font-display font-bold text-base text-white">Lyrah Access Active</h4>
                     <p className="text-xs text-emerald-100/80 font-sans">You have full unlocked access to AI lesson transformations, Cloud Firestore storage, Nana Banana Pro visual generator, and export channels.</p>
+                    {billingPortalError && (
+                      <p className="text-xs text-amber-200 font-sans mt-1.5" role="alert">{billingPortalError}</p>
+                    )}
                   </div>
                 </div>
-                <div className="shrink-0">
+                <div className="shrink-0 flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={openBillingPortal}
+                    disabled={billingPortalLoading}
+                    className="px-3.5 py-1.5 bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed border border-white/25 text-white font-bold text-xs rounded-full transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+                  >
+                    <CreditCard className="w-3.5 h-3.5 text-emerald-300" />
+                    <span>{billingPortalLoading ? "Opening…" : "Manage billing"}</span>
+                  </button>
                   <span className="px-3.5 py-1.5 bg-emerald-400 text-slate-950 font-extrabold text-xs rounded-full inline-block uppercase tracking-wider font-mono">
-                    PRO UNLOCKED
+                    UNLOCKED
                   </span>
                 </div>
               </div>
@@ -3401,7 +3444,7 @@ export default function App() {
                     <Crown className="w-5 h-5 text-amber-300" />
                   </div>
                   <div>
-                    <h4 className="font-display font-bold text-base text-white">Unlock Full Educator Pro Access ($9.99/mo)</h4>
+                    <h4 className="font-display font-bold text-base text-white">Unlock Full Access — Summer STEM Special ($12.99 one-time)</h4>
                     <p className="text-xs text-teal-100/80 font-sans">Register and subscribe to access unlimited AI transformations, persistent Cloud Firestore lesson saving, and full curriculum suite tools.</p>
                   </div>
                 </div>
@@ -3416,7 +3459,7 @@ export default function App() {
                   }}
                   className="px-5 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-extrabold text-xs rounded-xl shadow-sm transition-all cursor-pointer shrink-0 flex items-center gap-2"
                 >
-                  <span>{user ? 'Activate Pro Access ($9.99/mo)' : 'Sign In & Subscribe'}</span>
+                  <span>{user ? 'Activate Access ($12.99 one-time)' : 'Sign In & Get Access'}</span>
                   <ArrowRight className="w-4 h-4 text-slate-950" />
                 </button>
               </div>

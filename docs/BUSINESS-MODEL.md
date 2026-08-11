@@ -78,14 +78,18 @@ outcomes are downstream of this product and we don't claim them.
 ### Live now
 
 Two tiers are live in Stripe in the deployed application, and the pricing page shows only these
-two. Both are one-time charges rather than subscriptions, which is deliberate: the instructors
-buying today are paying out of pocket, mid-season, and a recurring charge is a harder yes than
-the product is worth to them on day one.
+two. They are deliberately different shapes. The individual instructor pays once, because the
+teachers buying today are paying out of their own pocket mid-season and a recurring charge is a
+harder yes than the product is worth to them on day one. The director tier recurs, because a
+programme buying for several instructors is a budget line, not a personal purchase.
 
 | Tier | Price | Buyer |
 |---|---|---|
 | **Summer STEM Special** | $12.99 one-time | The individual instructor. The offer being put in front of real instructors this season, and the lead position on the pricing page |
-| **Camp Director Special** | $49.99 (from $99.99) | Multi-site programmes, summer camps and franchises running several instructors |
+| **Camp Director Special** | $49.99/month (list $99.99) | Multi-site programmes, summer camps and franchises running several instructors |
+
+Because the director tier recurs, subscribers reach Stripe's hosted billing portal from their
+Lyrah dashboard to change a card, pull receipts or cancel unassisted.
 
 ### Held back for a later launch
 

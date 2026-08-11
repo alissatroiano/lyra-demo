@@ -371,7 +371,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <div className="flex items-baseline gap-2 pt-2">
                 <span className="line-through text-slate-400 dark:text-slate-500 font-display text-2xl font-normal">$99.99</span>
                 <span className="font-display text-4xl font-extrabold text-teal-900 dark:text-teal-brand">$49.99</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-sans font-medium">/ month</span>
               </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">Recurring monthly subscription. Cancel anytime from your dashboard.</p>
 
               <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2.5 text-xs text-slate-700 dark:text-slate-300 font-sans">
                 <div className="flex items-center gap-2">
@@ -408,7 +410,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               }}
               className="w-full py-3 bg-gradient-to-r from-teal-dark to-teal-800 dark:from-teal-600 dark:to-teal-500 hover:from-teal-900 hover:to-teal-950 text-white rounded-xl text-xs font-extrabold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>Get Camp Director Special ($49.99)</span>
+              <span>Get Camp Director Special ($49.99/mo)</span>
               <ArrowRight className="w-4 h-4 text-amber-300" />
             </button>
           </div>

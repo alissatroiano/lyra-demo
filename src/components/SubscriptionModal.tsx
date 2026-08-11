@@ -69,7 +69,7 @@ export default function SubscriptionModal({
           plan: selectedPlan === "summer" 
             ? "Summer STEM Special ($12.99 One-Time Fee)" 
             : selectedPlan === "yearly" 
-            ? "Camp Director Special ($49.99)" 
+            ? "Camp Director Special ($49.99/month)"
             : "Demo Incentive ($9.99 One-Time Fee)",
           priceId,
           cardName,
@@ -241,7 +241,7 @@ export default function SubscriptionModal({
                     </div>
                     <div className="mt-1.5 flex items-baseline gap-1">
                       <span className="text-[10px] font-serif line-through text-slate-400 dark:text-slate-500">$99.99</span>
-                      <p className="text-lg font-serif font-bold text-teal-900 dark:text-teal-brand">$49.99</p>
+                      <p className="text-lg font-serif font-bold text-teal-900 dark:text-teal-brand">$49.99<span className="text-[9px] font-sans font-normal text-slate-600 dark:text-slate-400"> / month</span></p>
                     </div>
                     <p className="text-[9px] text-slate-600 dark:text-slate-400 mt-1 leading-tight">For programs running several instructors</p>
                   </button>
