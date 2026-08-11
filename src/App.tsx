@@ -112,7 +112,10 @@ const PLATFORM_SIGNALS: { supply: string; category: string; terms: string[] }[] 
 /** Subject signals, used when no software platform is called for at all. */
 const CATEGORY_SIGNALS: { category: string; terms: string[] }[] = [
   { category: "Science", terms: ["science", "physics", "chemistry", "biology", "ecosystem", "photosynthesis", "molecule", "atom", "gravity", "force", "motion", "newton", "thrust", "propulsion", "energy", "weather", "planet", "solar system", "habitat", "experiment", "hypothesis", "density", "magnet", "chemical reaction"] },
-  { category: "Engineering", terms: ["engineering", "bridge", "truss", "catapult", "tower", "prototype", "blueprint", "load-bearing", "design challenge", "robot", "robotics"] },
+  // Build-and-make vocabulary matters as much as the word "engineering": a
+  // spool-and-string pulley rig is a DIY engineering lesson even though the
+  // write-up only ever says "gravity".
+  { category: "Engineering", terms: ["engineering", "bridge", "truss", "catapult", "tower", "prototype", "blueprint", "load-bearing", "design challenge", "robot", "robotics", "pulley", "lever", "simple machine", "gear", "axle", "winch", "hoist", "spool", "rig", "scaffold", "assemble", "construct"] },
   { category: "Math", terms: ["math", "fraction", "geometry", "algebra", "equation", "graphing", "perimeter", "probability"] },
   { category: "Circuitry", terms: ["circuit", "voltage", "conductor", "insulator", "led", "battery"] },
   { category: "Art", terms: ["art", "drawing", "painting", "clay", "sculpture", "color theory", "poster", "infographic", "graphic design"] },
@@ -467,15 +470,11 @@ export default function App() {
   const [isTextMaterialOpen, setIsTextMaterialOpen] = useState<boolean>(false);
   const textMaterialTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  // Instructor Tool Bar fold state (Collapsible, auto-opens when user inputs a lesson)
+  // Instructor Tool Bar fold state. It stays folded until the instructor opens
+  // it: the first thing they should see is the upload prompt, and every setting
+  // in here is shown again for review in the generation plan before anything
+  // runs, so nothing is lost by keeping it out of the way.
   const [isInstructorToolBarOpen, setIsInstructorToolBarOpen] = useState<boolean>(false);
-
-  // Auto-open Instructor Tool Bar when a lesson plan is inputted or uploaded
-  useEffect(() => {
-    if (hasPlanUploaded) {
-      setIsInstructorToolBarOpen(true);
-    }
-  }, [hasPlanUploaded]);
 
   // Briefly opens the text material dropdown upon upload/preset load to confirm success, then auto-closes
   const triggerTempTextMaterialOpen = React.useCallback(() => {
@@ -563,15 +562,23 @@ export default function App() {
       lesson.handsOnActivity?.scientificPrinciple || ''
     ].join(" ").toLowerCase();
 
+    // Only an unambiguous programming tool or practice puts a lesson in the
+    // coding lab. The previous list matched bare substrings, so "prevents"
+    // contained "event" and "logical" contained "logic" — enough to render a
+    // cardboard-and-string pulley build as Scratch blocks.
     const codingKeywords = [
-      "code", "coding", "scratch", "python", "block", "algorithm", "program",
-      "programming", "variable", "loop", "conditional", "function", "syntax",
-      "css", "html", "javascript", "js", "micro:bit", "microbit", "arduino",
-      "robot", "robotics", "logic", "event", "sprite", "pseudocode", "debug",
-      "computer science", "app design", "minecraft", "roblox"
+      // "scratch" only ever appears qualified — "build a rocket from scratch"
+      // is not a programming lesson.
+      "coding", "scratch 3", "scratch jr", "scratchjr", "scratch project",
+      "scratch programming", "python", "algorithm", "programming",
+      "pseudocode", "syntax", "css", "html", "javascript", "typescript",
+      "micro:bit", "microbit", "makecode", "arduino", "raspberry pi", "sprite",
+      "debug", "computer science", "edublocks", "thunkable", "code.org",
+      "minecraft", "roblox", "app inventor", "source code", "code block",
+      "block-based", "robotics"
     ];
 
-    return codingKeywords.some(kw => textToScan.includes(kw));
+    return codingKeywords.some(kw => countTerm(textToScan, kw) > 0);
   }, [lesson]);
 
   // Detect if current lesson is a Gaming / Game Design curriculum
@@ -590,13 +597,16 @@ export default function App() {
       (lesson.feasibilityAudit as any)?.identifiedSoftwarePlatform || ''
     ].join(" ").toLowerCase();
 
+    // Whole-word only, and no bare "game"/"stage"/"agent": those matched
+    // "gamified", "stages" and "reagent" in ordinary science write-ups.
     const gamingKeywords = [
-      "scratch", "minecraft", "roblox", "game", "gaming", "sprite", "costume",
-      "stage", "green flag", "agent", "redstone", "edublocks", "thunkable",
-      "makecode", "arcade", "unity", "unreal", "godot", "tynker", "code.org"
+      "scratch", "minecraft", "roblox", "game design", "game mechanic",
+      "video game", "gaming", "sprite", "costume", "green flag", "redstone",
+      "edublocks", "thunkable", "makecode", "arcade", "unity", "unreal",
+      "godot", "tynker", "code.org", "makecode agent"
     ];
 
-    return gamingKeywords.some(kw => textToScan.includes(kw));
+    return gamingKeywords.some(kw => countTerm(textToScan, kw) > 0);
   }, [lesson, selectedCategory]);
 
   // Identify specific Software / Coding platform if lesson falls into software
