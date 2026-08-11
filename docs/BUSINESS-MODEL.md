@@ -1,7 +1,7 @@
 # Lyrah — Business Model
 
 **Category:** Education & Human Potential
-**Live product:** https://lyra-6050696394.us-east1.run.app
+**Live product:** https://lyrah.io
 **Built by:** Alissa Troiano
 
 > **DRAFT.** Items in `[BRACKETS]` need real numbers before submission. Everything outside brackets
@@ -75,27 +75,57 @@ outcomes are downstream of this product and we don't claim them.
 
 **B2C self-serve today, with a direct path into B2B.**
 
-### Live now
+### Live now — priced to acquire, not to earn
 
-Two tiers are live in Stripe in the deployed application, and the pricing page shows only these
-two. They are deliberately different shapes. The individual instructor pays once, because the
-teachers buying today are paying out of their own pocket mid-season and a recurring charge is a
-harder yes than the product is worth to them on day one. The director tier recurs, because a
-programme buying for several instructors is a budget line, not a personal purchase.
+Two tiers are live in Stripe in the deployed application, and the pricing page shows only these two.
 
 | Tier | Price | Buyer |
 |---|---|---|
 | **Summer STEM Special** | $12.99 one-time | The individual instructor. The offer being put in front of real instructors this season, and the lead position on the pricing page |
 | **Camp Director Special** | $49.99/month (list $99.99) | Multi-site programmes, summer camps and franchises running several instructors |
 
+**$12.99 once is not a revenue model and is not intended as one.** It is priced against a Sunday
+evening, not against cost. The individual tier is effectively a giveaway, deliberately, for one
+season: the scarce thing right now is not money but evidence — instructors who have actually run a
+Lyrah-generated lesson in front of children and will say whether it held up. A price low enough to
+be an impulse decision buys that evidence faster than a free tier does, because a $12.99 charge
+still filters for genuine intent in a way "sign up free" does not.
+
+The two tiers are deliberately different shapes. The instructor pays once, out of their own pocket,
+mid-season, where a recurring charge is a harder yes than the product has yet earned. The director
+tier recurs, because a programme buying for several instructors is a budget line rather than a
+personal purchase — and because multi-instructor usage is where inference cost actually lands.
+
 Because the director tier recurs, subscribers reach Stripe's hosted billing portal from their
 Lyrah dashboard to change a card, pull receipts or cancel unassisted.
+
+### The bet: summer acquisition, school-year conversion
+
+The sequence is the strategy.
+
+Summer is when camp and enrichment instructors are teaching and school-year staff are free — the
+one window where both halves of the market are reachable. Acquire in that window at a price that
+removes deliberation, then convert during the school year, when the product's actual retention
+argument becomes true: an instructor mid-term has a semester of accumulated materials and pacing
+memory inside Lyrah that they cannot rebuild elsewhere.
+
+That is what the held-back recurring tiers are for. They are not a fallback if the giveaway fails;
+they are the second half of a deliberate sequence, launched once there is renewal evidence to price
+against rather than a guess.
+
+**The honest risk in this plan:** a one-time payment against ongoing inference cost has no natural
+ceiling. A single instructor generating weekly all year can consume more than $12.99 of inference
+by themselves. That is acceptable while the goal is evidence rather than margin, and it is why the
+one-time price is framed as a *season* pass rather than a lifetime one — but it is a real cost
+exposure, not a rounding error, and it is bounded only by how long this pricing stays live.
 
 ### Held back for a later launch
 
 Two recurring tiers are designed and priced but deliberately not shown. Running them alongside a
 $12.99 one-time offer would bury it, and subscription retention is the weakest part of this
-market (see below) — so they wait until there is renewal evidence to justify them.
+market (see below) — so they wait until there is renewal evidence to justify them. These are the
+school-year half of the sequence above, and the point at which the model has to start earning
+rather than acquiring.
 
 | Tier | Price | Buyer |
 |---|---|---|
@@ -170,14 +200,20 @@ Priority order:
 A lesson generation is several Gemini calls, including image generation, which is the expensive
 part. **Gross margin is a function of generations per subscriber per month.**
 
-At $9.99 with a target ~80% margin, the ceiling is roughly **$2.00 of inference per subscriber per
-month**. `[Insert: measured cost per full lesson generation, and the implied number of generations
-before margin inverts.]`
+While the individual tier is a one-time $12.99, margin on it is **negative by design over a long
+enough horizon** — there is no recurring revenue to offset recurring inference. The relevant
+question is therefore not margin but *runway per acquired instructor*: how many generations $12.99
+buys before that instructor costs more than they paid. `[Insert: measured cost per full lesson
+generation, and the implied number of generations before the one-time price is exhausted.]`
 
-This is the number that decides whether the $9.99 tier survives contact with real usage, and it is
-the single most important unmeasured figure in this document. At a low price point a heavy user is
-the risk, not the win — Camp Director Pro exists partly because multi-instructor programmes
-generate far more and must not be served at individual pricing.
+That number decides two things: how long this acquisition pricing can responsibly stay live, and
+where the school-year recurring price has to land. At the future $9.99/mo tier, a target ~80%
+margin puts the ceiling at roughly **$2.00 of inference per subscriber per month** — which is the
+figure the product has to be engineered against, and the single most important unmeasured number in
+this document.
+
+At any low price point a heavy user is the risk, not the win. Camp Director Special exists partly
+because multi-instructor programmes generate far more and must not be served at individual pricing.
 
 Two mitigations already in the codebase: **image compression** on upload, and **graceful fallback
 to preloaded lessons** when keys are absent — so a cost spike degrades the experience rather than
@@ -259,15 +295,23 @@ not of scale, headcount, or a funding round.
 
 ### What exists today, stated plainly
 
-- **Working product deployed on Cloud Run**, publicly reachable
+- **Working product deployed on Cloud Run** at https://lyrah.io, publicly reachable
 - **Gemini in the critical path** — two models, no product without them
+- **Google Search grounding** on lesson generation, so material is checked against current sources
+  rather than model recall alone
 - **Five distinct output modules**, not a single-trick demo
-- **Stripe subscriptions integrated and live**
+- **Stripe live in production**, taking real payments — hosted Checkout, promotion codes, and a
+  self-serve billing portal for subscribers
 - **Firebase auth, Firestore, and Storage** in production use
 
-What does **not** exist yet, and won't be claimed: paying subscribers, revenue, or validated
-product-market fit. `[Update with instructor testing results — that data is being gathered this
-week.]`
+Live payments have been processed through Stripe in production. `[State the honest number of
+instructor purchases and the revenue, and report any purchases by colleagues separately — a
+related-party sale is evidence the checkout works, not evidence of market demand, and conflating
+the two is the fastest way to lose a judge's trust.]`
+
+What does **not** exist yet, and won't be claimed: a subscriber base, meaningful revenue, renewal
+data, or validated product-market fit. `[Update with instructor testing results — that data is
+being gathered this week.]`
 
 ### Evidence toward product-market fit
 
