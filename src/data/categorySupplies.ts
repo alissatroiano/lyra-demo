@@ -7,7 +7,6 @@ export interface SupplyOption {
 
 export const CATEGORY_SUPPLIES: Record<string, SupplyOption[]> = {
   Gaming: [
-    { id: "Minecraft Education", label: "Minecraft Education", icon: "⛏️", description: "3D block building, Agent & MakeCode" },
     { id: "Roblox Studio", label: "Roblox Studio", icon: "🎮", description: "Lua 3D world building & game scripting" },
     { id: "Scratch 3.0", label: "Scratch 3.0", icon: "🚀", description: "Interactive 2D sprite games & physics" },
     { id: "Scratch JR", label: "Scratch JR", icon: "🐱", description: "Ages 5-7 tablet story & game blocks" },
@@ -30,7 +29,6 @@ export const CATEGORY_SUPPLIES: Record<string, SupplyOption[]> = {
   ],
   Software: [
     { id: "Scratch JR", label: "Scratch JR", icon: "🐱", description: "Ages 5-7 tablet block programming" },
-    { id: "Minecraft Education", label: "Minecraft", icon: "⛏️", description: "3D block building & MakeCode" },
     { id: "Scratch 3.0", label: "Scratch", icon: "🚀", description: "Interactive sprites & games" },
     { id: "EduBlocks", label: "EduBlocks", icon: "🧱", description: "Drag & drop Python & HTML" },
     { id: "Thunkable", label: "Thunkable", icon: "📱", description: "No-code mobile app builder" },
