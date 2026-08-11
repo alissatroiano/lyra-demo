@@ -601,11 +601,13 @@ export default function App() {
     ).toLowerCase();
 
     const allTabs = [
+      // Ordered by what saves an instructor the most prep time. Visual Studio
+      // is a nice-to-have, so it sits last rather than third.
       { id: "slides", label: "Interactive Slides", icon: Layers },
-      { id: "lab", label: selectedCategory === "Software" ? "💻 Coding Blocks" : "Hands-On Lab", icon: selectedCategory === "Software" ? Terminal : Activity },
-      { id: "nana-banana", label: "🎨 Visual Studio", icon: Palette },
+      { id: "lab", label: selectedCategory === "Software" ? "Coding Blocks" : "Hands-On Lab", icon: selectedCategory === "Software" ? Terminal : Activity },
       { id: "quiz", label: "Smartboard Quiz", icon: HelpCircle },
-      { id: "media", label: "Media Fixer", icon: Link2Off }
+      { id: "media", label: "Media Fixer", icon: Link2Off },
+      { id: "nana-banana", label: "Visual Studio", icon: Palette }
     ];
 
     const scores: Record<string, number> = {
@@ -3159,24 +3161,6 @@ export default function App() {
                 )}
 
                 {/* TAB: Visual Studio / Nana Banana Pro */}
-                {activeTab === "nana-banana" && (
-                  <motion.div
-                    key="tab-nana-banana-content"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.25 }}
-                    className="space-y-6 animate-fade-in"
-                  >
-                    <NanaBananaPro
-                      lesson={lesson}
-                      onUpdateVisuals={(visuals) => {
-                        setLesson(prev => ({ ...prev, generatedVisuals: visuals }));
-                      }}
-                    />
-                  </motion.div>
-                )}
-
                 {/* TAB 5: Broken Media Link Fixer */}
                 {activeTab === "media" && (
                   <motion.div
