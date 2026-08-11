@@ -1103,58 +1103,6 @@ app.post("/api/billing-portal", async (req, res) => {
   }
 });
 
-// Secure Direct Stripe Subscription Endpoint (Fallback)
-app.post("/api/subscribe", async (req, res) => {
-  const { uid, email, plan, cardName, cardNumber, expDate, cvc, priceId: reqPriceId } = req.body;
-
-  if (!uid || !email) {
-    return res.status(400).json({ error: "User UID and Email are required to register a subscription." });
-  }
-
-  try {
-    const stripeSecret = process.env.STRIPE_SECRET_KEY;
-    const priceId = reqPriceId || ((plan === "yearly" || plan === "annual")
-      ? (process.env.STRIPE_PROD_KEY_2 || "price_yearly_educator_99")
-      : (process.env.STRIPE_PROD_KEY_1 || "price_1U2OwBKExpIuZ5d5bmfH68py"));
-
-    let transactionId = "sub_live_" + Math.random().toString(36).substring(2, 12).toUpperCase();
-    
-    if (stripeSecret) {
-      try {
-        const Stripe = (await import("stripe")).default;
-        const stripe = new Stripe(stripeSecret);
-
-        console.log(`Processing Stripe payment for ${email} with plan: ${plan} (Price ID: ${priceId})...`);
-        const customer = await stripe.customers.create({
-          email,
-          name: cardName || undefined,
-          metadata: { uid, plan, priceId }
-        });
-        transactionId = "sub_" + customer.id;
-      } catch (stripeErr: any) {
-        console.warn("Stripe API notice (continuing with verified subscription):", stripeErr?.message);
-      }
-    } else {
-      console.log(`No STRIPE_SECRET_KEY configured. Processing subscription for ${email} using price ID ${priceId}...`);
-    }
-
-    res.json({
-      success: true,
-      transactionId,
-      message: "Subscription activated successfully!",
-      plan,
-      priceId,
-      isSubscribed: true,
-      timestamp: new Date().toISOString()
-    });
-  } catch (error: any) {
-    console.error("Stripe Subscription Endpoint error:", error);
-    res.status(500).json({
-      error: "Stripe transaction processing failed.",
-      details: error?.message || String(error)
-    });
-  }
-});
 
 // Configure Vite or Static Assets based on environment
 async function setupServer() {

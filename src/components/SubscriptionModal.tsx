@@ -19,10 +19,6 @@ export default function SubscriptionModal({
   authLoading
 }: SubscriptionModalProps) {
   const [selectedPlan, setSelectedPlan] = useState<"intro" | "summer" | "yearly">("summer");
-  const [cardName, setCardName] = useState(user?.displayName || "");
-  const [cardNumber, setCardNumber] = useState("•••• •••• •••• 4242");
-  const [expDate, setExpDate] = useState("12/28");
-  const [cvc, setCvc] = useState("123");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,32 +55,9 @@ export default function SubscriptionModal({
         return;
       }
 
-      // 2. Fallback to direct subscription if checkout session endpoint is not available
-      const subRes = await fetch("/api/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uid: user.uid,
-          email: user.email,
-          plan: selectedPlan === "summer" 
-            ? "Summer STEM Special ($12.99 One-Time Fee)" 
-            : selectedPlan === "yearly" 
-            ? "Camp Director Special ($49.99/month)"
-            : "Demo Incentive ($9.99 One-Time Fee)",
-          priceId,
-          cardName,
-          cardNumber,
-          expDate,
-          cvc
-        })
-      });
-
-      const subData = await subRes.json();
-      if (!subRes.ok || subData.error) {
-        throw new Error(data.error || subData.error || "Failed to process Stripe subscription.");
-      }
-
-      await onSubscribe(selectedPlan === "yearly" ? "annual" : selectedPlan === "summer" ? "summer_1299" : "intro_999", { cardName });
+      // Checkout is the only way to pay. There is deliberately no fallback that
+      // grants access without a completed Stripe payment.
+      throw new Error(data.details || data.error || "Could not start Stripe checkout. Please try again.");
     } catch (err: any) {
       console.error("Subscription payment error:", err);
       setError(err.message || "An error occurred while processing your payment. Please try again.");
@@ -248,66 +221,17 @@ export default function SubscriptionModal({
                 </div>
               </div>
 
-              {/* Stripe Payment Form */}
-              <div className="space-y-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl">
-                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-2">
-                  <span className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                    <CreditCard className="w-4 h-4 text-teal-800 dark:text-teal-brand" /> Stripe API Payment Details
-                  </span>
-                  <span className="text-[9px] font-mono text-slate-500 dark:text-slate-400 font-medium">
-                    Key: {STRIPE_PUBLIC_KEY.slice(0, 14)}...
-                  </span>
-                </div>
-
-                <div className="space-y-3 pt-1">
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">Cardholder Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={cardName}
-                      onChange={(e) => setCardName(e.target.value)}
-                      placeholder="Jane Doe"
-                      className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-xs font-medium text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-brand focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">Card Number (Stripe Test / Live)</label>
-                    <input
-                      type="text"
-                      required
-                      value={cardNumber}
-                      onChange={(e) => setCardNumber(e.target.value)}
-                      placeholder="4242 •••• •••• 4242"
-                      className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-xs font-mono font-medium text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-brand focus:outline-none"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">Expiration</label>
-                      <input
-                        type="text"
-                        required
-                        value={expDate}
-                        onChange={(e) => setExpDate(e.target.value)}
-                        placeholder="MM/YY"
-                        className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-xs font-mono font-medium text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-brand focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block mb-1">CVC / CVV</label>
-                      <input
-                        type="text"
-                        required
-                        value={cvc}
-                        onChange={(e) => setCvc(e.target.value)}
-                        placeholder="123"
-                        className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg text-xs font-mono font-medium text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-teal-brand focus:outline-none"
-                      />
-                    </div>
-                  </div>
+              {/* Card details are collected by Stripe Checkout on Stripe's own
+                  domain. Lyrah never sees or transmits a card number, which is
+                  what keeps it out of PCI scope. */}
+              <div className="flex items-start gap-3 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl">
+                <ShieldCheck className="w-4 h-4 text-teal-800 dark:text-teal-brand shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="text-xs font-bold text-slate-900 dark:text-slate-100">You'll finish payment on Stripe</p>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Continuing takes you to Stripe's secure checkout to enter your card
+                    and any promotion code. Lyrah never receives your card details.
+                  </p>
                 </div>
               </div>
 
