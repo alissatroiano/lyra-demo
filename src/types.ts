@@ -77,6 +77,12 @@ export interface ProcessedLesson {
   extractedStyleNotes?: string;
   generatedVisuals?: SavedVisual[];
   feasibilityAudit?: FeasibilityAudit;
+  /** Lyrah's own call on whether this lesson needs an illustration at all. */
+  visualSuggestion?: {
+    needed: boolean;
+    reason: string;
+    prompt?: string;
+  };
 }
 
 export interface PreloadedLesson {

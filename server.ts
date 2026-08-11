@@ -244,6 +244,25 @@ Please convert this into a comprehensive, highly interactive lesson plan with sl
             "feasibilityAudit",
           ],
           properties: {
+            visualSuggestion: {
+              type: Type.OBJECT,
+              description: "Whether this specific lesson genuinely benefits from a generated illustration. Most lessons do not: a hands-on build with clear written steps, or a coding lesson whose blocks are already written out, needs no picture. Recommend one only when a single image would remove real ambiguity - an unfamiliar apparatus, a spatial arrangement, or a physical setup that is hard to picture from text.",
+              required: ["needed", "reason"],
+              properties: {
+                needed: {
+                  type: Type.BOOLEAN,
+                  description: "True only if an illustration would materially help the instructor or students. Default to false.",
+                },
+                reason: {
+                  type: Type.STRING,
+                  description: "One short sentence explaining the decision, written for the instructor (e.g. 'The steps are clear in text; a picture would not add anything.').",
+                },
+                prompt: {
+                  type: Type.STRING,
+                  description: "Only when needed is true: a single concrete image prompt describing exactly what to draw for this lesson. Omit when needed is false.",
+                },
+              },
+            },
             extractedStyleNotes: {
               type: Type.STRING,
               description: "A short, one-sentence observation about this instructor's style, preferences, or technical level based on their inputs. Write in 3rd person singular/plural (e.g., 'Instructor prefers...').",
