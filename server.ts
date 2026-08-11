@@ -166,6 +166,49 @@ app.post("/api/extract-text", async (req, res) => {
   }
 });
 
+/**
+ * Strip HTML formatting the model sometimes emits inside JSON string fields.
+ *
+ * Nothing in the UI renders lesson text as HTML, so a stray <p> or <strong>
+ * reaches the instructor as literal visible markup. The system instruction asks
+ * for plain text, but instructions are not a guarantee and a mangled lesson in
+ * front of a classroom is not a recoverable error.
+ *
+ * Only a narrow list of formatting tags is removed. Anything else — an <svg>, a
+ * code sample, or "5 < 10" — is left intact, because coding lessons legitimately
+ * contain angle brackets and over-eager stripping would corrupt them.
+ */
+const FORMATTING_TAG = /<\/?(?:p|br|div|span|strong|b|em|i|u|ul|ol|h[1-6])(?:\s[^>]*)?\/?>/gi;
+
+const stripMarkup = (value: string): string => {
+  let out = value.replace(/<\/?li(?:\s[^>]*)?>/gi, " ").replace(FORMATTING_TAG, " ");
+
+  // Undo entity escaping so "&amp;" and "&lt;" do not reach the instructor raw.
+  out = out
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&amp;/gi, "&");
+
+  // Tags become spaces, which otherwise strands a gap before punctuation
+  // ("balloon rocket . Then measure").
+  return out
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\s+([.,;:!?)])/g, "$1")
+    .trim();
+};
+
+const stripMarkupFromLesson = (node: any): any => {
+  if (typeof node === "string") return stripMarkup(node);
+  if (Array.isArray(node)) return node.map(stripMarkupFromLesson);
+  if (node && typeof node === "object") {
+    return Object.fromEntries(Object.entries(node).map(([k, v]) => [k, stripMarkupFromLesson(v)]));
+  }
+  return node;
+};
+
 // API endpoint to process lesson plan using Gemini
 app.post("/api/process-lesson", async (req, res) => {
   if (!ai) {
@@ -184,8 +227,13 @@ app.post("/api/process-lesson", async (req, res) => {
     const memoryDirective = instructorMemory ? `\n\nINSTRUCTOR LEARNING & STYLE MEMORY:\nYou have learned the following personal teaching style and directives for this specific instructor across sessions:\n"${instructorMemory}"\nAdapt all pacing, difficulty, gamification narrative style, and software/hardware choices to honor these learned preferences.` : "";
 
     const systemInstruction = `You are Lyrah, an enthusiastic, creative, and highly organized AI teaching copilot for STEM/STEAM instructors.
-Your mission is to help instructors transform standard, text-heavy, or dry lesson plans into immersive, gamified learning adventures for children (ages 5-14). You specialize in hands-on engineering challenges and block-based coding environments (Scratch, ScratchJr, EduBlocks, Code.org, Thunkable, Minecraft Education). You help instructors manage multi-session pacing and streamline heavy documentation into digestible, visually engaging student experiences.
+Your mission is to help instructors transform standard, text-heavy, or dry lesson plans into immersive, gamified learning adventures for children (ages 5-14). You specialize in hands-on engineering challenges and block-based coding environments (Scratch, ScratchJr, EduBlocks, Code.org, Thunkable). You help instructors manage multi-session pacing and streamline heavy documentation into digestible, visually engaging student experiences.
 ${memoryDirective}
+
+OUTPUT FORMAT:
+- Every string you return is displayed to the instructor exactly as written. Write plain prose.
+- Never use HTML tags (<p>, <br>, <strong>, <li>) or Markdown syntax (**bold**, ## headings, - bullets) inside any field. The interface applies its own styling; your markup reaches the instructor as visible clutter in the middle of a lesson.
+- Where a field takes a list, return separate array items rather than one string with bullet characters in it.
 
 PROFILE & TONE:
 - Tone & Style: Energetic, encouraging, imaginative, and highly collaborative. Speak like a seasoned, innovative educator who believes learning should feel like play.
@@ -195,7 +243,7 @@ PROFILE & TONE:
 CORE INSTRUCTIONS & TASKS:
 1. CONDENSE & MANAGE PACING: Turn walls of text into clean, high-impact key takeaways. Track heavy documentation and streamline deferred bloat/vocabulary for multi-session pacing.
 2. GAMIFICATION TRANSLATION: Convert traditional engineering and coding objectives into quests, mysteries, or challenges (e.g., framing a catapult build as a "castle siege defense" or a Scratch script as "programming a robot's escape route").
-3. BLOCK-BASED CODE ARCHITECT: Deconstruct programming logic into developmentally appropriate Scratch, ScratchJr, EduBlocks, Thunkable, Code.org, or Minecraft Education workflows. Translate instructions into exact text representations of blocks (e.g., \`[When Green Flag Clicked] -> [Repeat 10] -> [Move 10 Steps]\`).
+3. BLOCK-BASED CODE ARCHITECT: Deconstruct programming logic into developmentally appropriate Scratch, ScratchJr, EduBlocks, Thunkable, or Code.org workflows. Translate instructions into exact text representations of blocks (e.g., \`[When Green Flag Clicked] -> [Repeat 10] -> [Move 10 Steps]\`).
 4. PLATFORM-SPECIFIC GAMIFICATION & METAPHORS: Create fun metaphors for coding block categories (e.g., ScratchJr Triggering Blocks as "magic start buttons", Scratch Variables as "backpacks that hold secrets").
 5. STEP-BY-STEP VISUAL LAYOUTS: Transform text-heavy instructions into child-friendly visual layouts, text-based block stacks, or structured storyboard prompts.
 6. AUDIT LINKS & RESOURCES: Proactively scan lesson plans to identify broken, outdated, or missing video/slide deck links, and suggest high-quality relevant web replacements in mediaRecommendations.
@@ -213,11 +261,8 @@ SOFTWARE PLATFORMS & HARDWARE GUIDELINES (CRITICAL - DO NOT CONFUSE PLATFORMS):
   * End: End, Repeat Forever, Go to Page.
 - EduBlocks: Drag-and-drop block interface for Python / HTML text-based coding by Anaconda.
 - Thunkable / Block-Based Canva: Event blocks (e.g., when Button clicked) and UI/sound blocks.
-- Minecraft Education: 3D voxel sandbox with MakeCode Code Builder (Blocks or JavaScript), classroom tools (chalkboards, cameras, NPCs), agent loops, and redstone. Supports spatial geometry, 3D manipulation, computational thinking, and neurodiversity/inclusivity.
-- NEVER CONFUSE SCRATCH AND MINECRAFT EDUCATION:
-  * If the lesson mentions Scratch, sprites, costumes, backdrops, green flag, or ScratchJr, produce a Scratch / ScratchJr lesson plan. DO NOT mention or substitute Minecraft!
-  * If the lesson mentions Minecraft, blocks, agent, redstone, Steve, or Minecraft Education, produce a Minecraft Education lesson plan.
-- CHECK GOAL COMPATIBILITY: Verify whether goals work natively with identified software limits (e.g., ScratchJr lacks variables, so adapt score goals to page triggers or upgrade to Scratch 3.0; 2D frame animation in 3D Minecraft requires agent loops or NPC dialogue).
+- NEVER SUBSTITUTE A PLATFORM THE LESSON DID NOT ASK FOR. If the lesson names Scratch, sprites, costumes, backdrops, green flag or ScratchJr, produce a Scratch / ScratchJr plan. If it names no software at all, produce a hands-on lesson using ordinary classroom materials rather than inventing a platform requirement.
+- CHECK GOAL COMPATIBILITY: Verify whether goals work natively with identified software limits (e.g., ScratchJr lacks variables, so adapt score goals to page triggers or upgrade to Scratch 3.0; Code.org Game Lab has no persistent save between sessions, so multi-day builds need an export step).
 - CIRCUITRY / HARDWARE: If the lesson involves Circuitry, Electronics, or Hardware (DC Motors, LEDs, Copper Tape, Breadboards, Alligator Clips, Micro:bit), specify exact components, polarity, and circuit configuration.
 
 REAL-WORLD FEASIBILITY AUDIT & ALTERNATIVES:
@@ -397,7 +442,7 @@ ${groundedFindings}`
                 },
                 softwarePlatform: {
                   type: Type.STRING,
-                  description: "If this lesson involves coding or software, specify the exact software (e.g. 'Scratch JR', 'Scratch 3.0', 'Minecraft Education', 'EduBlocks', 'Thunkable', 'Code.org', 'Python', 'Micro:bit').",
+                  description: "If this lesson involves coding or software, specify the exact software (e.g. 'Scratch JR', 'Scratch 3.0', 'EduBlocks', 'Thunkable', 'Code.org', 'Python', 'Micro:bit').",
                 },
               },
             },
@@ -412,7 +457,7 @@ ${groundedFindings}`
                 },
                 identifiedSoftwarePlatform: {
                   type: Type.STRING,
-                  description: "Primary identified software platform, e.g. 'Scratch 3.0', 'Scratch JR', 'Minecraft Education', 'Roblox Studio', 'EduBlocks', 'Thunkable', 'Code.org', 'Python', 'Micro:bit'.",
+                  description: "Primary identified software platform, e.g. 'Scratch 3.0', 'Scratch JR', 'Roblox Studio', 'EduBlocks', 'Thunkable', 'Code.org', 'Python', 'Micro:bit'.",
                 },
                 softwareGoalCompatibility: {
                   type: Type.STRING,
@@ -518,7 +563,7 @@ ${groundedFindings}`
       throw new Error("No text returned from Gemini API");
     }
 
-    const processedData = JSON.parse(text.trim());
+    const processedData = stripMarkupFromLesson(JSON.parse(text.trim()));
 
     // Surface the grounding so the UI can cite sources and so the run leaves
     // an auditable trail of what was verified.
@@ -746,7 +791,7 @@ app.post("/api/chat", async (req, res) => {
     }
 
     const defaultLyrahSysInst = `You are Lyrah, an enthusiastic, creative, and highly organized AI teaching copilot.
-Your mission is to help STEM and STEAM instructors transform standard, text-heavy, or dry lesson plans into immersive, gamified learning adventures for children (ages 5-14). You specialize in hands-on engineering challenges and block-based coding environments (Scratch, ScratchJr, EduBlocks, Code.org, Thunkable, Minecraft Education). You help instructors manage multi-session pacing and streamline heavy documentation into digestible, visually engaging student experiences.
+Your mission is to help STEM and STEAM instructors transform standard, text-heavy, or dry lesson plans into immersive, gamified learning adventures for children (ages 5-14). You specialize in hands-on engineering challenges and block-based coding environments (Scratch, ScratchJr, EduBlocks, Code.org, Thunkable). You help instructors manage multi-session pacing and streamline heavy documentation into digestible, visually engaging student experiences.
 
 PROFILE & TONE:
 - Tone & Style: Energetic, encouraging, imaginative, and highly collaborative. Speak like a seasoned, innovative educator who believes learning should feel like play.
@@ -756,7 +801,7 @@ PROFILE & TONE:
 CORE TASKS & CAPABILITIES:
 1. Maintain Multi-Session Memory & Pacing: Actively track what has been taught and what "bloat" vocabulary or material was deferred for each instructor across semesters/camps.
 2. Apply Gamification Translation: Convert traditional engineering and coding objectives into quests, mysteries, or challenges (e.g., catapult -> castle siege defense, Scratch script -> robot's escape route).
-3. Act as a Block-Based Code Architect: Deconstruct complex programming logic into Scratch, ScratchJr, EduBlocks, Thunkable, Code.org, or Minecraft Education workflows. Translate instructions into exact text representations of blocks: \`[When Green Flag Clicked] -> [Repeat 10] -> [Move 10 Steps]\`.
+3. Act as a Block-Based Code Architect: Deconstruct complex programming logic into Scratch, ScratchJr, EduBlocks, Thunkable, or Code.org workflows. Translate instructions into exact text representations of blocks: \`[When Green Flag Clicked] -> [Repeat 10] -> [Move 10 Steps]\`.
 4. Design Platform-Specific Gamification: Create fun metaphors for coding block categories (e.g., ScratchJr "Triggering Blocks" as "magic start buttons" or Scratch "Variables" as "backpacks that hold secrets").
 5. Create Visual Step-by-Step Layouts: Transform dry, text-heavy technical building or coding instructions into child-friendly visual layouts, text-based block stacks, or storyboard prompts.
 6. Audit Links & Resources: Proactively scan lesson plans to identify broken, outdated, or missing video/slide deck links, and suggest high-quality relevant web replacements.
@@ -767,7 +812,7 @@ SOFTWARE PLATFORM KNOWLEDGE:
 - Scratch / Scratch Blocks: 2D sprites, costumes, backdrops, green flag events, broadcast messages, clones, variables.
 - ScratchJr (ages 5-7): Horizontal block grammar (Triggering: Green Flag, Tap, Bump, Message; Motion: Move Right/Left/Up/Down, Turn, Hop, Go Home; Looks: Say, Grow, Shrink, Reset Size, Hide, Show; Sound: Pop, Record; Control: Wait, Stop, Set Speed, Repeat; End: End, Repeat Forever, Go to Page).
 - EduBlocks (Anaconda): Drag-and-drop block coding for Python and HTML.
-- Minecraft Education: 3D voxel sandbox with MakeCode Code Builder (Blocks or JavaScript), classroom tools (chalkboards, cameras, NPCs), agent loops, redstone, spatial geometry, and neurodiversity benefits.`;
+`;
 
     const baseSysInst = systemInstruction || defaultLyrahSysInst;
     const fullSystemInstruction = `${baseSysInst}\n\n[SVG Diagram Rule]: Only generate or output raw inline SVG diagrams (<svg>...</svg>) if the user query or active demo path visibly depends on text-generated vector visuals. Otherwise, stick to clean Markdown text formatting and structured explanations.`;

@@ -80,6 +80,9 @@ export const RobotBunnyMascot = ({ className = "w-28 h-28" }: { className?: stri
  * to one piece of state, so they have to agree on the stored value even though
  * they show different labels.
  */
+/** Lessons an unsubscribed instructor can generate before checkout is required. */
+const FREE_LESSON_LIMIT = 3;
+
 const GRADE_CHOICES = [
   { value: "K-2", toolbarLabel: "K-2nd", modalLabel: "K-2 (Ages 5-7)" },
   { value: "3-5", toolbarLabel: "Elementary (3-5)", modalLabel: "3-5 (Ages 8-10)" },
@@ -97,7 +100,6 @@ const GRADE_CHOICES = [
 const PLATFORM_SIGNALS: { supply: string; category: string; terms: string[] }[] = [
   { supply: "Scratch JR", category: "Gaming", terms: ["scratch jr", "scratchjr", "junior scratch"] },
   { supply: "Scratch 3.0", category: "Gaming", terms: ["scratch 3", "scratch 3.0", "mit scratch", "scratch project", "sprite", "costume"] },
-  { supply: "Minecraft Education", category: "Gaming", terms: ["minecraft", "redstone", "makecode agent", "creeper"] },
   { supply: "Roblox Studio", category: "Gaming", terms: ["roblox", "lua"] },
   { supply: "EduBlocks", category: "Software", terms: ["edublocks", "edu blocks"] },
   { supply: "Thunkable", category: "Software", terms: ["thunkable", "app inventor"] },
@@ -258,7 +260,7 @@ export default function App() {
 
     // The instructor's own platform selection wins over anything scanned out of
     // the document. Previously this ran the other way, so one incidental mention
-    // ("you could also try this in Minecraft") flipped the whole pipeline.
+    // ("you could also try this in Roblox") flipped the whole pipeline.
     // "Custom Tools / Software" is the empty-Other placeholder, not a real pick.
     const techText = (tech || "").toLowerCase();
     const hasExplicitTech = !!techText && !techText.includes("custom tools / software");
@@ -271,7 +273,6 @@ export default function App() {
     const platformScores: Record<string, number> = {
       scratchJr: countOf(["scratchjr", "scratch jr", "junior scratch"]),
       scratch: countOf(["scratch", "sprite", "costume", "green flag", "backdrop"]),
-      minecraft: countOf(["minecraft", "command block", "redstone", "makecode agent"]),
       roblox: countOf(["roblox", "lua"]),
       eduBlocks: countOf(["edublocks", "edu blocks"]),
       thunkable: countOf(["thunkable", "app inventor"]),
@@ -291,7 +292,6 @@ export default function App() {
 
     const isScratchJr = picked("scratchJr", "scratch jr", "scratchjr");
     const isScratch = picked("scratch", "scratch") && !isScratchJr;
-    const isMinecraft = picked("minecraft", "minecraft") && !isScratch && !isScratchJr;
     const isRoblox = picked("roblox", "roblox");
     const isEduBlocks = picked("eduBlocks", "edublocks", "edu blocks");
     const isThunkable = picked("thunkable", "thunkable", "app inventor");
@@ -302,12 +302,11 @@ export default function App() {
     const isEngineering = fullText.includes("catapult") || fullText.includes("bridge") || fullText.includes("tower") || fullText.includes("physics") || fullText.includes("gravity") || fullText.includes("truss");
     const isScience = fullText.includes("chem") || fullText.includes("bio") || fullText.includes("cell") || fullText.includes("plant") || fullText.includes("eco");
     const isMath = fullText.includes("math") || fullText.includes("fraction") || fullText.includes("geometry") || fullText.includes("equation");
-    const isGaming = fullText.includes("gaming") || fullText.includes("game design") || isScratch || isScratchJr || isMinecraft || isRoblox || isCodeOrg;
+    const isGaming = fullText.includes("gaming") || fullText.includes("game design") || isScratch || isScratchJr || isRoblox || isCodeOrg;
 
     if (step === 1) {
       if (isScratchJr) return "Parsing ScratchJR yellow trigger blocks, motion grids & story loops";
       if (isScratch) return "Parsing Scratch 3.0 sprite blocks, costumes, broadcasts & stage events";
-      if (isMinecraft) return "Parsing Minecraft Education 3D world coordinates & MakeCode agent blocks";
       if (isRoblox) return "Parsing Roblox Studio Lua scripts, workspace parts & 3D physics";
       if (isEduBlocks) return "Parsing EduBlocks Python drag-and-drop workspace & block logic";
       if (isThunkable) return "Parsing Thunkable mobile app screens, buttons & event handlers";
@@ -332,7 +331,6 @@ export default function App() {
       }
       if (isScratchJr) return "Linking ScratchJR tap/bump triggers, character motion & sound blocks";
       if (isScratch) return "Linking Scratch 2D motion loops, green flag triggers & variable backpacks";
-      if (isMinecraft) return "Linking Minecraft redstone circuits, /tp command blocks & spatial routing";
       if (isRoblox) return "Linking Roblox player collision triggers, leaderstats & GUI events";
       if (isEduBlocks) return "Linking EduBlocks Python terminal outputs, loop blocks & functions";
       if (isThunkable) return "Linking Thunkable event handlers, sound triggers & cloud variables";
@@ -357,7 +355,6 @@ export default function App() {
       }
       if (isScratchJr) return "Synthesizing ScratchJR visual story cards, slide deck & smart quiz";
       if (isScratch) return "Synthesizing Scratch block-stack guide, slide deck & smart quiz";
-      if (isMinecraft) return "Synthesizing Minecraft quest guide, slide deck & smart quiz";
       if (isRoblox) return "Synthesizing Roblox 3D game quest guide, slide deck & smart quiz";
       if (isEduBlocks) return "Synthesizing EduBlocks block-to-Python lab guide & smart quiz";
       if (isThunkable) return "Synthesizing Thunkable app development guide & smart quiz";
@@ -605,7 +602,7 @@ export default function App() {
       "pseudocode", "syntax", "css", "html", "javascript", "typescript",
       "micro:bit", "microbit", "makecode", "arduino", "raspberry pi", "sprite",
       "debug", "computer science", "edublocks", "thunkable", "code.org",
-      "minecraft", "roblox", "app inventor", "source code", "code block",
+      "roblox", "app inventor", "source code", "code block",
       "block-based", "robotics"
     ];
 
@@ -631,10 +628,10 @@ export default function App() {
     // Whole-word only, and no bare "game"/"stage"/"agent": those matched
     // "gamified", "stages" and "reagent" in ordinary science write-ups.
     const gamingKeywords = [
-      "scratch", "minecraft", "roblox", "game design", "game mechanic",
-      "video game", "gaming", "sprite", "costume", "green flag", "redstone",
+      "scratch", "roblox", "game design", "game mechanic",
+      "video game", "gaming", "sprite", "costume", "green flag",
       "edublocks", "thunkable", "makecode", "arcade", "unity", "unreal",
-      "godot", "tynker", "code.org", "makecode agent"
+      "godot", "tynker", "code.org"
     ];
 
     return gamingKeywords.some(kw => countTerm(textToScan, kw) > 0);
@@ -650,7 +647,6 @@ export default function App() {
       const lowerExplicit = String(explicitField).toLowerCase();
       if (lowerExplicit.includes("scratch jr") || lowerExplicit.includes("scratchjr") || lowerExplicit.includes("junior scratch")) return "Scratch JR";
       if (lowerExplicit.includes("scratch")) return "Scratch 3.0";
-      if (lowerExplicit.includes("minecraft")) return "Minecraft Education";
       if (lowerExplicit.includes("roblox")) return "Roblox Studio";
       if (lowerExplicit.includes("edublocks")) return "EduBlocks";
       if (lowerExplicit.includes("thunkable")) return "Thunkable";
@@ -672,15 +668,11 @@ export default function App() {
       uploadedFileName || ''
     ].join(" ").toLowerCase();
 
-    // Check Scratch / Scratch JR FIRST before Minecraft to eliminate misidentification
     if (textToScan.includes("scratch jr") || textToScan.includes("scratchjr") || textToScan.includes("junior scratch")) {
       return "Scratch JR";
     }
     if (textToScan.includes("scratch") || textToScan.includes("sprite") || textToScan.includes("costume") || textToScan.includes("green flag") || textToScan.includes("backdrop")) {
       return "Scratch 3.0";
-    }
-    if (textToScan.includes("minecraft") || textToScan.includes("creeper") || textToScan.includes("redstone") || textToScan.includes("makecode agent")) {
-      return "Minecraft Education";
     }
     if (textToScan.includes("roblox") || textToScan.includes("lua")) {
       return "Roblox Studio";
@@ -766,7 +758,7 @@ export default function App() {
     }
 
     // Instructor Memory and Directives Boost
-    if (learnedNotes.includes("gaming") || learnedNotes.includes("scratch") || learnedNotes.includes("minecraft") || learnedNotes.includes("coding") || learnedNotes.includes("lab") || learnedNotes.includes("hands-on") || learnedNotes.includes("experiment") || learnedNotes.includes("robot")) {
+    if (learnedNotes.includes("gaming") || learnedNotes.includes("scratch") || learnedNotes.includes("coding") || learnedNotes.includes("lab") || learnedNotes.includes("hands-on") || learnedNotes.includes("experiment") || learnedNotes.includes("robot")) {
       scores.lab += 15;
     }
     if (learnedNotes.includes("visual") || learnedNotes.includes("art") || learnedNotes.includes("image") || learnedNotes.includes("diagram") || learnedNotes.includes("studio") || learnedNotes.includes("nana")) {
@@ -876,7 +868,7 @@ export default function App() {
     const requirements = extractRequirementsText(combined);
 
     // A mention under a requirements heading is worth three in the body, so a
-    // single "Software Required: Minecraft Education" is decisive while three
+    // single "Software Required: Scratch 3.0" is decisive while three
     // stray narrative references are needed to reach the same confidence.
     const REQUIREMENTS_WEIGHT = 3;
     const CONFIDENCE_THRESHOLD = 3;
@@ -888,7 +880,7 @@ export default function App() {
       );
 
     // 1. Grade / age range. Only explicit grade language counts — inferring
-    // "Minecraft therefore middle school" overrode instructors who had already
+    // "Roblox therefore middle school" overrode instructors who had already
     // said otherwise.
     if (!userSetGradeRef.current) {
       const gradeRanking = GRADE_SIGNALS
@@ -1082,8 +1074,10 @@ export default function App() {
       return;
     }
 
-    // 1 Free Lesson enforcement
-    if (!profile?.isSubscribed && generatedCount >= 1) {
+    // Free lesson enforcement. Three rather than one: a single generation is
+    // not enough to judge a five-module bundle, and someone evaluating Lyrah
+    // should not have to reach checkout to see what it does.
+    if (!profile?.isSubscribed && generatedCount >= FREE_LESSON_LIMIT) {
       setShowSubscriptionModal(true);
       return;
     }
@@ -2076,7 +2070,7 @@ export default function App() {
                       <div className="flex flex-wrap gap-1.5 pt-1">
                         {[
                           { id: "Hardware", label: "Hardware & Robotics", icon: "💻", desc: "Robotics, microcontrollers, 3D printing" },
-                          { id: "Software", label: "Software & Coding", icon: "⚙️", desc: "Scratch JR, Scratch, Minecraft, EduBlocks, Python" },
+                          { id: "Software", label: "Software & Coding", icon: "⚙️", desc: "Scratch JR, Scratch, EduBlocks, Python" },
                           { id: "Circuitry", label: "Circuitry & Electronics", icon: "⚡", desc: "DC motors, LEDs, breadboards, conductive circuits" }
                         ].map((techType) => {
                           const isSelected = selectedTechSubTypes.includes(techType.id);
