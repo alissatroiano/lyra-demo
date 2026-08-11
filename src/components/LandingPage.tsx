@@ -29,11 +29,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
 
             <h1 className="font-display text-3.5xl sm:text-5xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
-              Transform Plain STEM Lessons into <span className="text-teal-700 dark:text-teal-brand underline decoration-amber-400 dark:decoration-amber-500 underline-offset-6">Interactive Visual Adventures</span>
+              Say goodbye to <span className="text-teal-700 dark:text-teal-brand underline decoration-amber-400 dark:decoration-amber-500 underline-offset-6">long, wordy lesson plans</span>
             </h1>
 
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans font-normal">
-              Lyrah automatically restructures dense science articles, raw textbooks, and outline PDFs into classroom-ready smartboard slides, hands-on engineering labs, Nana Banana Pro visual diagrams, and interactive quizzes.
+              Paste in the curriculum you already have. Get slides, a hands-on lab checklist, a printable
+              worksheet with the answer key, and a review game — with the dead video links already flagged.
+              Ready to teach, not ready to edit for two more hours.
             </p>
 
             <div className="pt-2 flex flex-wrap items-center gap-3">
@@ -117,10 +119,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             >
               <Icon className="w-5 h-5 text-teal-brand shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 font-sans leading-snug">
+                <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100 font-display leading-snug landing-snug">
                   {title}
                 </h4>
-                <p className="text-xs text-secondary dark:text-slate-400 font-sans leading-relaxed">
+                <p className="text-xs text-secondary dark:text-slate-400 font-display leading-relaxed">
                   {body}
                 </p>
               </div>
@@ -132,11 +134,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* How Lyrah works — five steps in the order they actually run, so the
           numbering carries real sequence rather than decoration. */}
       <section className="space-y-4" id="pipeline-section">
-        <span className="text-[10px] font-mono font-bold text-teal-brand uppercase tracking-[0.18em]">
-          How Lyrah works — 5 AI agents, one learning package
+        <span className="text-[11px] font-mono font-bold text-teal-brand uppercase tracking-[0.18em]">
+          How Lyrah works
         </span>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 font-display leading-snug">
           {[
             {
               icon: FileCode,

@@ -31,10 +31,23 @@
 }
 
 /* 2026 Liquid Glass & Micro Glow Utilities */
-.font-display {
-  font-weight: 400;
+.font-display .logo {
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
+.font-mono {
+  font-weight: 800;
+  font-size: 10px;
+}
+
+.landing-snug {
+  text-transform: uppercase;
+}
+
+h4.font-display.font-bold {
+  letter-spacing: .8px;
+}
 .liquid-glass-light {
   background: rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(16px);

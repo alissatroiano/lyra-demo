@@ -6,3 +6,6 @@ coverage/
 !.env.example
 lyrahEnv/
 nEnv/
+lyrah/
+.env.example
+.env
