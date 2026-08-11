@@ -175,16 +175,48 @@ export default function App() {
     const primaryText = ((content || "") + " " + (fileName || "")).toLowerCase();
     const fullText = (primaryText + " " + (tech || "")).toLowerCase();
 
-    // Explicit Software Platform Checks (Scratch/ScratchJR primary over Minecraft)
-    const isScratchJr = primaryText.includes("scratchjr") || primaryText.includes("scratch jr") || primaryText.includes("junior scratch") || (fullText.includes("scratchjr") && !primaryText.includes("minecraft"));
-    const isScratch = (primaryText.includes("scratch") || primaryText.includes("sprite") || primaryText.includes("costume") || primaryText.includes("green flag") || primaryText.includes("backdrop")) && !isScratchJr;
-    const isMinecraft = (primaryText.includes("minecraft") || primaryText.includes("command block") || primaryText.includes("redstone") || primaryText.includes("makecode agent")) && !isScratch && !isScratchJr;
-    const isRoblox = primaryText.includes("roblox") || primaryText.includes("lua");
-    const isEduBlocks = primaryText.includes("edublocks") || primaryText.includes("edu blocks");
-    const isThunkable = primaryText.includes("thunkable") || primaryText.includes("app inventor");
-    const isCodeOrg = primaryText.includes("code.org") || primaryText.includes("game lab") || primaryText.includes("sprite lab");
-    const isMicroBit = primaryText.includes("micro:bit") || primaryText.includes("microbit");
-    const isPython = primaryText.includes("python") && !isEduBlocks;
+    // The instructor's own platform selection wins over anything scanned out of
+    // the document. Previously this ran the other way, so one incidental mention
+    // ("you could also try this in Minecraft") flipped the whole pipeline.
+    // "Custom Tools / Software" is the empty-Other placeholder, not a real pick.
+    const techText = (tech || "").toLowerCase();
+    const hasExplicitTech = !!techText && !techText.includes("custom tools / software");
+
+    // Count mentions rather than taking the first hit: the platform a lesson is
+    // actually about gets named repeatedly; a passing example gets named once.
+    const countOf = (needles: string[]) =>
+      needles.reduce((n, needle) => n + (primaryText.split(needle).length - 1), 0);
+
+    const platformScores: Record<string, number> = {
+      scratchJr: countOf(["scratchjr", "scratch jr", "junior scratch"]),
+      scratch: countOf(["scratch", "sprite", "costume", "green flag", "backdrop"]),
+      minecraft: countOf(["minecraft", "command block", "redstone", "makecode agent"]),
+      roblox: countOf(["roblox", "lua"]),
+      eduBlocks: countOf(["edublocks", "edu blocks"]),
+      thunkable: countOf(["thunkable", "app inventor"]),
+      codeOrg: countOf(["code.org", "game lab", "sprite lab"]),
+      microBit: countOf(["micro:bit", "microbit"]),
+      python: countOf(["python"]),
+    };
+
+    // A platform must be named at least twice before it defines the lesson.
+    const ranked = Object.entries(platformScores)
+      .filter(([, n]) => n > 1)
+      .sort((a, b) => b[1] - a[1]);
+    const winner = ranked.length ? ranked[0][0] : null;
+
+    const picked = (key: string, ...aliases: string[]) =>
+      hasExplicitTech ? aliases.some(a => techText.includes(a)) : winner === key;
+
+    const isScratchJr = picked("scratchJr", "scratch jr", "scratchjr");
+    const isScratch = picked("scratch", "scratch") && !isScratchJr;
+    const isMinecraft = picked("minecraft", "minecraft") && !isScratch && !isScratchJr;
+    const isRoblox = picked("roblox", "roblox");
+    const isEduBlocks = picked("eduBlocks", "edublocks", "edu blocks");
+    const isThunkable = picked("thunkable", "thunkable", "app inventor");
+    const isCodeOrg = picked("codeOrg", "code.org");
+    const isMicroBit = picked("microBit", "micro:bit", "microbit");
+    const isPython = picked("python", "python") && !isEduBlocks;
     const isRobotics = fullText.includes("lego") || fullText.includes("spike") || fullText.includes("ev3") || fullText.includes("robot") || fullText.includes("sensor");
     const isEngineering = fullText.includes("catapult") || fullText.includes("bridge") || fullText.includes("tower") || fullText.includes("physics") || fullText.includes("gravity") || fullText.includes("truss");
     const isScience = fullText.includes("chem") || fullText.includes("bio") || fullText.includes("cell") || fullText.includes("plant") || fullText.includes("eco");
@@ -814,6 +846,13 @@ export default function App() {
     setUploadedFileName(file.name);
     setExtractionError(null);
 
+    // A new upload is a new lesson: drop the directive from the previous one.
+    // Clearing the manual-edit flag lets the chip-driven effect rebuild it for
+    // this file, and the auto-detect calls below are passed "" so the old
+    // directive cannot skew detection for the new document.
+    setCustomPreferences("");
+    setIsManuallyEdited(false);
+
     const fileExt = file.name.split('.').pop()?.toLowerCase();
 
     if (fileExt === "pdf" || fileExt === "docx") {
@@ -849,7 +888,7 @@ export default function App() {
           if (data.text && data.text.trim().length > 0) {
             setCustomContent(data.text);
             triggerTempTextMaterialOpen();
-            autoDetectCurriculumSettings(data.text, file.name, customPreferences);
+            autoDetectCurriculumSettings(data.text, file.name, "");
             setShowPlanConfirmationModal(true);
           } else {
             throw new Error("No readable text content could be extracted from this document.");
@@ -870,7 +909,7 @@ export default function App() {
         if (typeof text === "string") {
           setCustomContent(text);
           triggerTempTextMaterialOpen();
-          autoDetectCurriculumSettings(text, file.name, customPreferences);
+          autoDetectCurriculumSettings(text, file.name, "");
           setShowPlanConfirmationModal(true);
         }
       };
@@ -1305,7 +1344,7 @@ export default function App() {
               onClick={() => setCurrentView("landing")}
             >
               <div>
-                <span className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-teal-dark dark:text-teal-brand">
+                <span className="font-display logo text-2xl sm:text-3xl font-extrabold tracking-tight text-teal-dark dark:text-teal-brand">
                   Lyrah<span className="text-teal-brand font-sans">.</span>
                 </span>
                 <p className="text-[9px] sm:text-[10px] text-secondary dark:text-slate-400 font-sans font-medium tracking-wide leading-none hidden xs:block">Afterschool STEM Copilot</p>
