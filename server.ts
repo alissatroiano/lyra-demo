@@ -20,7 +20,10 @@ const PORT = Number(process.env.PORT) || 3000;
 // Stripe Webhook Endpoint (requires raw body before express.json parsing)
 app.post("/api/webhook/stripe", express.raw({ type: "application/json" }), async (req, res) => {
   const sig = req.headers["stripe-signature"];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SIGNING_SECRET || "whsec_h2Q2CtoDpjuMAP042arsH6JkPUnpE8X4";
+  // No hardcoded fallback: a literal here is a published secret, and once it is
+  // rotated it is also wrong. If the secret is not configured, the only safe
+  // thing this endpoint can do is refuse.
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SIGNING_SECRET;
   const stripeSecret = process.env.STRIPE_SECRET_KEY;
 
   if (!stripeSecret) {
@@ -28,20 +31,29 @@ app.post("/api/webhook/stripe", express.raw({ type: "application/json" }), async
     return res.status(200).json({ received: true, status: "stripe_not_configured" });
   }
 
+  // Every event must carry a signature we can verify against the secret.
+  // Parsing an unsigned body would let anyone POST a forged
+  // checkout.session.completed and be treated as a paying customer.
+  if (!webhookSecret) {
+    console.error("Stripe webhook rejected: STRIPE_WEBHOOK_SECRET is not configured.");
+    return res.status(500).send("Webhook secret is not configured.");
+  }
+
+  if (!sig) {
+    console.error("Stripe webhook rejected: request carried no stripe-signature header.");
+    return res.status(400).send("Missing stripe-signature header.");
+  }
+
   try {
     const Stripe = (await import("stripe")).default;
     const stripe = new Stripe(stripeSecret);
 
     let event: any;
-    if (sig && webhookSecret) {
-      try {
-        event = stripe.webhooks.constructEvent(req.body, sig as string, webhookSecret);
-      } catch (err: any) {
-        console.error(`Stripe Webhook signature verification failed: ${err.message}`);
-        return res.status(400).send(`Webhook Signature Error: ${err.message}`);
-      }
-    } else {
-      event = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig as string, webhookSecret);
+    } catch (err: any) {
+      console.error(`Stripe Webhook signature verification failed: ${err.message}`);
+      return res.status(400).send(`Webhook Signature Error: ${err.message}`);
     }
 
     console.log(`Verified Stripe Webhook event: ${event.type}`);
@@ -222,9 +234,64 @@ ${customPreferences ? `Teacher's Custom Request & Available Supplies/Tools: ${cu
 
 Please convert this into a comprehensive, highly interactive lesson plan with slides, worksheets, quizzes, a hands-on activity, media backup queries, and a technical feasibility audit with realistic alternatives.`;
 
+    // PASS 1 - grounded research.
+    //
+    // Gemini will not accept googleSearch alongside responseMimeType/
+    // responseSchema, so grounding cannot simply be switched on for the
+    // structured call below. Instead we run a short grounded pass first and
+    // feed its findings into the structured pass as context.
+    //
+    // Best effort by design: if this fails, times out, or the model returns
+    // nothing, lesson generation proceeds ungrounded rather than erroring.
+    let groundedFindings = "";
+    let groundingCitations: string[] = [];
+
+    try {
+      const research = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: `Research this STEM lesson topic for a K-12 instructor and report only what you verify.
+
+TOPIC / RAW LESSON:
+${lessonContent.slice(0, 4000)}
+
+${customPreferences ? `INSTRUCTOR CONTEXT: ${customPreferences}` : ""}
+
+Report, in under 300 words:
+1. Any factual corrections - dates, values, mechanisms, terminology - if the material states something outdated or wrong.
+2. Two or three currently-working, classroom-appropriate resources (video, simulation, or activity guide) with their real URLs.
+3. One current, concrete real-world example an instructor could reference this term.
+
+If you cannot verify something, leave it out. Do not invent URLs.`,
+        config: {
+          tools: [{ googleSearch: {} }],
+        },
+      });
+
+      groundedFindings = research.text || "";
+
+      const chunks = research.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+      groundingCitations = chunks
+        .map((c: any) => c.web?.uri)
+        .filter((u: any): u is string => typeof u === "string" && u.length > 0);
+
+      console.log(
+        `Grounding pass: ${groundedFindings.length} chars, ${groundingCitations.length} sources`
+      );
+    } catch (groundErr: any) {
+      console.warn("Grounding pass failed; generating ungrounded:", groundErr?.message);
+    }
+
+    const groundedContext = groundedFindings
+      ? `
+
+VERIFIED RESEARCH (from a Google Search grounded pass - prefer these facts and links over your own recollection, and do not contradict them):
+${groundedFindings}`
+      : "";
+
+    // PASS 2 - structured generation, with the research folded in.
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
-      contents: userPrompt,
+      contents: userPrompt + groundedContext,
       config: {
         systemInstruction,
         responseMimeType: "application/json",
@@ -452,7 +519,16 @@ Please convert this into a comprehensive, highly interactive lesson plan with sl
     }
 
     const processedData = JSON.parse(text.trim());
-    res.json(processedData);
+
+    // Surface the grounding so the UI can cite sources and so the run leaves
+    // an auditable trail of what was verified.
+    res.json({
+      ...processedData,
+      grounding: {
+        used: groundingCitations.length > 0 || groundedFindings.length > 0,
+        sources: groundingCitations,
+      },
+    });
   } catch (error: any) {
     console.error("Gemini processing error:", error);
     res.status(500).json({
@@ -880,6 +956,10 @@ app.post("/api/create-checkout-session", async (req, res) => {
           },
         ],
         mode: defaultMode as any,
+        // Lets instructors redeem a promotion code at checkout. Without this
+        // Stripe renders no code box at all, so coupons created in the
+        // dashboard would silently never apply.
+        allow_promotion_codes: true,
         customer_email: email,
         client_reference_id: uid,
         success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
@@ -903,6 +983,10 @@ app.post("/api/create-checkout-session", async (req, res) => {
           },
         ],
         mode: altMode as any,
+        // Lets instructors redeem a promotion code at checkout. Without this
+        // Stripe renders no code box at all, so coupons created in the
+        // dashboard would silently never apply.
+        allow_promotion_codes: true,
         customer_email: email,
         client_reference_id: uid,
         success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
@@ -962,58 +1046,63 @@ app.get("/api/verify-checkout-session", async (req, res) => {
   }
 });
 
-// Secure Direct Stripe Subscription Endpoint (Fallback)
-app.post("/api/subscribe", async (req, res) => {
-  const { uid, email, plan, cardName, cardNumber, expDate, cvc, priceId: reqPriceId } = req.body;
+/**
+ * Stripe billing portal.
+ *
+ * Instructors on the recurring tiers need somewhere to update a card, see what
+ * they were charged and cancel without emailing anyone. Stripe hosts all of
+ * that; this only has to find the customer and hand back a link.
+ *
+ * Checkout is created with `customer_email`, so the customer is looked up by
+ * email rather than requiring a stored customer ID.
+ */
+app.post("/api/billing-portal", async (req, res) => {
+  const { email } = req.body || {};
 
-  if (!uid || !email) {
-    return res.status(400).json({ error: "User UID and Email are required to register a subscription." });
+  if (!email) {
+    return res.status(400).json({ error: "An email address is required to open the billing portal." });
   }
 
+  const stripeSecret = process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecret) {
+    return res.status(400).json({ error: "STRIPE_SECRET_KEY not configured on server." });
+  }
+
+  const protocol = req.headers["x-forwarded-proto"] || "https";
+  const host = req.headers.host || "localhost:3000";
+  const origin = `${protocol}://${host}`;
+
   try {
-    const stripeSecret = process.env.STRIPE_SECRET_KEY;
-    const priceId = reqPriceId || ((plan === "yearly" || plan === "annual")
-      ? (process.env.STRIPE_PROD_KEY_2 || "price_yearly_educator_99")
-      : (process.env.STRIPE_PROD_KEY_1 || "price_1U2OwBKExpIuZ5d5bmfH68py"));
+    const Stripe = (await import("stripe")).default;
+    const stripe = new Stripe(stripeSecret);
 
-    let transactionId = "sub_live_" + Math.random().toString(36).substring(2, 12).toUpperCase();
-    
-    if (stripeSecret) {
-      try {
-        const Stripe = (await import("stripe")).default;
-        const stripe = new Stripe(stripeSecret);
+    const customers = await stripe.customers.list({ email, limit: 1 });
+    const customer = customers.data[0];
 
-        console.log(`Processing Stripe payment for ${email} with plan: ${plan} (Price ID: ${priceId})...`);
-        const customer = await stripe.customers.create({
-          email,
-          name: cardName || undefined,
-          metadata: { uid, plan, priceId }
-        });
-        transactionId = "sub_" + customer.id;
-      } catch (stripeErr: any) {
-        console.warn("Stripe API notice (continuing with verified subscription):", stripeErr?.message);
-      }
-    } else {
-      console.log(`No STRIPE_SECRET_KEY configured. Processing subscription for ${email} using price ID ${priceId}...`);
+    if (!customer) {
+      // A one-time Summer Special buyer has no subscription to manage, and
+      // saying so is more useful than dropping them into an empty portal.
+      return res.status(404).json({
+        error: "No billing record found for this account.",
+        details: "If you paid the one-time Summer STEM Special there is no subscription to manage — nothing will be charged again.",
+      });
     }
 
-    res.json({
-      success: true,
-      transactionId,
-      message: "Subscription activated successfully!",
-      plan,
-      priceId,
-      isSubscribed: true,
-      timestamp: new Date().toISOString()
+    const portal = await stripe.billingPortal.sessions.create({
+      customer: customer.id,
+      return_url: `${origin}/`,
     });
+
+    res.json({ url: portal.url });
   } catch (error: any) {
-    console.error("Stripe Subscription Endpoint error:", error);
+    console.error("Stripe billing portal error:", error);
     res.status(500).json({
-      error: "Stripe transaction processing failed.",
-      details: error?.message || String(error)
+      error: "Could not open the billing portal.",
+      details: error?.message || String(error),
     });
   }
 });
+
 
 // Configure Vite or Static Assets based on environment
 async function setupServer() {

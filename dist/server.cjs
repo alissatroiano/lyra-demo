@@ -217,9 +217,44 @@ ${lessonContent}
 ${customPreferences ? `Teacher's Custom Request & Available Supplies/Tools: ${customPreferences}` : ""}
 
 Please convert this into a comprehensive, highly interactive lesson plan with slides, worksheets, quizzes, a hands-on activity, media backup queries, and a technical feasibility audit with realistic alternatives.`;
+    let groundedFindings = "";
+    let groundingCitations = [];
+    try {
+      const research = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: `Research this STEM lesson topic for a K-12 instructor and report only what you verify.
+
+TOPIC / RAW LESSON:
+${lessonContent.slice(0, 4e3)}
+
+${customPreferences ? `INSTRUCTOR CONTEXT: ${customPreferences}` : ""}
+
+Report, in under 300 words:
+1. Any factual corrections - dates, values, mechanisms, terminology - if the material states something outdated or wrong.
+2. Two or three currently-working, classroom-appropriate resources (video, simulation, or activity guide) with their real URLs.
+3. One current, concrete real-world example an instructor could reference this term.
+
+If you cannot verify something, leave it out. Do not invent URLs.`,
+        config: {
+          tools: [{ googleSearch: {} }]
+        }
+      });
+      groundedFindings = research.text || "";
+      const chunks = research.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+      groundingCitations = chunks.map((c) => c.web?.uri).filter((u) => typeof u === "string" && u.length > 0);
+      console.log(
+        `Grounding pass: ${groundedFindings.length} chars, ${groundingCitations.length} sources`
+      );
+    } catch (groundErr) {
+      console.warn("Grounding pass failed; generating ungrounded:", groundErr?.message);
+    }
+    const groundedContext = groundedFindings ? `
+
+VERIFIED RESEARCH (from a Google Search grounded pass - prefer these facts and links over your own recollection, and do not contradict them):
+${groundedFindings}` : "";
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
-      contents: userPrompt,
+      contents: userPrompt + groundedContext,
       config: {
         systemInstruction,
         responseMimeType: "application/json",
@@ -445,7 +480,13 @@ Please convert this into a comprehensive, highly interactive lesson plan with sl
       throw new Error("No text returned from Gemini API");
     }
     const processedData = JSON.parse(text.trim());
-    res.json(processedData);
+    res.json({
+      ...processedData,
+      grounding: {
+        used: groundingCitations.length > 0 || groundedFindings.length > 0,
+        sources: groundingCitations
+      }
+    });
   } catch (error) {
     console.error("Gemini processing error:", error);
     res.status(500).json({

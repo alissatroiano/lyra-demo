@@ -138,7 +138,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           How Lyrah works
         </span>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 font-display leading-snug">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 font-display leading-snug text-lg">
           {[
             {
               icon: FileCode,
@@ -178,7 +178,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${tint}`}>
                 <Icon className="w-5 h-5" />
               </span>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 font-sans leading-snug">
+              <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100 font-display leading-snug">
                 {i + 1}. {title}
               </h4>
               <p className="text-xs text-secondary dark:text-slate-400 font-sans leading-relaxed">
@@ -281,7 +281,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <div className="pt-4 space-y-8" id="pricing-section">
         <div className="text-center space-y-2">
           <span className="text-[10px] font-bold text-amber-800 dark:text-amber-200 uppercase tracking-widest font-sans bg-amber-100/60 dark:bg-amber-950/60 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-800">
-            STEM & STEAM EDUCATOR PLANS
+            INSTRUCTOR &amp; CAMP DIRECTOR PLANS
           </span>
           <h3 className="font-display text-3xl font-bold text-slate-900 dark:text-slate-100">Simple, Transparent Pricing</h3>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-lg mx-auto font-sans">
@@ -289,133 +289,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {/* Plan 1: STEM Educator Pro - $12.99 slashed out -> $9.99/mo */}
-          <div className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-6 flex flex-col justify-between shadow-sm hover:border-teal-brand transition-all relative">
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <span className="text-[10px] font-mono font-bold text-teal-900 dark:text-teal-brand uppercase tracking-wider bg-teal-50 dark:bg-teal-brand/20 px-2.5 py-1 rounded-md border border-teal-200 dark:border-teal-brand/30 inline-block">
-                  INDIVIDUAL TEACHER
-                </span>
-                <h4 className="font-display text-2xl font-bold text-slate-900 dark:text-slate-100">Educator Pro</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">Designed for single STEM/STEAM classroom teachers & lab instructors.</p>
-              </div>
-
-              <div className="flex items-baseline gap-2 pt-2">
-                <span className="line-through text-slate-400 dark:text-slate-500 font-display text-2xl font-normal">$12.99</span>
-                <span className="font-display text-4xl font-extrabold text-teal-900 dark:text-teal-brand">$9.99</span>
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-sans font-medium">/ month</span>
-              </div>
-
-              <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2.5 text-xs text-slate-700 dark:text-slate-300 font-sans">
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>Unlimited AI lesson transformations</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>Interactive smartboard slide decks</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>Hands-on lab guides & checklists</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>🍌 Nana Banana Pro visual diagrams</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>Gamified smartboard trivia quizzes</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>Google SafeSearch media recovery</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>Cloud Firestore persistent saving</span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                if (!user) {
-                  onSignIn();
-                } else {
-                  onSelectPlan();
-                }
-              }}
-              className="w-full py-3 bg-teal-800 dark:bg-teal-600 hover:bg-slate-900 dark:hover:bg-teal-500 text-white rounded-xl text-xs font-extrabold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <span>Get Educator Pro ($9.99/mo)</span>
-              <ArrowRight className="w-4 h-4 text-amber-300" />
-            </button>
-          </div>
-
-          {/* Plan 2: Educator Yearly - $99.00 */}
-          <div className="bg-white dark:bg-slate-900 border-2 border-teal-brand/60 rounded-3xl p-6 space-y-6 flex flex-col justify-between shadow-md hover:border-teal-brand transition-all relative">
-            <div className="absolute -top-3 right-4 bg-teal-brand text-slate-950 text-[10px] font-extrabold px-3 py-0.5 rounded-full uppercase tracking-wider font-mono shadow-xs">
-              BEST VALUE
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <span className="text-[10px] font-mono font-bold text-teal-900 dark:text-teal-brand uppercase tracking-wider bg-teal-50 dark:bg-teal-brand/20 px-2.5 py-1 rounded-md border border-teal-200 dark:border-teal-brand/30 inline-block">
-                  ANNUAL PASS
-                </span>
-                <h4 className="font-display text-2xl font-bold text-slate-900 dark:text-slate-100">Educator Yearly</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">Full annual access to all Lyrah STEM AI co-teacher tools ($8.25/mo).</p>
-              </div>
-
-              <div className="flex items-baseline gap-1.5 pt-2">
-                <span className="font-display text-4xl font-extrabold text-teal-900 dark:text-teal-brand">$99.00</span>
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-sans font-medium">/ year</span>
-              </div>
-
-              <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2.5 text-xs text-slate-700 dark:text-slate-300 font-sans">
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span><strong>Everything in Educator Pro</strong></span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>Save over 17% compared to monthly</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>Priority access to new AI model updates</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>Dedicated educator support channel</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>Full year of persistent cloud storage</span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                if (!user) {
-                  onSignIn();
-                } else {
-                  onSelectPlan();
-                }
-              }}
-              className="w-full py-3 bg-gradient-to-r from-teal-dark to-teal-800 dark:from-teal-600 dark:to-teal-500 hover:from-teal-900 hover:to-teal-950 text-white rounded-xl text-xs font-extrabold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <span>Get Educator Yearly ($99.00/yr)</span>
-              <ArrowRight className="w-4 h-4 text-amber-300" />
-            </button>
-          </div>
-
-          {/* Plan 3: Summer STEM Special - $12.99 ONE TIME */}
+        {/* Two plans only. Educator Pro and Educator Yearly are held back for a
+            later launch and documented in docs/BUSINESS-MODEL.md; showing them
+            now would bury the $12.99 offer instructors are actually being given. */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+          {/* Plan 1: Summer STEM Special - $12.99 ONE TIME (leads) */}
           <div className="bg-gradient-to-b from-teal-dark via-teal-900 to-slate-900 text-white rounded-3xl p-6 space-y-6 flex flex-col justify-between shadow-lg relative border-2 border-teal-brand/40 overflow-hidden">
             <div className="absolute top-0 right-0 bg-amber-400 text-slate-950 text-[10px] font-extrabold px-3.5 py-1 rounded-bl-xl uppercase tracking-wider font-mono shadow-xs">
               SUMMER SPECIAL
@@ -427,7 +305,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   ONE TIME CHARGE
                 </span>
                 <h4 className="font-display text-2xl font-bold text-white">Summer STEM Special</h4>
-                <p className="text-xs text-teal-100/80 font-sans">Special summer offer for educators & camps. Full access for a single low charge.</p>
+                <p className="text-xs text-teal-100/80 font-sans">Special summer offer for educators &amp; camps. Full access for a single low charge.</p>
               </div>
 
               <div className="flex items-baseline gap-1.5 pt-2">
@@ -438,7 +316,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <div className="border-t border-white/10 pt-4 space-y-2.5 text-xs text-teal-100 font-sans">
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-300 shrink-0" />
-                  <span><strong>Everything in Educator Pro</strong></span>
+                  <span><strong>Full access for one instructor</strong></span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-300 shrink-0" />
@@ -446,15 +324,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-300 shrink-0" />
-                  <span>Full access to Scratch & STEM lesson generators</span>
+                  <span>Unlimited AI lesson transformations</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-300 shrink-0" />
-                  <span>Summer curriculum & camp templates</span>
+                  <span>Summer curriculum &amp; camp templates</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-300 shrink-0" />
-                  <span>Instant activation & Stripe checkout</span>
+                  <span>Instant activation &amp; Stripe checkout</span>
                 </div>
               </div>
             </div>
@@ -472,6 +350,68 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             >
               <span>Get Summer STEM Special ($12.99 One-Time)</span>
               <ArrowRight className="w-4 h-4 text-slate-950" />
+            </button>
+          </div>
+
+          {/* Plan 2: Camp Director Special - $99.99 held at $49.99 */}
+          <div className="bg-white dark:bg-slate-900 border-2 border-teal-brand/60 rounded-3xl p-6 space-y-6 flex flex-col justify-between shadow-md hover:border-teal-brand transition-all relative">
+            <div className="absolute -top-3 right-4 bg-teal-brand text-slate-950 text-[10px] font-extrabold px-3 py-0.5 rounded-full uppercase tracking-wider font-mono shadow-xs">
+              MULTI-SITE
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono font-bold text-teal-900 dark:text-teal-brand uppercase tracking-wider bg-teal-50 dark:bg-teal-brand/20 px-2.5 py-1 rounded-md border border-teal-200 dark:border-teal-brand/30 inline-block">
+                  PROGRAM DIRECTOR
+                </span>
+                <h4 className="font-display text-2xl font-bold text-slate-900 dark:text-slate-100">Camp Director Special</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">For directors running several instructors across sites or sessions.</p>
+              </div>
+
+              <div className="flex items-baseline gap-2 pt-2">
+                <span className="line-through text-slate-400 dark:text-slate-500 font-display text-2xl font-normal">$99.99</span>
+                <span className="font-display text-4xl font-extrabold text-teal-900 dark:text-teal-brand">$49.99</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-sans font-medium">/ month</span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">Recurring monthly subscription. Cancel anytime from your dashboard.</p>
+
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2.5 text-xs text-slate-700 dark:text-slate-300 font-sans">
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
+                  <span><strong>Everything in the Summer STEM Special</strong></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
+                  <span>Covers a program running several instructors</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
+                  <span>Priority access to new AI model updates</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
+                  <span>Dedicated director support channel</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
+                  <span>Persistent cloud storage for the season</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!user) {
+                  onSignIn();
+                } else {
+                  onSelectPlan();
+                }
+              }}
+              className="w-full py-3 bg-gradient-to-r from-teal-dark to-teal-800 dark:from-teal-600 dark:to-teal-500 hover:from-teal-900 hover:to-teal-950 text-white rounded-xl text-xs font-extrabold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Get Camp Director Special ($49.99/mo)</span>
+              <ArrowRight className="w-4 h-4 text-amber-300" />
             </button>
           </div>
         </div>

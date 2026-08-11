@@ -47,6 +47,7 @@ import {
   Brain,
   Save,
   Crown,
+  CreditCard,
   Palette,
   Sun,
   Moon,
@@ -74,8 +75,86 @@ export const RobotBunnyMascot = ({ className = "w-28 h-28" }: { className?: stri
   </div>
 );
 
+/**
+ * Canonical grade keys. The tool bar and the generation plan modal both write
+ * to one piece of state, so they have to agree on the stored value even though
+ * they show different labels.
+ */
+const GRADE_CHOICES = [
+  { value: "K-2", toolbarLabel: "K-2nd", modalLabel: "K-2 (Ages 5-7)" },
+  { value: "3-5", toolbarLabel: "Elementary (3-5)", modalLabel: "3-5 (Ages 8-10)" },
+  { value: "6-8", toolbarLabel: "Middle (6-8)", modalLabel: "6-8 (Ages 11-13)" },
+  { value: "9-12", toolbarLabel: "High School (9-12)", modalLabel: "9-12 (Ages 14-18)" },
+  { value: "Custom", toolbarLabel: "Custom", modalLabel: "Custom" },
+];
+
+/**
+ * Platforms Lyrah can recognise from a lesson plan. Terms are matched on whole
+ * words only — a bare "scratch" substring used to make "build a rocket from
+ * scratch" register as a Scratch programming lesson, which is how a physics
+ * lesson ended up tagged Gaming.
+ */
+const PLATFORM_SIGNALS: { supply: string; category: string; terms: string[] }[] = [
+  { supply: "Scratch JR", category: "Gaming", terms: ["scratch jr", "scratchjr", "junior scratch"] },
+  { supply: "Scratch 3.0", category: "Gaming", terms: ["scratch 3", "scratch 3.0", "mit scratch", "scratch project", "sprite", "costume"] },
+  { supply: "Minecraft Education", category: "Gaming", terms: ["minecraft", "redstone", "makecode agent", "creeper"] },
+  { supply: "Roblox Studio", category: "Gaming", terms: ["roblox", "lua"] },
+  { supply: "EduBlocks", category: "Software", terms: ["edublocks", "edu blocks"] },
+  { supply: "Thunkable", category: "Software", terms: ["thunkable", "app inventor"] },
+  { supply: "Code.org Game Lab", category: "Gaming", terms: ["code.org", "game lab", "sprite lab"] },
+  { supply: "Micro:bit / MakeCode", category: "Circuitry", terms: ["micro:bit", "microbit", "makecode"] },
+  { supply: "Python / IDE", category: "Software", terms: ["python", "repl.it", "replit"] },
+  { supply: "LEGO Robotics", category: "Engineering", terms: ["lego", "spike prime", "wedo", "mindstorms"] },
+  { supply: "Snap Circuits", category: "Circuitry", terms: ["snap circuit", "breadboard", "resistor"] },
+  { supply: "Canva", category: "Art", terms: ["canva"] },
+  { supply: "Digital Drawing Tablet", category: "Art", terms: ["procreate", "tinkercad", "digital art"] },
+];
+
+/** Subject signals, used when no software platform is called for at all. */
+const CATEGORY_SIGNALS: { category: string; terms: string[] }[] = [
+  { category: "Science", terms: ["science", "physics", "chemistry", "biology", "ecosystem", "photosynthesis", "molecule", "atom", "gravity", "force", "motion", "newton", "thrust", "propulsion", "energy", "weather", "planet", "solar system", "habitat", "experiment", "hypothesis", "density", "magnet", "chemical reaction"] },
+  // Build-and-make vocabulary matters as much as the word "engineering": a
+  // spool-and-string pulley rig is a DIY engineering lesson even though the
+  // write-up only ever says "gravity".
+  { category: "Engineering", terms: ["engineering", "bridge", "truss", "catapult", "tower", "prototype", "blueprint", "load-bearing", "design challenge", "robot", "robotics", "pulley", "lever", "simple machine", "gear", "axle", "winch", "hoist", "spool", "rig", "scaffold", "assemble", "construct"] },
+  { category: "Math", terms: ["math", "fraction", "geometry", "algebra", "equation", "graphing", "perimeter", "probability"] },
+  { category: "Circuitry", terms: ["circuit", "voltage", "conductor", "insulator", "led", "battery"] },
+  { category: "Art", terms: ["art", "drawing", "painting", "clay", "sculpture", "color theory", "poster", "infographic", "graphic design"] },
+  { category: "Software", terms: ["coding", "programming", "algorithm", "debug", "variable", "loop", "conditional"] },
+  { category: "Gaming", terms: ["game design", "level design", "game mechanic", "quest"] },
+];
+
+const GRADE_SIGNALS: { grade: string; terms: string[] }[] = [
+  { grade: "K-2", terms: ["k-2", "kindergarten", "1st grade", "2nd grade", "first grade", "second grade", "ages 5-7", "ages 4-6", "early childhood", "pre-k"] },
+  { grade: "3-5", terms: ["3-5", "3rd grade", "4th grade", "5th grade", "third grade", "fourth grade", "fifth grade", "ages 8-10", "elementary"] },
+  { grade: "6-8", terms: ["6-8", "6th grade", "7th grade", "8th grade", "sixth grade", "seventh grade", "eighth grade", "ages 11-13", "middle school"] },
+  { grade: "9-12", terms: ["9-12", "9th grade", "10th grade", "11th grade", "12th grade", "ages 14-18", "high school"] },
+];
+
+/** Count whole-word occurrences of a term. */
+const countTerm = (haystack: string, term: string): number => {
+  const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return (haystack.match(new RegExp(`(?:^|[^a-z0-9])${escaped}(?![a-z0-9])`, "g")) || []).length;
+};
+
+/**
+ * Pull out text sitting under a "Software Required" / "Materials" style heading.
+ * A tool named there is what the lesson actually runs on, so those mentions are
+ * weighted far above a passing reference in the narrative.
+ */
+const extractRequirementsText = (text: string): string => {
+  const headings = /(?:software|hardware|platform|tool|material|supply|supplies|equipment|resource)s?(?:\s+(?:required|needed|list))?\s*[:\-–]/gi;
+  const sections: string[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = headings.exec(text)) !== null) {
+    const after = text.slice(match.index + match[0].length, match.index + match[0].length + 400);
+    sections.push(after.split(/\n\s*\n/)[0]);
+  }
+  return sections.join(" \n ");
+};
+
 export default function App() {
-  const { 
+  const {
     user, 
     profile,
     signInWithGoogle, 
@@ -132,6 +211,8 @@ export default function App() {
   const [mediaSearchQuery, setMediaSearchQuery] = useState<string>("");
   const [showSubscriptionModal, setShowSubscriptionModal] = useState<boolean>(false);
   const [showPlanConfirmationModal, setShowPlanConfirmationModal] = useState<boolean>(false);
+  const [billingPortalLoading, setBillingPortalLoading] = useState<boolean>(false);
+  const [billingPortalError, setBillingPortalError] = useState<string | null>(null);
   const [generatedCount, setGeneratedCount] = useState<number>(() => {
     try {
       return Number(localStorage.getItem('lyra_free_lessons_count') || '0');
@@ -365,34 +446,66 @@ export default function App() {
 
   // Interactive Chip parameters state (for easy configuration)
   const [selectedCategory, setSelectedCategory] = useState<string>("Science");
-  const [selectedGrade, setSelectedGrade] = useState<string>("K-2nd");
+  const [selectedGrade, setSelectedGrade] = useState<string>("K-2");
   const [customGradeInput, setCustomGradeInput] = useState<string>("");
   const [selectedSize, setSelectedSize] = useState<string>("15-20 kids");
   const [selectedDuration, setSelectedDuration] = useState<string>("60 mins");
   const [selectedSupplies, setSelectedSupplies] = useState<string[]>(["Smart Board"]);
   const [customSuppliesInput, setCustomSuppliesInput] = useState<string>("");
 
+  // Once the instructor answers one of these by hand, auto-detect stops
+  // overwriting it. Scanning the lesson text fills blanks; it does not argue
+  // with the person who already told us the answer.
+  const userSetCategoryRef = React.useRef(false);
+  const userSetGradeRef = React.useRef(false);
+  const userSetSuppliesRef = React.useRef(false);
+
   // Track if a curriculum plan is uploaded or text is provided
   const hasPlanUploaded = Boolean((customContent && customContent.trim().length > 0) || uploadedFileName);
 
   // Helper to toggle supply selection (Restricted to max 1 item for single selection consistency)
   const toggleSupply = (val: string) => {
+    userSetSuppliesRef.current = true;
     setSelectedSupplies(prev => (prev.includes(val) ? [] : [val]));
+  };
+
+  // Hand the instructor over to Stripe's own billing portal, where they can
+  // update a card, download receipts or cancel without having to email anyone.
+  const openBillingPortal = async () => {
+    if (!user?.email || billingPortalLoading) return;
+
+    setBillingPortalLoading(true);
+    setBillingPortalError(null);
+
+    try {
+      const res = await fetch("/api/billing-portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        throw new Error(data.details || data.error || "Could not open the billing portal.");
+      }
+
+      window.location.href = data.url;
+    } catch (err: any) {
+      setBillingPortalError(err.message || String(err));
+    } finally {
+      setBillingPortalLoading(false);
+    }
   };
 
   // Curriculum Text Material fold state (Folded by default)
   const [isTextMaterialOpen, setIsTextMaterialOpen] = useState<boolean>(false);
   const textMaterialTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  // Instructor Tool Bar fold state (Collapsible, auto-opens when user inputs a lesson)
+  // Instructor Tool Bar fold state. It stays folded until the instructor opens
+  // it: the first thing they should see is the upload prompt, and every setting
+  // in here is shown again for review in the generation plan before anything
+  // runs, so nothing is lost by keeping it out of the way.
   const [isInstructorToolBarOpen, setIsInstructorToolBarOpen] = useState<boolean>(false);
-
-  // Auto-open Instructor Tool Bar when a lesson plan is inputted or uploaded
-  useEffect(() => {
-    if (hasPlanUploaded) {
-      setIsInstructorToolBarOpen(true);
-    }
-  }, [hasPlanUploaded]);
 
   // Briefly opens the text material dropdown upon upload/preset load to confirm success, then auto-closes
   const triggerTempTextMaterialOpen = React.useCallback(() => {
@@ -480,15 +593,23 @@ export default function App() {
       lesson.handsOnActivity?.scientificPrinciple || ''
     ].join(" ").toLowerCase();
 
+    // Only an unambiguous programming tool or practice puts a lesson in the
+    // coding lab. The previous list matched bare substrings, so "prevents"
+    // contained "event" and "logical" contained "logic" — enough to render a
+    // cardboard-and-string pulley build as Scratch blocks.
     const codingKeywords = [
-      "code", "coding", "scratch", "python", "block", "algorithm", "program",
-      "programming", "variable", "loop", "conditional", "function", "syntax",
-      "css", "html", "javascript", "js", "micro:bit", "microbit", "arduino",
-      "robot", "robotics", "logic", "event", "sprite", "pseudocode", "debug",
-      "computer science", "app design", "minecraft", "roblox"
+      // "scratch" only ever appears qualified — "build a rocket from scratch"
+      // is not a programming lesson.
+      "coding", "scratch 3", "scratch jr", "scratchjr", "scratch project",
+      "scratch programming", "python", "algorithm", "programming",
+      "pseudocode", "syntax", "css", "html", "javascript", "typescript",
+      "micro:bit", "microbit", "makecode", "arduino", "raspberry pi", "sprite",
+      "debug", "computer science", "edublocks", "thunkable", "code.org",
+      "minecraft", "roblox", "app inventor", "source code", "code block",
+      "block-based", "robotics"
     ];
 
-    return codingKeywords.some(kw => textToScan.includes(kw));
+    return codingKeywords.some(kw => countTerm(textToScan, kw) > 0);
   }, [lesson]);
 
   // Detect if current lesson is a Gaming / Game Design curriculum
@@ -507,13 +628,16 @@ export default function App() {
       (lesson.feasibilityAudit as any)?.identifiedSoftwarePlatform || ''
     ].join(" ").toLowerCase();
 
+    // Whole-word only, and no bare "game"/"stage"/"agent": those matched
+    // "gamified", "stages" and "reagent" in ordinary science write-ups.
     const gamingKeywords = [
-      "scratch", "minecraft", "roblox", "game", "gaming", "sprite", "costume",
-      "stage", "green flag", "agent", "redstone", "edublocks", "thunkable",
-      "makecode", "arcade", "unity", "unreal", "godot", "tynker", "code.org"
+      "scratch", "minecraft", "roblox", "game design", "game mechanic",
+      "video game", "gaming", "sprite", "costume", "green flag", "redstone",
+      "edublocks", "thunkable", "makecode", "arcade", "unity", "unreal",
+      "godot", "tynker", "code.org", "makecode agent"
     ];
 
-    return gamingKeywords.some(kw => textToScan.includes(kw));
+    return gamingKeywords.some(kw => countTerm(textToScan, kw) > 0);
   }, [lesson, selectedCategory]);
 
   // Identify specific Software / Coding platform if lesson falls into software
@@ -738,99 +862,80 @@ export default function App() {
   };
 
   // Auto-detect age range / grade level and software platforms from uploaded curriculum & directives
+  /**
+   * Read the lesson and fill in the grade, domain and platform chips.
+   *
+   * Two rules keep this from fighting the instructor. A tool named under a
+   * "Software Required" heading counts for much more than one mentioned in
+   * passing, and anything already chosen by hand is left alone.
+   */
   const autoDetectCurriculumSettings = (textToScan: string, fileNameToScan?: string | null, directiveToScan?: string) => {
     const combined = ((textToScan || "") + " " + (fileNameToScan || "") + " " + (directiveToScan || "")).toLowerCase();
     if (!combined.trim()) return;
 
-    // 1. Grade / Age Range Auto-Selection
-    if (
-      combined.includes("scratch jr") || combined.includes("scratchjr") || combined.includes("junior scratch") ||
-      combined.includes("k-2") || combined.includes("kindergarten") || combined.includes("1st grade") ||
-      combined.includes("2nd grade") || combined.includes("ages 5-7") || combined.includes("ages 4-6") ||
-      combined.includes("early childhood") || combined.includes("pre-k")
-    ) {
-      setSelectedGrade("K-2");
-    } else if (
-      combined.includes("3-5") || combined.includes("3rd grade") || combined.includes("4th grade") ||
-      combined.includes("5th grade") || combined.includes("ages 8-10") || combined.includes("elementary") ||
-      combined.includes("scratch 3") || combined.includes("scratch 3.0")
-    ) {
-      setSelectedGrade("3-5");
-    } else if (
-      combined.includes("6-8") || combined.includes("6th grade") || combined.includes("7th grade") ||
-      combined.includes("8th grade") || combined.includes("ages 11-13") || combined.includes("middle school") ||
-      combined.includes("minecraft") || combined.includes("roblox")
-    ) {
-      setSelectedGrade("6-8");
-    } else if (
-      combined.includes("9-12") || combined.includes("9th grade") || combined.includes("10th grade") ||
-      combined.includes("11th grade") || combined.includes("12th grade") || combined.includes("ages 14-18") ||
-      combined.includes("high school")
-    ) {
-      setSelectedGrade("9-12");
+    const requirements = extractRequirementsText(combined);
+
+    // A mention under a requirements heading is worth three in the body, so a
+    // single "Software Required: Minecraft Education" is decisive while three
+    // stray narrative references are needed to reach the same confidence.
+    const REQUIREMENTS_WEIGHT = 3;
+    const CONFIDENCE_THRESHOLD = 3;
+    const scoreTerms = (terms: string[]) =>
+      terms.reduce(
+        (total, term) =>
+          total + countTerm(combined, term) + countTerm(requirements, term) * (REQUIREMENTS_WEIGHT - 1),
+        0
+      );
+
+    // 1. Grade / age range. Only explicit grade language counts — inferring
+    // "Minecraft therefore middle school" overrode instructors who had already
+    // said otherwise.
+    if (!userSetGradeRef.current) {
+      const gradeRanking = GRADE_SIGNALS
+        .map(({ grade, terms }) => ({ grade, score: scoreTerms(terms) }))
+        .filter(({ score }) => score > 0)
+        .sort((a, b) => b.score - a.score);
+
+      if (gradeRanking.length > 0) setSelectedGrade(gradeRanking[0].grade);
     }
 
-    // 2. Domain Category & Software/Platform Auto-Selection (Guarantees strictly ONE category and ONE software)
-    let detectedCat = "Science";
-    let detectedSupply: string | null = null;
+    // 2. Software platform. Every platform is scored and the best one wins,
+    // rather than the first keyword to appear in the file.
+    const platformRanking = PLATFORM_SIGNALS
+      .map((signal) => ({ signal, score: scoreTerms(signal.terms) }))
+      .filter(({ score }) => score >= CONFIDENCE_THRESHOLD)
+      .sort((a, b) => b.score - a.score);
 
-    if (combined.includes("scratch jr") || combined.includes("scratchjr") || combined.includes("junior scratch")) {
-      detectedCat = "Gaming";
-      detectedSupply = "Scratch JR";
-    } else if (combined.includes("scratch 3") || combined.includes("scratch 3.0") || combined.includes("scratch") || combined.includes("sprite") || combined.includes("costume")) {
-      detectedCat = "Gaming";
-      detectedSupply = "Scratch 3.0";
-    } else if (combined.includes("minecraft") || combined.includes("redstone") || combined.includes("makecode agent") || combined.includes("creeper")) {
-      detectedCat = "Gaming";
-      detectedSupply = "Minecraft Education";
-    } else if (combined.includes("roblox") || combined.includes("lua")) {
-      detectedCat = "Gaming";
-      detectedSupply = "Roblox Studio";
-    } else if (combined.includes("edublocks") || combined.includes("edu blocks")) {
-      detectedCat = "Software";
-      detectedSupply = "EduBlocks";
-    } else if (combined.includes("thunkable") || combined.includes("app inventor")) {
-      detectedCat = "Software";
-      detectedSupply = "Thunkable";
-    } else if (combined.includes("code.org") || combined.includes("game lab") || combined.includes("sprite lab")) {
-      detectedCat = "Gaming";
-      detectedSupply = "Code.org Game Lab";
-    } else if (combined.includes("micro:bit") || combined.includes("microbit")) {
-      detectedCat = "Circuitry";
-      detectedSupply = "Micro:bit / MakeCode";
-    } else if (combined.includes("python")) {
-      detectedCat = "Software";
-      detectedSupply = "Python / IDE";
-    } else if (combined.includes("lego") || combined.includes("spike prime") || combined.includes("wedo") || combined.includes("robot")) {
-      detectedCat = "Engineering";
-      detectedSupply = "LEGO Robotics";
-    } else if (combined.includes("circuit") || combined.includes("led") || combined.includes("breadboard") || combined.includes("battery")) {
-      detectedCat = "Circuitry";
-      detectedSupply = "Snap Circuits";
-    } else if (combined.includes("bridge") || combined.includes("truss") || combined.includes("catapult") || combined.includes("tower")) {
-      detectedCat = "Engineering";
-    } else if (combined.includes("math") || combined.includes("fraction") || combined.includes("geometry") || combined.includes("algebra")) {
-      detectedCat = "Math";
-    } else if (combined.includes("canva") || combined.includes("poster") || combined.includes("infographic") || combined.includes("digital art") || combined.includes("graphic design") || combined.includes("procreate") || combined.includes("tinkercad")) {
-      detectedCat = "Art";
-      setSelectedArtSubType("Digital Art");
-      detectedSupply = combined.includes("canva") ? "Canva" : "Digital Drawing Tablet";
-    } else if (combined.includes("art") || combined.includes("drawing") || combined.includes("painting") || combined.includes("clay") || combined.includes("sculpture") || combined.includes("fine art")) {
-      detectedCat = "Art";
-      if (combined.includes("digital") || combined.includes("software") || combined.includes("screen") || combined.includes("canva")) {
-        setSelectedArtSubType("Digital Art");
-        detectedSupply = "Canva";
-      } else {
-        setSelectedArtSubType("Fine Art");
-        detectedSupply = "Paints & Brushes";
+    const winningPlatform = platformRanking.length > 0 ? platformRanking[0].signal : null;
+
+    // 3. Domain. A confidently detected platform implies its domain; otherwise
+    // fall back to subject keywords, so a science lesson that happens to name a
+    // tool once still reads as Science.
+    let detectedCat = winningPlatform?.category ?? null;
+    if (!detectedCat) {
+      const categoryRanking = CATEGORY_SIGNALS
+        .map(({ category, terms }) => ({ category, score: scoreTerms(terms) }))
+        .filter(({ score }) => score > 0)
+        .sort((a, b) => b.score - a.score);
+
+      detectedCat = categoryRanking.length > 0 ? categoryRanking[0].category : "Science";
+    }
+
+    const detectedSupply = winningPlatform?.supply ?? null;
+
+    if (!userSetCategoryRef.current) {
+      setSelectedCategory(detectedCat);
+      if (detectedCat === "Art") {
+        setSelectedArtSubType(
+          countTerm(combined, "digital") > 0 || detectedSupply === "Canva" ? "Digital Art" : "Fine Art"
+        );
       }
     }
 
-    setSelectedCategory(detectedCat);
-    if (detectedSupply) {
+    // Leave the instructor's own supply list alone; only replace it when we are
+    // confident enough to name a platform.
+    if (!userSetSuppliesRef.current && detectedSupply) {
       setSelectedSupplies([detectedSupply]);
-    } else {
-      setSelectedSupplies([]);
     }
 
     // Auto-update generated instruction directive if not manually edited
@@ -854,6 +959,12 @@ export default function App() {
     // directive cannot skew detection for the new document.
     setCustomPreferences("");
     setIsManuallyEdited(false);
+
+    // Chips picked for the previous lesson should not lock out detection on this
+    // one, so the manual-selection flags reset alongside the directive.
+    userSetCategoryRef.current = false;
+    userSetGradeRef.current = false;
+    userSetSuppliesRef.current = false;
 
     const fileExt = file.name.split('.').pop()?.toLowerCase();
 
@@ -1347,7 +1458,7 @@ export default function App() {
             >
               <div>
                 <span className="font-display logo text-2xl sm:text-3xl font-extrabold tracking-tight text-teal-dark dark:text-teal-brand">
-                  Lyrah<span className="text-teal-brand font-sans">.</span>
+                  LYRAH<span className="text-teal-brand font-sans">.</span>
                 </span>
                 <p className="text-[9px] sm:text-[10px] text-secondary dark:text-slate-400 font-sans font-medium tracking-wide leading-none hidden xs:block">Afterschool STEM Copilot</p>
               </div>
@@ -1934,7 +2045,10 @@ export default function App() {
                       <button
                         key={cat.id}
                         type="button"
-                        onClick={() => setSelectedCategory(cat.id)}
+                        onClick={() => {
+                          userSetCategoryRef.current = true;
+                          setSelectedCategory(cat.id);
+                        }}
                         className={`text-xs px-3 py-1.5 rounded-xl font-sans font-bold transition-all cursor-pointer flex items-center gap-1.5 border ${
                           selectedCategory === cat.id 
                             ? "bg-teal-dark dark:bg-teal-brand text-white dark:text-slate-950 border-teal-brand shadow-3xs micro-glow-teal scale-[1.02]" 
@@ -2033,18 +2147,24 @@ export default function App() {
                 <div className="space-y-1 sm:col-span-2">
                   <span className="text-[10px] font-bold text-secondary dark:text-slate-300 uppercase font-sans">Age Range / Grade Level</span>
                   <div className="flex flex-wrap gap-1.5 items-center">
-                    {["K-2nd", "Elementary (3-5)", "Middle (6-8)", "High School (9-12)", "Custom"].map((val) => (
+                    {/* Values are the canonical grade keys shared with the generation
+                        plan modal; only the labels differ. Storing "Middle (6-8)" here
+                        meant the modal could never match the instructor's choice. */}
+                    {GRADE_CHOICES.map(({ value, toolbarLabel }) => (
                       <button
-                        key={val}
+                        key={value}
                         type="button"
-                        onClick={() => setSelectedGrade(val)}
+                        onClick={() => {
+                          userSetGradeRef.current = true;
+                          setSelectedGrade(value);
+                        }}
                         className={`text-[10px] px-2.5 py-1 rounded-md font-sans font-bold transition-all cursor-pointer ${
-                          selectedGrade === val 
-                            ? "bg-teal-dark dark:bg-teal-brand text-white dark:text-slate-950 shadow-3xs" 
+                          selectedGrade === value
+                            ? "bg-teal-dark dark:bg-teal-brand text-white dark:text-slate-950 shadow-3xs"
                             : "bg-white dark:bg-slate-800 text-secondary dark:text-slate-300 hover:text-teal-dark dark:hover:text-white border border-black/[0.08] dark:border-slate-700"
                         }`}
                       >
-                        {val}
+                        {toolbarLabel}
                       </button>
                     ))}
                   </div>
@@ -3295,13 +3415,25 @@ export default function App() {
                     <Sparkles className="w-5 h-5 text-amber-300" />
                   </div>
                   <div>
-                    <h4 className="font-display font-bold text-base text-white">Educator Pro Subscription Active</h4>
+                    <h4 className="font-display font-bold text-base text-white">Lyrah Access Active</h4>
                     <p className="text-xs text-emerald-100/80 font-sans">You have full unlocked access to AI lesson transformations, Cloud Firestore storage, Nana Banana Pro visual generator, and export channels.</p>
+                    {billingPortalError && (
+                      <p className="text-xs text-amber-200 font-sans mt-1.5" role="alert">{billingPortalError}</p>
+                    )}
                   </div>
                 </div>
-                <div className="shrink-0">
+                <div className="shrink-0 flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={openBillingPortal}
+                    disabled={billingPortalLoading}
+                    className="px-3.5 py-1.5 bg-white/10 hover:bg-white/20 disabled:opacity-50 disabled:cursor-not-allowed border border-white/25 text-white font-bold text-xs rounded-full transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+                  >
+                    <CreditCard className="w-3.5 h-3.5 text-emerald-300" />
+                    <span>{billingPortalLoading ? "Opening…" : "Manage billing"}</span>
+                  </button>
                   <span className="px-3.5 py-1.5 bg-emerald-400 text-slate-950 font-extrabold text-xs rounded-full inline-block uppercase tracking-wider font-mono">
-                    PRO UNLOCKED
+                    UNLOCKED
                   </span>
                 </div>
               </div>
@@ -3312,7 +3444,7 @@ export default function App() {
                     <Crown className="w-5 h-5 text-amber-300" />
                   </div>
                   <div>
-                    <h4 className="font-display font-bold text-base text-white">Unlock Full Educator Pro Access ($9.99/mo)</h4>
+                    <h4 className="font-display font-bold text-base text-white">Unlock Full Access — Summer STEM Special ($12.99 one-time)</h4>
                     <p className="text-xs text-teal-100/80 font-sans">Register and subscribe to access unlimited AI transformations, persistent Cloud Firestore lesson saving, and full curriculum suite tools.</p>
                   </div>
                 </div>
@@ -3327,7 +3459,7 @@ export default function App() {
                   }}
                   className="px-5 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-extrabold text-xs rounded-xl shadow-sm transition-all cursor-pointer shrink-0 flex items-center gap-2"
                 >
-                  <span>{user ? 'Activate Pro Access ($9.99/mo)' : 'Sign In & Subscribe'}</span>
+                  <span>{user ? 'Activate Access ($12.99 one-time)' : 'Sign In & Get Access'}</span>
                   <ArrowRight className="w-4 h-4 text-slate-950" />
                 </button>
               </div>
@@ -3395,18 +3527,21 @@ export default function App() {
                     </span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                    {["K-2", "3-5", "6-8", "9-12", "Custom"].map((g) => (
+                    {GRADE_CHOICES.map(({ value, modalLabel }) => (
                       <button
-                        key={g}
+                        key={value}
                         type="button"
-                        onClick={() => setSelectedGrade(g)}
+                        onClick={() => {
+                          userSetGradeRef.current = true;
+                          setSelectedGrade(value);
+                        }}
                         className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                          selectedGrade === g
+                          selectedGrade === value
                             ? "bg-teal-dark dark:bg-teal-brand text-white dark:text-slate-950 border-teal-brand shadow-2xs"
                             : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600 hover:border-teal-brand"
                         }`}
                       >
-                        {g === "K-2" ? "K-2 (Ages 5-7)" : g === "3-5" ? "3-5 (Ages 8-10)" : g === "6-8" ? "6-8 (Ages 11-13)" : g === "9-12" ? "9-12 (Ages 14-18)" : "Custom"}
+                        {modalLabel}
                       </button>
                     ))}
                   </div>
@@ -3437,7 +3572,10 @@ export default function App() {
                       <button
                         key={cat}
                         type="button"
-                        onClick={() => setSelectedCategory(cat)}
+                        onClick={() => {
+                          userSetCategoryRef.current = true;
+                          setSelectedCategory(cat);
+                        }}
                         className={`text-[11px] px-2.5 py-1 rounded-lg font-bold border transition-all cursor-pointer ${
                           selectedCategory === cat
                             ? "bg-slate-900 text-white border-slate-700 shadow-2xs"
