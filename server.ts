@@ -20,7 +20,10 @@ const PORT = Number(process.env.PORT) || 3000;
 // Stripe Webhook Endpoint (requires raw body before express.json parsing)
 app.post("/api/webhook/stripe", express.raw({ type: "application/json" }), async (req, res) => {
   const sig = req.headers["stripe-signature"];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SIGNING_SECRET || "whsec_h2Q2CtoDpjuMAP042arsH6JkPUnpE8X4";
+  // No hardcoded fallback: a literal here is a published secret, and once it is
+  // rotated it is also wrong. If the secret is not configured, the only safe
+  // thing this endpoint can do is refuse.
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SIGNING_SECRET;
   const stripeSecret = process.env.STRIPE_SECRET_KEY;
 
   if (!stripeSecret) {
@@ -28,20 +31,29 @@ app.post("/api/webhook/stripe", express.raw({ type: "application/json" }), async
     return res.status(200).json({ received: true, status: "stripe_not_configured" });
   }
 
+  // Every event must carry a signature we can verify against the secret.
+  // Parsing an unsigned body would let anyone POST a forged
+  // checkout.session.completed and be treated as a paying customer.
+  if (!webhookSecret) {
+    console.error("Stripe webhook rejected: STRIPE_WEBHOOK_SECRET is not configured.");
+    return res.status(500).send("Webhook secret is not configured.");
+  }
+
+  if (!sig) {
+    console.error("Stripe webhook rejected: request carried no stripe-signature header.");
+    return res.status(400).send("Missing stripe-signature header.");
+  }
+
   try {
     const Stripe = (await import("stripe")).default;
     const stripe = new Stripe(stripeSecret);
 
     let event: any;
-    if (sig && webhookSecret) {
-      try {
-        event = stripe.webhooks.constructEvent(req.body, sig as string, webhookSecret);
-      } catch (err: any) {
-        console.error(`Stripe Webhook signature verification failed: ${err.message}`);
-        return res.status(400).send(`Webhook Signature Error: ${err.message}`);
-      }
-    } else {
-      event = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig as string, webhookSecret);
+    } catch (err: any) {
+      console.error(`Stripe Webhook signature verification failed: ${err.message}`);
+      return res.status(400).send(`Webhook Signature Error: ${err.message}`);
     }
 
     console.log(`Verified Stripe Webhook event: ${event.type}`);
