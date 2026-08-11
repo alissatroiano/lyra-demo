@@ -2117,7 +2117,7 @@ export default function App() {
                           className="text-xs px-3.5 py-2 border border-teal-brand/50 rounded-xl bg-white dark:bg-slate-800 w-full focus:outline-none focus:ring-2 focus:ring-teal-brand/30 focus:border-teal-brand font-sans text-teal-dark dark:text-teal-brand font-semibold shadow-3xs"
                         />
 
-                        <div className="p-2.5 bg-sky-50 dark:bg-sky-950/40 border border-sky-300/40 dark:border-sky-800 rounded-xl text-[10px] text-sky-900 dark:text-sky-200 font-sans flex items-start gap-2">
+                        <div className="p-2.5 bg-sky-50 dark:bg-sky-950/40 border border-sky-300/40 dark:border-sky-800 rounded-xl text-[10px] text-sky-900 dark:text-sky-200 font-display flex items-start gap-2">
                           <Search className="w-3.5 h-3.5 text-sky-500 shrink-0 mt-0.5" />
                           <p className="leading-snug">
                             <strong>🔍 Google Search Grounding Active:</strong> Lyrah will search Google using <em>"{activeSupplyCategoryKey}"</em> + your custom keywords from the lesson plan to create, research real data on, and perfect the most realistic solution with technical feasibility checks & alternatives.

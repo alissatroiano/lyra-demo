@@ -117,10 +117,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             >
               <Icon className="w-5 h-5 text-teal-brand shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 font-sans leading-snug">
+                <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100 font-display leading-snug landing-snug">
                   {title}
                 </h4>
-                <p className="text-xs text-secondary dark:text-slate-400 font-sans leading-relaxed">
+                <p className="text-xs text-secondary dark:text-slate-400 font-display leading-relaxed">
                   {body}
                 </p>
               </div>
@@ -131,12 +131,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
       {/* How Lyrah works — five steps in the order they actually run, so the
           numbering carries real sequence rather than decoration. */}
-      <section className="space-y-4" id="pipeline-section">
-        <span className="text-[10px] font-mono font-bold text-teal-brand uppercase tracking-[0.18em]">
-          How Lyrah works — 5 AI agents, one learning package
+      <section f-4" id="pipeline-section">
+        <span className="text-[11px] font-mono font-bold text-teal-brand uppercase tracking-[0.18em]">
+          How Lyrah works
         </span>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 font-display leading-snug">
           {[
             {
               icon: FileCode,
