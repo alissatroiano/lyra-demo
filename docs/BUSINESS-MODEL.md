@@ -77,13 +77,26 @@ outcomes are downstream of this product and we don't claim them.
 
 ### Live now
 
-Two tiers, both live in Stripe in the deployed application:
+Two tiers are live in Stripe in the deployed application, and the pricing page shows only these
+two. Both are one-time charges rather than subscriptions, which is deliberate: the instructors
+buying today are paying out of pocket, mid-season, and a recurring charge is a harder yes than
+the product is worth to them on day one.
+
+| Tier | Price | Buyer |
+|---|---|---|
+| **Summer STEM Special** | $12.99 one-time | The individual instructor. The offer being put in front of real instructors this season, and the lead position on the pricing page |
+| **Camp Director Special** | $49.99 (from $99.99) | Multi-site programmes, summer camps and franchises running several instructors |
+
+### Held back for a later launch
+
+Two recurring tiers are designed and priced but deliberately not shown. Running them alongside a
+$12.99 one-time offer would bury it, and subscription retention is the weakest part of this
+market (see below) — so they wait until there is renewal evidence to justify them.
 
 | Tier | Price | Buyer |
 |---|---|---|
 | **Educator Pro** | $9.99/mo | The individual instructor — unlimited curriculum transformation across all five modules |
-| **Camp Director Pro** | $49.99 | Multi-site programmes, summer camps and franchises running several instructors |
-| **Summer Special** | Seasonal | A time-boxed offer for camp season, when demand spikes and budgets are shortest |
+| **Educator Yearly** | $99.00/yr | The same buyer, prepaid annually at roughly $8.25/mo, trading discount for a full school year of commitment |
 
 A **Publisher API** contract tier — educational publishers turning static textbooks into
 interactive activities — remains the B2B end state, not a shipped product.
