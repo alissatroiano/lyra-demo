@@ -222,9 +222,64 @@ ${customPreferences ? `Teacher's Custom Request & Available Supplies/Tools: ${cu
 
 Please convert this into a comprehensive, highly interactive lesson plan with slides, worksheets, quizzes, a hands-on activity, media backup queries, and a technical feasibility audit with realistic alternatives.`;
 
+    // PASS 1 - grounded research.
+    //
+    // Gemini will not accept googleSearch alongside responseMimeType/
+    // responseSchema, so grounding cannot simply be switched on for the
+    // structured call below. Instead we run a short grounded pass first and
+    // feed its findings into the structured pass as context.
+    //
+    // Best effort by design: if this fails, times out, or the model returns
+    // nothing, lesson generation proceeds ungrounded rather than erroring.
+    let groundedFindings = "";
+    let groundingCitations: string[] = [];
+
+    try {
+      const research = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: `Research this STEM lesson topic for a K-12 instructor and report only what you verify.
+
+TOPIC / RAW LESSON:
+${lessonContent.slice(0, 4000)}
+
+${customPreferences ? `INSTRUCTOR CONTEXT: ${customPreferences}` : ""}
+
+Report, in under 300 words:
+1. Any factual corrections - dates, values, mechanisms, terminology - if the material states something outdated or wrong.
+2. Two or three currently-working, classroom-appropriate resources (video, simulation, or activity guide) with their real URLs.
+3. One current, concrete real-world example an instructor could reference this term.
+
+If you cannot verify something, leave it out. Do not invent URLs.`,
+        config: {
+          tools: [{ googleSearch: {} }],
+        },
+      });
+
+      groundedFindings = research.text || "";
+
+      const chunks = research.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
+      groundingCitations = chunks
+        .map((c: any) => c.web?.uri)
+        .filter((u: any): u is string => typeof u === "string" && u.length > 0);
+
+      console.log(
+        `Grounding pass: ${groundedFindings.length} chars, ${groundingCitations.length} sources`
+      );
+    } catch (groundErr: any) {
+      console.warn("Grounding pass failed; generating ungrounded:", groundErr?.message);
+    }
+
+    const groundedContext = groundedFindings
+      ? `
+
+VERIFIED RESEARCH (from a Google Search grounded pass - prefer these facts and links over your own recollection, and do not contradict them):
+${groundedFindings}`
+      : "";
+
+    // PASS 2 - structured generation, with the research folded in.
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
-      contents: userPrompt,
+      contents: userPrompt + groundedContext,
       config: {
         systemInstruction,
         responseMimeType: "application/json",
@@ -452,7 +507,16 @@ Please convert this into a comprehensive, highly interactive lesson plan with sl
     }
 
     const processedData = JSON.parse(text.trim());
-    res.json(processedData);
+
+    // Surface the grounding so the UI can cite sources and so the run leaves
+    // an auditable trail of what was verified.
+    res.json({
+      ...processedData,
+      grounding: {
+        used: groundingCitations.length > 0 || groundedFindings.length > 0,
+        sources: groundingCitations,
+      },
+    });
   } catch (error: any) {
     console.error("Gemini processing error:", error);
     res.status(500).json({
