@@ -45,6 +45,11 @@
   text-transform: uppercase;
 }
 
+.font-display .leading-snug {
+  text-transform: uppercase;
+}
+
+
 h4.font-display.font-bold {
   letter-spacing: .8px;
 }
@@ -57,11 +62,10 @@ h4.font-display.font-bold {
 }
 
 .liquid-glass-dark {
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 194, 178, 0.25);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    -webkit-backdrop-filter: blur(20px);
+    background: #02081887;
+    border: 1px solid #00c2b240;
+    box-shadow: 0 8px 32px #0000005e;
 }
 
 .micro-glow-teal {

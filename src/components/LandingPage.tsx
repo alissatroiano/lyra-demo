@@ -138,7 +138,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           How Lyrah works
         </span>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 font-display leading-snug">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 font-display leading-snug text-lg">
           {[
             {
               icon: FileCode,
@@ -178,7 +178,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${tint}`}>
                 <Icon className="w-5 h-5" />
               </span>
-              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 font-sans leading-snug">
+              <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100 font-display leading-snug">
                 {i + 1}. {title}
               </h4>
               <p className="text-xs text-secondary dark:text-slate-400 font-sans leading-relaxed">
