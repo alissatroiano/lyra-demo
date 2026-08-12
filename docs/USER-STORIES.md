@@ -13,6 +13,33 @@
 
 ---
 
+## What instructor feedback changed, 11–12 August 2026
+
+Three instructors is not a usage statistic, and this project does not yet have one. What it does
+have is a short loop: instructors used it, said what was wrong, and the product changed within a
+day. That loop is the honest evidence available at this stage, so it is recorded here rather than
+implied.
+
+Every row below is a change that shipped to https://lyrah.io. The attributions are bracketed
+because they need to be confirmed before this is shown to anyone — some came from instructors
+testing the tool, others from the author's own testing, and the difference matters.
+
+| What was reported | Source | What changed |
+|---|---|---|
+| A generated lesson arrived full of visible HTML tags — `<p>`, `<strong>` — in the middle of the text | `[INSTRUCTOR NAME]`, testing in Microsoft Edge | The model is now instructed to return plain prose, and the server strips formatting tags from every lesson field before it reaches the instructor. Angle brackets in code samples and maths are deliberately preserved. |
+| Instructors were reaching the pricing page and stopping, saying they had not really made an account because they were never asked for a password | `[INSTRUCTOR NAMES]` | The passwordless sign-in is now explained rather than left implicit, and the payment step names the account being charged. |
+| Engineering and LEGO build lessons were being rendered as block-coding exercises, with "Copy Code" buttons on a lesson about a cardboard pulley | `[SOURCE]` | Lesson-type detection was rewritten. It had been matching bare substrings, so the word "pre**vent**s" matched "event" and flipped a hands-on build into a coding lab. DIY lessons now get a materials checklist. |
+| Lessons were being tagged as Minecraft when they had nothing to do with Minecraft | `[SOURCE]` | Minecraft support was removed entirely rather than tuned. Its vocabulary — redstone, agent, block — overlaps too heavily with ordinary science and engineering language to disambiguate reliably. It is shelved for a later release. |
+| The grade level chosen in the toolbar was not the grade level the generation plan used | `[SOURCE]` | The two controls had been storing different values for the same grade, so the plan could never match the instructor's choice. They now share one set of values, and a manual choice is no longer overwritten by auto-detection. |
+| One free lesson was not enough to judge whether the tool was useful | `[SOURCE]` | Raised to three. |
+| There was no way to cancel or change a card without emailing the author | `[SOURCE]` | Subscribers now reach Stripe's billing portal from their dashboard. |
+
+**What has not been fixed yet, and should be said plainly:** access is still granted by the
+browser after payment rather than by the server, so a customer who closes the tab mid-redirect is
+charged without being upgraded. No instructor has hit this. It is known, not discovered.
+
+---
+
 ## Story 1 — The Sunday night conversion
 
 **Instructor:** `[NAME]`, `[ROLE — e.g. afterschool STEM coordinator]` at `[PROGRAM]`
@@ -108,3 +135,13 @@ the `5.2 hours / 82%` estimates currently carried as claims.
 
 **Ask at least one instructor what made them stop using it**, if any did. A submission that names a
 real limitation reads as more credible than one that doesn't, and judges ask.
+
+**Use the feedback table as the answer to "how many users do you have?"** The honest answer is: not
+many, and not for long enough to measure retention. The stronger answer is that the ones there are
+have already changed the product seven times in two days, each change traceable to something
+someone said. Responsiveness is the claim this project can actually support right now; usage volume
+is not, and reaching for it invites a question with no good answer.
+
+**Confirm every attribution in that table before showing it to anyone.** Several rows came from the
+author's own testing rather than from an instructor, and presenting internal QA as user feedback is
+the kind of overstatement that costs more credibility than the row was worth.
