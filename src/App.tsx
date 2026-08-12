@@ -58,6 +58,7 @@ import {
   Gamepad2
 } from "lucide-react";
 import { PRELOADED_LESSONS } from "./data/preloadedLessons";
+import GuidedDemo from "./components/GuidedDemo";
 import { INITIAL_PROCESSED_LESSON } from "./data/initialProcessedLesson";
 import { CATEGORY_SUPPLIES } from "./data/categorySupplies";
 import { ProcessedLesson, PreloadedLesson } from "./types";
@@ -205,6 +206,8 @@ export default function App() {
   
   // App states
   const [currentView, setCurrentView] = useState<"landing" | "studio">("landing");
+  // Cursor-led walkthrough for first-time visitors and judges.
+  const [isDemoRunning, setIsDemoRunning] = useState<boolean>(false);
   const [lesson, setLesson] = useState<ProcessedLesson>(INITIAL_PROCESSED_LESSON);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -1717,7 +1720,15 @@ export default function App() {
 
         {currentView === "landing" ? (
           <LandingPage 
-            onLaunchStudio={() => setCurrentView("studio")} 
+            onLaunchStudio={() => setCurrentView("studio")}
+            onWatchDemo={() => {
+              setCurrentView("studio");
+              // The lesson input lives inside a panel that is folded by default,
+              // so the demo cannot point at it until the panel is open.
+              setIsTextMaterialOpen(true);
+              setCustomContent("");
+              setIsDemoRunning(true);
+            }} 
             onSelectPlan={() => setShowSubscriptionModal(true)}
             user={user}
             onSignIn={handleSignInAndRedirect}
@@ -1957,6 +1968,7 @@ export default function App() {
                     )}
                   </div>
                   <textarea
+                    id="demo-lesson-input"
                     value={customContent}
                     onChange={(e) => setCustomContent(e.target.value)}
                     rows={4}
@@ -3480,6 +3492,17 @@ export default function App() {
             }}
             onClose={() => setShowSubscriptionModal(false)}
             authLoading={authLoading}
+          />
+        )}
+
+        {/* Cursor-led walkthrough. Mounted only in the studio, where the
+            controls it points at actually exist. */}
+        {isDemoRunning && currentView === "studio" && (
+          <GuidedDemo
+            sampleText={PRELOADED_LESSONS[0]?.rawContent || ""}
+            onType={(text) => setCustomContent(text)}
+            onGenerate={() => handleProcessLesson(true)}
+            onFinish={() => setIsDemoRunning(false)}
           />
         )}
 
