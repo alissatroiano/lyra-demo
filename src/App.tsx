@@ -3251,29 +3251,29 @@ export default function App() {
                     transition={{ duration: 0.25 }}
                     className="space-y-5 animate-fade-in"
                   >
-                    <div className="bg-white border border-black/[0.08] rounded-2xl p-5 shadow-3xs flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="bg-white dark:bg-slate-900 border border-black/[0.08] dark:border-slate-800 rounded-2xl p-5 shadow-3xs flex flex-col sm:flex-row items-center justify-between gap-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-red-50 border border-red-100 flex items-center justify-center text-red-600 shrink-0">
+                        <div className="w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/60 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
                           <Link2Off className="w-5.5 h-5.5" />
                         </div>
                         <div className="space-y-0.5">
-                          <h4 className="text-xs font-bold text-teal-dark uppercase font-sans">Prevent "404 Broken Link" Disruption</h4>
-                          <p className="text-xs text-secondary leading-relaxed font-sans font-normal">
+                          <h4 className="text-xs font-bold text-teal-dark dark:text-teal-brand uppercase font-sans">Prevent "404 Broken Link" Disruption</h4>
+                          <p className="text-xs text-secondary dark:text-slate-300 leading-relaxed font-sans font-normal">
                             Detects dead ends in lesson plans and provides grounded, filtered (no explicit content) Google SafeSearch alternatives.
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-extrabold rounded-full shrink-0">
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300 text-[10px] font-extrabold rounded-full shrink-0">
                         <ShieldAlert className="w-3.5 h-3.5 text-emerald-600" />
                         <span>Google SafeSearch Active</span>
                       </div>
                     </div>
 
                     {/* Google SafeSearch Bar */}
-                    <div className="bg-gradient-to-r from-teal-50/80 via-white to-amber-50/60 border border-teal-brand/20 rounded-2xl p-4 sm:p-5 space-y-3 shadow-3xs">
+                    <div className="bg-gradient-to-r from-teal-50/80 via-white to-amber-50/60 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900 border border-teal-brand/20 rounded-2xl p-4 sm:p-5 space-y-3 shadow-3xs">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-mono font-bold text-teal-dark uppercase tracking-wide flex items-center gap-1.5">
+                        <span className="text-[10px] font-mono font-bold text-teal-dark dark:text-teal-brand uppercase tracking-wide flex items-center gap-1.5">
                           <Search className="w-3.5 h-3.5 text-teal-brand" />
                           <span>Google Search Assistant (Safe Content Filtered)</span>
                         </span>
@@ -3295,7 +3295,7 @@ export default function App() {
                           value={mediaSearchQuery}
                           onChange={(e) => setMediaSearchQuery(e.target.value)}
                           placeholder={`Search safe Google resources for "${lesson.lessonTitle}"...`}
-                          className="flex-1 px-3.5 py-2.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-teal-brand/30 font-sans"
+                          className="flex-1 px-3.5 py-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-xl text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-brand/30 font-sans"
                         />
                         <button
                           type="submit"
@@ -3309,20 +3309,20 @@ export default function App() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {lesson.mediaRecommendations.map((rec, idx) => (
-                        <div key={idx} className="bg-surface-0/50 border border-black/[0.06] rounded-2xl p-5 flex flex-col justify-between gap-4 hover:border-teal-brand/30 transition-all">
+                        <div key={idx} className="bg-surface-0/50 dark:bg-slate-900/70 border border-black/[0.06] dark:border-slate-800 rounded-2xl p-5 flex flex-col justify-between gap-4 hover:border-teal-brand/30 transition-all">
                           <div className="space-y-3">
                             <div className="flex justify-between items-center gap-2">
-                              <span className="px-2.5 py-0.5 bg-red-50 border border-red-100 text-[9px] font-bold text-red-800 rounded-full inline-block font-sans uppercase">
+                              <span className="px-2.5 py-0.5 bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/60 text-[9px] font-bold text-red-800 dark:text-red-300 rounded-full inline-block font-sans uppercase">
                                 Replaces Dead {rec.resourceType}
                               </span>
-                              <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                              <span className="text-[9px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60">
                                 Kid-Safe Filtered
                               </span>
                             </div>
                             
                             <div className="space-y-1">
-                              <span className="text-[10px] text-secondary font-sans font-bold uppercase block">Verified YouTube Search Query:</span>
-                              <div className="bg-white border border-black/[0.06] p-3 rounded-xl flex items-center justify-between gap-3 text-teal-dark">
+                              <span className="text-[10px] text-secondary dark:text-slate-400 font-sans font-bold uppercase block">Verified YouTube Search Query:</span>
+                              <div className="bg-white dark:bg-slate-800 border border-black/[0.06] dark:border-slate-700 p-3 rounded-xl flex items-center justify-between gap-3 text-teal-dark dark:text-teal-brand">
                                 <span className="text-xs font-mono font-bold truncate">{rec.suggestedSearchQuery}</span>
                                 <button
                                   onClick={() => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(rec.suggestedSearchQuery)}`, "_blank")}
@@ -3335,14 +3335,14 @@ export default function App() {
                             </div>
 
                             <div className="pt-1">
-                              <span className="text-[10px] text-secondary font-sans font-bold uppercase block mb-0.5">Pedagogical Value:</span>
-                              <p className="text-xs text-secondary leading-relaxed font-sans font-normal">
+                              <span className="text-[10px] text-secondary dark:text-slate-400 font-sans font-bold uppercase block mb-0.5">Pedagogical Value:</span>
+                              <p className="text-xs text-secondary dark:text-slate-300 leading-relaxed font-sans font-normal">
                                 {rec.whyItHelps}
                               </p>
                             </div>
                           </div>
 
-                          <div className="pt-2 border-t border-black/[0.04] flex justify-between items-center text-[10px] text-secondary font-sans">
+                          <div className="pt-2 border-t border-black/[0.04] dark:border-slate-800 flex justify-between items-center text-[10px] text-secondary dark:text-slate-400 font-sans">
                             <span className="font-medium">Ready-to-use Backup</span>
                             <button
                               onClick={() => window.open(`https://www.google.com/search?q=${encodeURIComponent(rec.suggestedSearchQuery)}&safe=active`, "_blank")}
