@@ -66,6 +66,53 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
   const [chatRole, setChatRole] = useState<string>("Pedagogical Advisor");
   const [useSearch, setUseSearch] = useState<boolean>(false);
   const [chatInput, setChatInput] = useState<string>("");
+  // Dictation for the chat box.
+  //
+  // This uses the browser's own speech recognition, not a model call, so an
+  // instructor can talk to Lyrah while their hands are busy without it costing
+  // anything per use. Support is not universal, so the button only appears
+  // where the API exists rather than offering something that silently fails.
+  const [isDictating, setIsDictating] = useState<boolean>(false);
+  const recognitionRef = useRef<any>(null);
+  const speechSupported =
+    typeof window !== "undefined" &&
+    !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
+
+  const toggleDictation = () => {
+    if (!speechSupported) return;
+
+    if (isDictating) {
+      recognitionRef.current?.stop();
+      return;
+    }
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = false;
+
+    // Anything already typed is kept; dictation appends rather than replaces.
+    const existing = chatInput.trim();
+
+    recognition.onresult = (event: any) => {
+      let transcript = "";
+      for (let i = 0; i < event.results.length; i += 1) {
+        transcript += event.results[i][0].transcript;
+      }
+      setChatInput(existing ? `${existing} ${transcript}` : transcript);
+    };
+    recognition.onerror = () => setIsDictating(false);
+    recognition.onend = () => setIsDictating(false);
+
+    recognitionRef.current = recognition;
+    setIsDictating(true);
+    recognition.start();
+  };
+
+  // Stop the microphone if the panel closes mid-sentence.
+  useEffect(() => () => recognitionRef.current?.stop(), []);
   const [isChatLoading, setIsChatLoading] = useState<boolean>(false);
   const [chatError, setChatError] = useState<string>("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -731,6 +778,22 @@ Active Lesson Context:
                 className="flex-1 text-xs p-3.5 border border-black/[0.08] rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-brand/15 focus:border-teal-brand bg-surface-0 font-sans text-primary leading-normal"
                 disabled={isChatLoading}
               />
+              {speechSupported && (
+                <button
+                  type="button"
+                  onClick={toggleDictation}
+                  title={isDictating ? "Stop dictating" : "Dictate your message"}
+                  aria-label={isDictating ? "Stop dictating" : "Dictate your message"}
+                  className={`px-3.5 rounded-xl flex items-center justify-center cursor-pointer transition-all border ${
+                    isDictating
+                      ? "bg-red-500 border-red-400 text-white animate-pulse"
+                      : "bg-surface-0 dark:bg-slate-800 border-black/[0.08] dark:border-slate-700 text-secondary dark:text-slate-300 hover:text-teal-brand hover:border-teal-brand/40"
+                  }`}
+                >
+                  {isDictating ? <MicOff className="w-4.5 h-4.5" /> : <Mic className="w-4.5 h-4.5" />}
+                </button>
+              )}
+
               <button
                 type="submit"
                 disabled={!chatInput.trim() || isChatLoading}
