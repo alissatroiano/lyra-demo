@@ -2682,24 +2682,24 @@ export default function App() {
                     <InteractiveSlideshow slides={lesson.slides} />
 
                     {/* Scientific learning pillars */}
-                    <div className="bg-surface-0/60 border border-black/[0.06] rounded-2xl p-5 space-y-4">
-                      <div className="flex items-center gap-2.5 border-b border-black/[0.05] pb-3">
-                        <div className="w-8 h-8 rounded-lg bg-teal-light flex items-center justify-center text-teal-brand border border-teal-brand/10">
+                    <div className="bg-surface-0/60 dark:bg-slate-900/70 border border-black/[0.06] dark:border-slate-800 rounded-2xl p-5 space-y-4">
+                      <div className="flex items-center gap-2.5 border-b border-black/[0.05] dark:border-slate-800 pb-3">
+                        <div className="w-8 h-8 rounded-lg bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center text-teal-brand border border-teal-brand/10 dark:border-teal-brand/30">
                           <CheckCircle2 className="w-4.5 h-4.5" />
                         </div>
                         <div>
-                          <h4 className="text-xs font-bold text-teal-dark uppercase font-sans">Curriculum Core Pillars</h4>
-                          <p className="text-[10px] text-secondary font-sans leading-none">Key Student Knowledge Deliverables</p>
+                          <h4 className="text-xs font-bold text-teal-dark dark:text-teal-brand uppercase font-sans">Curriculum Core Pillars</h4>
+                          <p className="text-[10px] text-secondary dark:text-slate-400 font-sans leading-none">Key Student Knowledge Deliverables</p>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                         {lesson.keyTakeaways.map((takeaway, idx) => (
-                          <div key={idx} className="flex gap-2.5 items-start p-3 bg-white rounded-xl border border-black/[0.04]">
-                            <span className="w-5 h-5 rounded-full bg-teal-light flex items-center justify-center shrink-0 text-teal-brand font-bold text-[10px] mt-0.5">
+                          <div key={idx} className="flex gap-2.5 items-start p-3 bg-white dark:bg-slate-800 rounded-xl border border-black/[0.04] dark:border-slate-700">
+                            <span className="w-5 h-5 rounded-full bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center shrink-0 text-teal-brand font-bold text-[10px] mt-0.5">
                               {idx + 1}
                             </span>
-                            <span className="text-xs text-secondary leading-relaxed font-sans font-medium">{takeaway}</span>
+                            <span className="text-xs text-secondary dark:text-slate-200 leading-relaxed font-sans font-medium">{takeaway}</span>
                           </div>
                         ))}
                       </div>
