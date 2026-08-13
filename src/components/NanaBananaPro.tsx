@@ -22,11 +22,25 @@ export default function NanaBananaPro({ lesson, onUpdateVisuals }: NanaBananaPro
 
   // Lyrah's own prompt when she asked for an image; otherwise a plain fallback
   // built from the lesson so the manual path still works.
+  // Built from the lesson's own materials and steps. A prompt written only from
+  // the title produces a picture of something plausible rather than a picture of
+  // what the children are actually going to build — a water wheel made of spoons
+  // for a lesson about paper cups, straws and washers.
+  const materials = (lesson?.handsOnActivity?.materials || []).slice(0, 8).join(", ");
+  const steps = (lesson?.handsOnActivity?.steps || []).slice(0, 4).join(" Then: ");
+
   const defaultPrompt =
     suggestion?.prompt?.trim() ||
-    `A clear, child-friendly illustration for a STEM lesson titled "${lesson?.lessonTitle || "this lesson"}". ` +
-      `Show the setup described here: ${lesson?.handsOnActivity?.title || lesson?.summary || ""}. ` +
-      `Simple, uncluttered, no text labels.`;
+    [
+      `A clear, friendly instructional illustration for a children's STEM class.`,
+      `Show the finished build from this activity: "${lesson?.handsOnActivity?.title || lesson?.lessonTitle || "this lesson"}".`,
+      materials && `It is made ONLY from these materials, and every one should be recognisable: ${materials}.`,
+      steps && `It is assembled like this: ${steps}`,
+      `Draw exactly those materials — do not substitute similar-looking objects or add materials that are not listed.`,
+      `Clean, simple, brightly lit, plain background, no text or labels.`,
+    ]
+      .filter(Boolean)
+      .join(" ");
 
   const [prompt, setPrompt] = useState<string>(defaultPrompt);
   const [image, setImage] = useState<string | null>(lesson?.generatedVisuals?.[0]?.url || null);

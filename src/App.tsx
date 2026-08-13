@@ -452,10 +452,12 @@ export default function App() {
   // Track if a curriculum plan is uploaded or text is provided
   const hasPlanUploaded = Boolean((customContent && customContent.trim().length > 0) || uploadedFileName);
 
-  // Helper to toggle supply selection (Restricted to max 1 item for single selection consistency)
+  // Supplies are multi-select. A lesson runs on paper cups AND straws AND
+  // washers; forcing a single choice made the instructor pick one and lose the
+  // rest, and made auto-detection look wrong when it had read the list correctly.
   const toggleSupply = (val: string) => {
     userSetSuppliesRef.current = true;
-    setSelectedSupplies(prev => (prev.includes(val) ? [] : [val]));
+    setSelectedSupplies(prev => (prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]));
   };
 
   // Hand the instructor over to Stripe's own billing portal, where they can
@@ -547,15 +549,24 @@ export default function App() {
     return CATEGORY_SUPPLIES[activeSupplyCategoryKey] || CATEGORY_SUPPLIES["Science"];
   }, [activeSupplyCategoryKey]);
 
-  // When active category key changes, supply initial default choices if switching domains
+  // Switching domain by hand clears supplies that no longer apply — Scratch is
+  // not a choice once the lesson is Circuitry.
+  //
+  // Auto-detection also changes the category, and this effect used to run a
+  // render later and wipe the supplies it had just matched, leaving exactly one
+  // chip selected. The flag lets a detected list through untouched.
+  const suppliesJustDetectedRef = React.useRef(false);
   const prevCategoryKeyRef = React.useRef(activeSupplyCategoryKey);
   React.useEffect(() => {
-    if (prevCategoryKeyRef.current !== activeSupplyCategoryKey) {
-      prevCategoryKeyRef.current = activeSupplyCategoryKey;
-      const available = CATEGORY_SUPPLIES[activeSupplyCategoryKey] || CATEGORY_SUPPLIES["Science"];
-      const defaultInit = available.slice(0, 1).map(s => s.id);
-      setSelectedSupplies(defaultInit);
+    if (prevCategoryKeyRef.current === activeSupplyCategoryKey) return;
+    prevCategoryKeyRef.current = activeSupplyCategoryKey;
+
+    if (suppliesJustDetectedRef.current) {
+      suppliesJustDetectedRef.current = false;
+      return;
     }
+
+    setSelectedSupplies([]);
   }, [activeSupplyCategoryKey]);
 
   // Prototype Carousel & Zoom Modal States for Google Search Grounded build examples
@@ -959,10 +970,31 @@ export default function App() {
       }
     }
 
-    // Leave the instructor's own supply list alone; only replace it when we are
-    // confident enough to name a platform.
-    if (!userSetSuppliesRef.current && detectedSupply) {
-      setSelectedSupplies([detectedSupply]);
+    // Match every supply chip the lesson actually calls for, not just one.
+    // A windmill build needs cups AND straws AND bottle caps; picking a single
+    // item made the instructor re-enter a list the document already contained.
+    // The materials section counts double, since that is where the real list is.
+    if (!userSetSuppliesRef.current) {
+      const catalogue = CATEGORY_SUPPLIES[detectedCat] || [];
+      const matched = catalogue
+        .filter((option) => option.id !== "Other")
+        .filter((option) => {
+          const words = `${option.id} ${option.label} ${option.description || ""}`
+            .toLowerCase()
+            .split(/[^a-z0-9:.]+/)
+            .filter((w) => w.length > 3);
+          return words.some((w) => countTerm(requirements, w) > 0 || countTerm(combined, w) > 1);
+        })
+        .map((option) => option.id);
+
+      // The detected platform belongs in the list even if its chip label never
+      // appears verbatim in the lesson text.
+      const finalSupplies = Array.from(new Set([...(detectedSupply ? [detectedSupply] : []), ...matched]));
+
+      if (finalSupplies.length > 0) {
+        suppliesJustDetectedRef.current = true;
+        setSelectedSupplies(finalSupplies);
+      }
     }
 
     // Auto-update generated instruction directive if not manually edited
@@ -2632,6 +2664,37 @@ export default function App() {
                   )}
                 </div>
 
+                {(lesson.lessonScope.deferred || []).length > 0 && (
+                  <div className="border-t border-teal-brand/20 dark:border-teal-brand/10 px-4 py-3 space-y-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-teal-dark dark:text-teal-brand font-sans">
+                      If your class runs long
+                    </p>
+                    <p className="text-[11px] text-secondary dark:text-slate-400 font-sans leading-relaxed">
+                      Held back to fit the hour, not thrown away. Add one if you have the time.
+                    </p>
+                    <div className="space-y-2 pt-0.5">
+                      {lesson.lessonScope.deferred!.map((d) => (
+                        <div
+                          key={d.activity}
+                          className="rounded-xl bg-white dark:bg-slate-800/70 border border-black/[0.06] dark:border-slate-700 p-2.5 space-y-1"
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <p className="text-[11px] font-bold text-slate-800 dark:text-slate-100 font-sans leading-snug">
+                              {d.activity}
+                            </p>
+                            <span className="shrink-0 text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-teal-brand/15 text-teal-dark dark:text-teal-brand border border-teal-brand/30">
+                              +{d.minutes}m
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-secondary dark:text-slate-400 font-sans leading-relaxed">
+                            {d.whyItWasHeld}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {lesson.lessonScope.cut?.length > 0 && (
                   <details className="border-t border-teal-brand/20 dark:border-teal-brand/10 group">
                     <summary className="px-4 py-2 text-[11px] font-bold text-teal-dark dark:text-teal-brand font-sans cursor-pointer hover:bg-teal-100/40 dark:hover:bg-teal-brand/10 transition-colors list-none flex items-center gap-1.5">
@@ -2645,11 +2708,7 @@ export default function App() {
                           <span className="text-secondary dark:text-slate-400"> — {c.reason}</span>
                         </div>
                       ))}
-                      {(lesson.lessonScope.deferred || []).length > 0 && (
-                        <p className="text-[11px] text-secondary dark:text-slate-400 font-sans pt-1 border-t border-black/[0.05] dark:border-slate-800">
-                          <span className="font-bold">Worth a later session:</span> {lesson.lessonScope.deferred!.join("; ")}
-                        </p>
-                      )}
+                      {(lesson.lessonScope.deferred || []).length === 0 && null}
                     </div>
                   </details>
                 )}
@@ -2810,121 +2869,6 @@ export default function App() {
                     {/* Left Panel: Grounded Build Examples / SVG Diagrams & Logistics Checklist */}
                     <div className="md:col-span-5 space-y-4">
                       
-                      {/* Grounded Prototype Examples & Nana Banana Pro SVG Diagram Component (ON THE LEFT) */}
-                      {lesson && (
-                        <div className="bg-surface-0/90 dark:bg-slate-900/90 border border-teal-brand/30 rounded-2xl p-4.5 space-y-3.5 shadow-xs relative overflow-hidden">
-                          <div className="space-y-2 border-b border-black/[0.06] dark:border-slate-800 pb-3">
-                            <div className="flex items-center justify-between gap-2 flex-wrap">
-                              <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-lg bg-sky-500/20 text-sky-600 dark:text-sky-400 flex items-center justify-center">
-                                  <Search className="w-3.5 h-3.5" />
-                                </div>
-                                <h4 className="text-xs font-bold font-sans uppercase text-teal-dark dark:text-teal-brand flex items-center gap-1.5">
-                                  <span>Visual Diagrams & Grounded Images</span>
-                                </h4>
-                              </div>
-                              {identifiedSoftware && (
-                                <span className="text-[9px] font-mono px-2 py-0.5 bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 rounded-full font-extrabold flex items-center gap-1">
-                                  <Terminal className="w-2.5 h-2.5 text-amber-500" /> {identifiedSoftware}
-                                </span>
-                              )}
-                            </div>
-
-                          </div>
-
-
-                          {/* MODE 2: Nana Banana Pro SVG Diagram Generator */}
-                          {labVisualMode === "diagram" && (
-                            <div className="space-y-3">
-                              {/* Dynamic SVG Diagram for Software Block / STEM Lab */}
-                              <div className="w-full bg-slate-950 p-3 rounded-xl border border-teal-brand/30 space-y-2">
-                                <div className="flex items-center justify-between text-[10px] font-mono text-teal-brand">
-                                  <span className="font-bold flex items-center gap-1">
-                                    <Sparkles className="w-3 h-3 text-amber-400" />
-                                    {identifiedSoftware ? `${identifiedSoftware} SVG Block Diagram` : "STEM Lab Vector Diagram"}
-                                  </span>
-                                  <span className="px-1.5 py-0.5 bg-amber-400/20 text-amber-300 rounded font-bold text-[9px]">Nana Banana SVG</span>
-                                </div>
-
-                                {/* Custom SVG Diagram rendering based on identified software */}
-                                {(identifiedSoftware || "").toLowerCase().includes("scratch jr") || (identifiedSoftware || "").toLowerCase().includes("scratchjr") ? (
-                                  <svg viewBox="0 0 520 120" className="w-full h-auto drop-shadow-md">
-                                    <g transform="translate(10, 20)">
-                                      <rect x="0" y="0" width="110" height="70" rx="12" fill="#EAB308" stroke="#CA8A04" strokeWidth="2" />
-                                      <circle cx="35" cy="35" r="18" fill="#15803D" />
-                                      <polygon points="30,25 30,45 45,35" fill="#FFFFFF" />
-                                      <text x="62" y="40" fill="#FFFFFF" fontSize="11" fontWeight="bold">START</text>
-                                    </g>
-                                    <g transform="translate(130, 20)">
-                                      <rect x="0" y="0" width="110" height="70" rx="12" fill="#0284C7" stroke="#0369A1" strokeWidth="2" />
-                                      <path d="M 25 35 L 55 35 M 45 25 L 55 35 L 45 45" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                                      <rect x="65" y="42" width="22" height="20" rx="4" fill="#FFFFFF" />
-                                      <text x="72" y="56" fill="#0369A1" fontSize="12" fontWeight="bold" fontFamily="monospace">4</text>
-                                    </g>
-                                    <g transform="translate(250, 20)">
-                                      <rect x="0" y="0" width="110" height="70" rx="12" fill="#22C55E" stroke="#15803D" strokeWidth="2" />
-                                      <path d="M 25 45 Q 40 15 55 45" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" fill="none" />
-                                      <polyline points="50,38 55,45 60,38" stroke="#FFFFFF" strokeWidth="3" fill="none" />
-                                      <rect x="65" y="42" width="22" height="20" rx="4" fill="#FFFFFF" />
-                                      <text x="72" y="56" fill="#15803D" fontSize="12" fontWeight="bold" fontFamily="monospace">2</text>
-                                    </g>
-                                    <g transform="translate(370, 20)">
-                                      <rect x="0" y="0" width="130" height="70" rx="12" fill="#A855F7" stroke="#7E22CE" strokeWidth="2" />
-                                      <path d="M 30 35 A 15 15 0 1 1 50 20" stroke="#FFFFFF" strokeWidth="4" fill="none" strokeLinecap="round" />
-                                      <polygon points="52,12 52,28 64,20" fill="#FFFFFF" />
-                                      <text x="65" y="40" fill="#FFFFFF" fontSize="10" fontWeight="bold">REPEAT</text>
-                                    </g>
-                                  </svg>
-                                ) : isCodingLesson ? (
-                                  <svg viewBox="0 0 480 160" className="w-full h-auto drop-shadow-md">
-                                    <path d="M 10 25 Q 50 10 90 25 L 260 25 C 270 25 275 30 275 35 L 275 55 C 275 60 270 65 260 65 L 40 65 C 35 65 30 70 30 75 L 10 75 Z" fill="#FFBF00" stroke="#D9A000" strokeWidth="1.5" />
-                                    <text x="30" y="48" fill="#FFFFFF" fontSize="12" fontWeight="bold">when 🏁 clicked</text>
-                                    
-                                    <g transform="translate(10, 65)">
-                                      <rect x="0" y="0" width="280" height="38" rx="6" fill="#4C97FF" stroke="#3373CC" strokeWidth="1.5" />
-                                      <text x="15" y="24" fill="#FFFFFF" fontSize="12" fontWeight="bold">move</text>
-                                      <rect x="60" y="9" width="30" height="20" rx="10" fill="#FFFFFF" />
-                                      <text x="68" y="23" fill="#3373CC" fontSize="11" fontWeight="bold" fontFamily="monospace">10</text>
-                                      <text x="100" y="24" fill="#FFFFFF" fontSize="12" fontWeight="bold">steps</text>
-                                    </g>
-
-                                    <g transform="translate(10, 108)">
-                                      <rect x="0" y="0" width="280" height="38" rx="6" fill="#9966FF" stroke="#7742E6" strokeWidth="1.5" />
-                                      <text x="15" y="24" fill="#FFFFFF" fontSize="12" fontWeight="bold">play sound</text>
-                                      <rect x="95" y="9" width="80" height="20" rx="10" fill="#FFFFFF" />
-                                      <text x="105" y="23" fill="#7742E6" fontSize="11" fontWeight="bold">"Pop" 🔊</text>
-                                    </g>
-                                  </svg>
-                                ) : (
-                                  <svg viewBox="0 0 480 150" className="w-full h-auto drop-shadow-md">
-                                    <rect x="40" y="120" width="400" height="15" rx="4" fill="#334155" stroke="#475569" strokeWidth="2" />
-                                    <polygon points="180,120 210,75 240,120" fill="#0D9488" stroke="#14B8A6" strokeWidth="2" />
-                                    <rect x="80" y="90" width="300" height="10" rx="3" fill="#F59E0B" stroke="#D97706" strokeWidth="2" transform="rotate(-10, 210, 95)" />
-                                    <rect x="75" y="55" width="30" height="30" rx="6" fill="#EF4444" stroke="#B91C1C" strokeWidth="2" />
-                                    <text x="81" y="74" fill="#FFFFFF" fontSize="9" fontWeight="bold">LOAD</text>
-                                    <path d="M 370 30 L 370 70" stroke="#38BDF8" strokeWidth="3" strokeDasharray="4 2" />
-                                    <polygon points="365,70 370,80 375,70" fill="#38BDF8" />
-                                    <text x="330" y="22" fill="#38BDF8" fontSize="10" fontWeight="bold">FORCE</text>
-                                  </svg>
-                                )}
-                              </div>
-
-                              <p className="text-[10px] text-slate-300 font-sans leading-relaxed">
-                                <strong>Nana Banana Pro Diagram:</strong> Clean, vector-scaled visual schematic customized for {lesson.handsOnActivity.title || lesson.lessonTitle}.
-                              </p>
-
-                              <button
-                                type="button"
-                                onClick={() => setActiveTab("nana-banana")}
-                                className="w-full py-2 bg-gradient-to-r from-amber-500 to-teal-500 hover:from-amber-600 hover:to-teal-600 text-slate-950 font-extrabold rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
-                              >
-                                <Sparkles className="w-3.5 h-3.5 text-slate-950" />
-                                <span>🎨 Generate AI Diagram with Nana Banana Pro</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
 
                       {/* Left Logistics & Checklist panel */}
                       <div className="bg-surface-0/40 dark:bg-slate-900/60 border border-black/[0.06] dark:border-slate-800 rounded-2xl p-5 space-y-4">

@@ -330,7 +330,9 @@ The instructor reading your output has roughly thirty minutes of paid preparatio
 
    State the cleanup figure you used and what drove it in lessonScope.cleanupMinutes and lessonScope.cleanupReason. An instructor who sees "15 minutes, because of the water trays" can plan the sink run; one who is handed a plan assuming 5 minutes discovers the problem at the sink.
 
-3. ONE HANDS-ON ACTIVITY. A forty-five to sixty minute class with young children has room for one build, not a warm-up plus a practice activity plus a main project. Where the source contains several, choose the one that best serves the learning goal and defer the rest. Never quietly include them all.
+3. ONE HANDS-ON ACTIVITY IN THE PLAN, THE REST HELD IN RESERVE. A forty-five to sixty minute class with young children has room for one build, not a warm-up plus a practice activity plus a main project. Choose the one that best serves the learning goal.
+
+   The others are not deleted. Put them in lessonScope.deferred with enough detail to actually run, and a realistic time to add. Classes vary - a seventy-five or ninety minute block, a group that moves quickly, a session where the video fails and twenty minutes appear - and an instructor who has the time should be able to reach for the next activity rather than rebuild it. Cutting is about what goes in the plan, not about throwing work away.
 
 4. CUT OUT LOUD. Record what you removed and why. An instructor who can see what was dropped can put it back deliberately; one handed everything can find nothing.
 
@@ -481,7 +483,7 @@ ${groundedFindings}`
                 },
                 prompt: {
                   type: Type.STRING,
-                  description: "Only when needed is true: a single concrete image prompt describing exactly what to draw for this lesson. Omit when needed is false.",
+                  description: "Only when needed is true. Describe the finished build using the EXACT materials from handsOnActivity.materials, naming each one, so the picture shows what these children will actually make rather than a generic version of it. A windmill built from paper cups, a bendable straw and metal washers must not be drawn as a wooden water wheel with spoons. State the arrangement, forbid substituting similar-looking objects, and ask for a plain background with no text. Omit when needed is false.",
                 },
               },
             },
@@ -547,8 +549,16 @@ ${groundedFindings}`
                 },
                 deferred: {
                   type: Type.ARRAY,
-                  description: "Content worth teaching that belongs in a later session rather than this one.",
-                  items: { type: Type.STRING },
+                  description: "Good activities from the source that did not fit today. These are held for the instructor, not thrown away - classes run long, some blocks are 75 or 90 minutes, and an instructor with spare time should be able to add one back without rebuilding it. Give each one enough detail to actually run.",
+                  items: {
+                    type: Type.OBJECT,
+                    required: ["activity", "minutes", "whyItWasHeld"],
+                    properties: {
+                      activity: { type: Type.STRING, description: "What the activity is, in enough detail to run it - materials and the basic sequence." },
+                      minutes: { type: Type.INTEGER, description: "Realistic minutes to add if the instructor has the time." },
+                      whyItWasHeld: { type: Type.STRING, description: "Why it did not make today's plan, e.g. 'The build already fills the hands-on block'." },
+                    },
+                  },
                 },
                 warning: {
                   type: Type.STRING,
