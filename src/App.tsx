@@ -710,72 +710,25 @@ export default function App() {
   // Retrieve 4 Google Search Grounded build prototype examples for the active hands-on activity / software
 
   // Reorder Active Curriculum Suite tabs based on learned instructor memory & category focus
+  // A fixed order, deliberately.
+  //
+  // These tabs used to be scored and reordered from the lesson and the saved
+  // profile, which meant Visual Studio could land first — an instructor opening
+  // a lesson to teach it was shown the picture generator before the lab steps.
+  // Prep order is stable: run the activity, put it on the board, then decorate.
   const getInstructorDynamicTabs = React.useCallback(() => {
-    const learnedNotes = (
-      (profile?.instructorNotes || "") + " " + 
-      (profile?.customPreferences || "") + " " + 
-      (customPreferences || "") + " " + 
-      (selectedCategory || "") + " " +
-      (lesson?.lessonTitle || "")
-    ).toLowerCase();
-
-    const allTabs = [
-      // Ordered by what saves an instructor the most prep time. Visual Studio
-      // is a nice-to-have, so it sits last rather than third.
+    return [
+      {
+        id: "lab",
+        label: selectedCategory === "Software" ? "Coding Blocks" : "Hands-On Lab",
+        icon: selectedCategory === "Software" ? Terminal : Activity,
+      },
       { id: "slides", label: "Interactive Slides", icon: Layers },
-      { id: "lab", label: selectedCategory === "Software" ? "Coding Blocks" : "Hands-On Lab", icon: selectedCategory === "Software" ? Terminal : Activity },
+      { id: "nana-banana", label: "Visual Studio", icon: Palette },
       { id: "quiz", label: "Smartboard Quiz", icon: HelpCircle },
       { id: "media", label: "Media Fixer", icon: Link2Off },
-      { id: "nana-banana", label: "Visual Studio", icon: Palette }
     ];
-
-    const scores: Record<string, number> = {
-      slides: 0,
-      lab: 0,
-      "nana-banana": 0,
-      quiz: 0,
-      media: 0
-    };
-
-    // Category base weight
-    if (selectedCategory === "Gaming" || isGamingLesson) {
-      scores.lab += 30;
-      scores.slides += 10;
-      scores["nana-banana"] += 10;
-    } else if (selectedCategory === "Technology" || selectedCategory === "Engineering") {
-      scores.lab += 20;
-      scores.slides += 8;
-      scores["nana-banana"] += 12;
-    } else if (selectedCategory === "Art") {
-      scores.lab += 15;
-      scores["nana-banana"] += 25;
-      scores.slides += 10;
-    } else if (selectedCategory === "Math") {
-      scores.quiz += 20;
-      scores.slides += 8;
-    } else {
-      // Science
-      scores.slides += 20;
-      scores.lab += 10;
-      scores["nana-banana"] += 8;
-    }
-
-    // Instructor Memory and Directives Boost
-    if (learnedNotes.includes("gaming") || learnedNotes.includes("scratch") || learnedNotes.includes("coding") || learnedNotes.includes("lab") || learnedNotes.includes("hands-on") || learnedNotes.includes("experiment") || learnedNotes.includes("robot")) {
-      scores.lab += 15;
-    }
-    if (learnedNotes.includes("visual") || learnedNotes.includes("art") || learnedNotes.includes("image") || learnedNotes.includes("diagram") || learnedNotes.includes("studio") || learnedNotes.includes("nana")) {
-      scores["nana-banana"] += 20;
-    }
-    if (learnedNotes.includes("quiz") || learnedNotes.includes("assessment") || learnedNotes.includes("jeopardy") || learnedNotes.includes("test") || learnedNotes.includes("question")) {
-      scores.quiz += 15;
-    }
-    if (learnedNotes.includes("slide") || learnedNotes.includes("deck") || learnedNotes.includes("lecture") || learnedNotes.includes("presentation")) {
-      scores.slides += 15;
-    }
-
-    return [...allTabs].sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0));
-  }, [profile, customPreferences, selectedCategory, lesson?.lessonTitle, isCodingLesson, isGamingLesson]);
+  }, [selectedCategory]);
 
   // Redirect to studio whenever user logs in or creates account from landing
   useEffect(() => {
@@ -2714,18 +2667,7 @@ export default function App() {
               </div>
             )}
 
-            {/* Adaptive Reordering Indicator Banner */}
-            <div className="flex items-center justify-between gap-2 px-3.5 py-2 bg-teal-50/80 dark:bg-teal-brand/10 border border-teal-brand/20 rounded-xl mb-3 text-xs text-teal-dark dark:text-teal-brand font-sans">
-              <div className="flex items-center gap-2 font-semibold">
-                <Brain className="w-4 h-4 text-teal-brand shrink-0" />
-                <span>Suite tabs reordered based on learned instructor memory & <strong>{selectedCategory}</strong> category focus</span>
-              </div>
-              <span className="text-[10px] font-mono font-extrabold uppercase px-2 py-0.5 bg-teal-brand/20 text-teal-brand rounded shrink-0">
-                Adaptive Layout
-              </span>
-            </div>
-
-            {/* Touch-Friendly Mobile Scrollable Resource Pills Tabs (Dynamic Order) */}
+            {/* Resource tabs, in a fixed prep order */}
             <div className="flex border border-black/[0.06] dark:border-slate-800 overflow-x-auto no-scrollbar scroll-smooth gap-1.5 bg-surface-0 dark:bg-slate-950/80 p-1.5 rounded-2xl mb-6 font-sans w-full">
               {getInstructorDynamicTabs().map((tab) => {
                 const TabIcon = tab.icon;
