@@ -60,7 +60,6 @@ import {
 } from "lucide-react";
 import { PRELOADED_LESSONS } from "./data/preloadedLessons";
 import GuidedDemo from "./components/GuidedDemo";
-import ClassroomTimer from "./components/ClassroomTimer";
 import { INITIAL_PROCESSED_LESSON } from "./data/initialProcessedLesson";
 import { CATEGORY_SUPPLIES } from "./data/categorySupplies";
 import { ProcessedLesson, PreloadedLesson } from "./types";
@@ -2714,13 +2713,6 @@ export default function App() {
                 )}
               </div>
             )}
-
-            {/* Instructors run a timer during every hands-on activity, in a
-                separate tab. Putting it here, preloaded with this lesson's own
-                segments, removes the tab and the typing. */}
-            <div className="flex justify-end mb-2">
-              <ClassroomTimer lesson={lesson} />
-            </div>
 
             {/* Adaptive Reordering Indicator Banner */}
             <div className="flex items-center justify-between gap-2 px-3.5 py-2 bg-teal-50/80 dark:bg-teal-brand/10 border border-teal-brand/20 rounded-xl mb-3 text-xs text-teal-dark dark:text-teal-brand font-sans">
