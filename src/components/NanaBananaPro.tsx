@@ -46,6 +46,7 @@ export default function NanaBananaPro({ lesson, onUpdateVisuals }: NanaBananaPro
   const [image, setImage] = useState<string | null>(lesson?.generatedVisuals?.[0]?.url || null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [overrideOpen, setOverrideOpen] = useState(false);
 
   const generate = async () => {
     if (!prompt.trim() || isLoading) return;
@@ -114,6 +115,22 @@ export default function NanaBananaPro({ lesson, onUpdateVisuals }: NanaBananaPro
         </div>
       )}
 
+      {/* When Lyrah has decided a picture would not help, the generator is put
+          away rather than merely labelled. It stays reachable — the instructor
+          knows their class — but it takes a deliberate click, because an
+          unnecessary illustration in front of children is worse than none. */}
+      {suggestion && !recommended && !overrideOpen && (
+        <button
+          type="button"
+          onClick={() => setOverrideOpen(true)}
+          className="text-xs font-bold text-teal-dark dark:text-teal-brand underline decoration-teal-brand/40 underline-offset-4 hover:decoration-teal-brand cursor-pointer font-sans"
+        >
+          Make one anyway
+        </button>
+      )}
+
+      {(recommended || overrideOpen || !suggestion) && (
+        <>
       <div className="space-y-2">
         <label
           htmlFor="visual-prompt"
@@ -161,6 +178,9 @@ export default function NanaBananaPro({ lesson, onUpdateVisuals }: NanaBananaPro
         <p className="text-xs text-red-600 dark:text-red-400 font-sans" role="alert">
           {error}
         </p>
+      )}
+
+      </>
       )}
 
       {image && (

@@ -547,16 +547,16 @@ The ${sourceFigures.length} image(s) attached are the diagrams and photographs f
           properties: {
             visualSuggestion: {
               type: Type.OBJECT,
-              description: "Whether this specific lesson genuinely benefits from a generated illustration. Most lessons do not: a hands-on build with clear written steps, or a coding lesson whose blocks are already written out, needs no picture. Recommend one only when a single image would remove real ambiguity - an unfamiliar apparatus, a spatial arrangement, or a physical setup that is hard to picture from text.",
+              description: "Whether this lesson needs a generated illustration. This is a real decision with a wrong answer in both directions: a confusing picture in front of a class is worse than none, and a build with no picture leaves children guessing.",
               required: ["needed", "reason"],
               properties: {
                 needed: {
                   type: Type.BOOLEAN,
-                  description: "True only if an illustration would materially help the instructor or students. Default to false.",
+                  description: "Answer true when children must ASSEMBLE something and the finished arrangement is hard to hold in your head from words alone - parts joined at angles, one thing threaded through another, an order of assembly that matters. Physical builds in engineering, circuitry and hands-on science are usually true. Answer false for everything else, and most lessons are everything else: discussion, reading, worksheets, observation, sorting, coding whose blocks are already written out as text, or a build so simple it is one obvious step (blow up a balloon and let it go). If the written steps already leave nothing ambiguous, the answer is false even for a hands-on lesson. Apply this test before answering true: if the build is two or three parts joined in the only way they could sensibly be joined, answer false - a balloon taped to a straw on a string has one obvious arrangement and needs no diagram. Answer true only when there are several parts AND a reader could plausibly assemble them wrongly. Do not answer true because a picture would be nice, decorative or engaging - the only question is whether an instructor or a child would otherwise be unsure what the thing is supposed to look like. When genuinely torn, answer false.",
                 },
                 reason: {
                   type: Type.STRING,
-                  description: "One short sentence explaining the decision, written for the instructor (e.g. 'The steps are clear in text; a picture would not add anything.').",
+                  description: "One short sentence for the instructor, naming what makes it ambiguous or what makes it obvious. Write 'The straw threads through the cup at a right angle, which is hard to picture from the steps' rather than 'a visual aid supports comprehension'.",
                 },
                 prompt: {
                   type: Type.STRING,
