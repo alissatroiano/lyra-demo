@@ -83,6 +83,64 @@ export const RobotBunnyMascot = ({ className = "w-28 h-28" }: { className?: stri
  * to one piece of state, so they have to agree on the stored value even though
  * they show different labels.
  */
+/**
+ * What Lyrah says while it works.
+ *
+ * "Compiling Gamified Curriculum" described the machinery. These describe what
+ * the instructor is getting, and a different set runs each time so the wait
+ * does not feel like the same wait.
+ */
+const COMPILE_SCRIPTS: { header: string; steps: [string, string, string] }[] = [
+  {
+    header: "Reading it so you don't have to…",
+    steps: [
+      "Reading all eight pages of it",
+      "Cutting the parts nobody ever teaches",
+      "Making tomorrow morning easier",
+    ],
+  },
+  {
+    header: "Generating a headache-free lesson…",
+    steps: [
+      "Finding the one thing this class is actually for",
+      "Counting the minutes you really have",
+      "Leaving you something you can teach",
+    ],
+  },
+  {
+    header: "Turning eight pages into one…",
+    steps: [
+      "Skimming past the wordy bits",
+      "Keeping what the kids will remember",
+      "Packing it down to a single page",
+    ],
+  },
+  {
+    header: "Making your class easier…",
+    steps: [
+      "Working out what fits and what waits",
+      "Budgeting for cleanup, honestly",
+      "Getting your evening back",
+    ],
+  },
+  {
+    header: "Doing the boring part for you…",
+    steps: [
+      "Hunting down the one clear learning goal",
+      "Deciding what to cut, and why",
+      "Nearly ready to teach",
+    ],
+  },
+  {
+    header: "Shrinking the lesson plan…",
+    steps: [
+      "Checking the clock against the age group",
+      "Choosing one activity instead of three",
+      "Tidying up the last few slides",
+    ],
+  },
+];
+
 /** Lessons an unsubscribed instructor can generate before checkout is required. */
 const FREE_LESSON_LIMIT = 3;
 
@@ -268,131 +326,11 @@ export default function App() {
 
   // 2026 Micro-delay Compilation & Block Simulation states
   const [compilationStep, setCompilationStep] = useState<number>(0);
+  const [compileScript, setCompileScript] = useState<number>(0);
   const [simulatingBlockStep, setSimulatingBlockStep] = useState<number>(-1);
   const [isSimulatingBlock, setIsSimulatingBlock] = useState<boolean>(false);
 
   // Helper to derive dynamic progress compilation messages per curriculum
-  const getDynamicCompilationStepText = (
-    step: number, 
-    content: string, 
-    fileName: string | null, 
-    goal: string,
-    tech?: string
-  ): string => {
-    // Primary content text scan (prioritize actual user content/filename over fallback supplies)
-    const primaryText = ((content || "") + " " + (fileName || "")).toLowerCase();
-    const fullText = (primaryText + " " + (tech || "")).toLowerCase();
-
-    // The instructor's own platform selection wins over anything scanned out of
-    // the document. Previously this ran the other way, so one incidental mention
-    // ("you could also try this in Roblox") flipped the whole pipeline.
-    // "Custom Tools / Software" is the empty-Other placeholder, not a real pick.
-    const techText = (tech || "").toLowerCase();
-    const hasExplicitTech = !!techText && !techText.includes("custom tools / software");
-
-    // Count mentions rather than taking the first hit: the platform a lesson is
-    // actually about gets named repeatedly; a passing example gets named once.
-    const countOf = (needles: string[]) =>
-      needles.reduce((n, needle) => n + (primaryText.split(needle).length - 1), 0);
-
-    const platformScores: Record<string, number> = {
-      scratchJr: countOf(["scratchjr", "scratch jr", "junior scratch"]),
-      scratch: countOf(["scratch", "sprite", "costume", "green flag", "backdrop"]),
-      roblox: countOf(["roblox", "lua"]),
-      eduBlocks: countOf(["edublocks", "edu blocks"]),
-      thunkable: countOf(["thunkable", "app inventor"]),
-      codeOrg: countOf(["code.org", "game lab", "sprite lab"]),
-      microBit: countOf(["micro:bit", "microbit"]),
-      python: countOf(["python"]),
-    };
-
-    // A platform must be named at least twice before it defines the lesson.
-    const ranked = Object.entries(platformScores)
-      .filter(([, n]) => n > 1)
-      .sort((a, b) => b[1] - a[1]);
-    const winner = ranked.length ? ranked[0][0] : null;
-
-    const picked = (key: string, ...aliases: string[]) =>
-      hasExplicitTech ? aliases.some(a => techText.includes(a)) : winner === key;
-
-    const isScratchJr = picked("scratchJr", "scratch jr", "scratchjr");
-    const isScratch = picked("scratch", "scratch") && !isScratchJr;
-    const isRoblox = picked("roblox", "roblox");
-    const isEduBlocks = picked("eduBlocks", "edublocks", "edu blocks");
-    const isThunkable = picked("thunkable", "thunkable", "app inventor");
-    const isCodeOrg = picked("codeOrg", "code.org");
-    const isMicroBit = picked("microBit", "micro:bit", "microbit");
-    const isPython = picked("python", "python") && !isEduBlocks;
-    const isRobotics = fullText.includes("lego") || fullText.includes("spike") || fullText.includes("ev3") || fullText.includes("robot") || fullText.includes("sensor");
-    const isEngineering = fullText.includes("catapult") || fullText.includes("bridge") || fullText.includes("tower") || fullText.includes("physics") || fullText.includes("gravity") || fullText.includes("truss");
-    const isScience = fullText.includes("chem") || fullText.includes("bio") || fullText.includes("cell") || fullText.includes("plant") || fullText.includes("eco");
-    const isMath = fullText.includes("math") || fullText.includes("fraction") || fullText.includes("geometry") || fullText.includes("equation");
-    const isGaming = fullText.includes("gaming") || fullText.includes("game design") || isScratch || isScratchJr || isRoblox || isCodeOrg;
-
-    if (step === 1) {
-      if (isScratchJr) return "Parsing ScratchJR yellow trigger blocks, motion grids & story loops";
-      if (isScratch) return "Parsing Scratch 3.0 sprite blocks, costumes, broadcasts & stage events";
-      if (isRoblox) return "Parsing Roblox Studio Lua scripts, workspace parts & 3D physics";
-      if (isEduBlocks) return "Parsing EduBlocks Python drag-and-drop workspace & block logic";
-      if (isThunkable) return "Parsing Thunkable mobile app screens, buttons & event handlers";
-      if (isCodeOrg) return "Parsing Code.org Game Lab sprites, draw loops & key controls";
-      if (isMicroBit) return "Parsing Micro:bit LED matrix display, buttons & sensor blocks";
-      if (isPython) return "Parsing Python code syntax, variable logic & function loops";
-      if (isRobotics) return "Parsing Robotics sensor loops, motor actuators & hardware logic";
-      if (isEngineering) return "Parsing physical engineering mechanics, forces & structural stress";
-      if (isScience) return "Parsing biological structures, chemical reactions & lab safety";
-      if (isMath) return "Parsing mathematical concepts, spatial geometry & equation logic";
-      if (isGaming) return "Parsing game design mechanics, player controls & reward loops";
-      if (fileName) {
-        const cleanName = fileName.replace(/\.[^/.]+$/, "").replace(/[_]/g, " ").replace(/[-]/g, " ");
-        return `Parsing "${cleanName.length > 25 ? cleanName.slice(0, 25) + '...' : cleanName}" logic pathways`;
-      }
-      return "Parsing curriculum logic & learning objectives";
-    }
-
-    if (step === 2) {
-      if (goal === "presentation") {
-        return "Building visual slide concepts & teaching analogies";
-      }
-      if (isScratchJr) return "Linking ScratchJR tap/bump triggers, character motion & sound blocks";
-      if (isScratch) return "Linking Scratch 2D motion loops, green flag triggers & variable backpacks";
-      if (isRoblox) return "Linking Roblox player collision triggers, leaderstats & GUI events";
-      if (isEduBlocks) return "Linking EduBlocks Python terminal outputs, loop blocks & functions";
-      if (isThunkable) return "Linking Thunkable event handlers, sound triggers & cloud variables";
-      if (isCodeOrg) return "Linking Code.org collision detection, variable scores & sound effects";
-      if (isMicroBit) return "Linking Micro:bit radio signals, pin inputs & sensor loops";
-      if (isPython) return "Linking Python conditional logic, list iterations & console scripts";
-      if (isRobotics) return "Linking LEGO robotics motor speeds, ultrasonic sensors & gears";
-      if (isEngineering) return "Linking catapult trajectory angles, tension physics & prototype build steps";
-      if (isScience) return "Formulating hands-on lab experiments, molecular models & observation steps";
-      if (isMath) return "Structuring interactive math manipulatives, visual proofs & puzzle steps";
-      if (isGaming) return "Linking game sprite events, win/loss conditions & score tracking";
-      if (fileName) {
-        const cleanName = fileName.replace(/\.[^/.]+$/, "").replace(/[_]/g, " ").replace(/[-]/g, " ");
-        return `Linking active STEM challenges for ${cleanName.length > 20 ? cleanName.slice(0, 20) + '...' : cleanName}`;
-      }
-      return "Linking active STEM challenges & interactive models";
-    }
-
-    if (step === 3) {
-      if (goal === "presentation") {
-        return "Synthesizing presentation slide deck & discussion points";
-      }
-      if (isScratchJr) return "Synthesizing ScratchJR visual story cards, slide deck & smart quiz";
-      if (isScratch) return "Synthesizing Scratch block-stack guide, slide deck & smart quiz";
-      if (isRoblox) return "Synthesizing Roblox 3D game quest guide, slide deck & smart quiz";
-      if (isEduBlocks) return "Synthesizing EduBlocks block-to-Python lab guide & smart quiz";
-      if (isThunkable) return "Synthesizing Thunkable app development guide & smart quiz";
-      if (isCodeOrg) return "Synthesizing Code.org interactive game lab guide & smart quiz";
-      if (isMicroBit) return "Synthesizing Micro:bit hardware coding guide & smart quiz";
-      if (isPython) return "Synthesizing Python coding challenge, slide deck & smart quiz";
-      if (isRobotics) return "Synthesizing Robotics lab challenge, slide deck & smart quiz";
-      if (isEngineering) return "Synthesizing hands-on engineering lab, slide deck & smart quiz";
-      return "Synthesizing interactive slides, lab guide & smart quiz";
-    }
-
-    return "";
-  };
   
   // Interactive Quiz states
   const [currentQuizIndex, setCurrentQuizIndex] = useState<number>(0);
@@ -1148,6 +1086,7 @@ export default function App() {
       return;
     }
 
+    setCompileScript(Math.floor(Math.random() * COMPILE_SCRIPTS.length));
     setIsLoading(true);
     setCompilationStep(1);
     setError(null);
@@ -2428,12 +2367,12 @@ export default function App() {
                 {isLoading ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin text-teal-brand" />
-                    <span>Orchestrating 2026 STEM Logic Pathways...</span>
+                    <span>{COMPILE_SCRIPTS[compileScript].header}</span>
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4.5 h-4.5 text-amber-300 group-hover:rotate-12 transition-transform" />
-                    <span>Generate Gamified STEM Pack (2026 AI Engine)</span>
+                    <span>Turn this into a lesson I can teach</span>
                     <ArrowRight className="w-4 h-4 text-teal-brand group-hover:translate-x-1 transition-transform" />
                   </>
                 )}
@@ -2453,7 +2392,7 @@ export default function App() {
                       </div>
                       <div>
                         <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-teal-brand">2026 STEM Engine Execution</span>
-                        <h3 className="text-sm font-bold font-sans text-slate-100">Compiling Gamified Curriculum...</h3>
+                        <h3 className="text-sm font-bold font-sans text-slate-100">{COMPILE_SCRIPTS[compileScript].header}</h3>
                       </div>
                     </div>
 
@@ -2466,7 +2405,7 @@ export default function App() {
                           01
                         </span>
                         <span className="flex-1 font-sans">
-                          {getDynamicCompilationStepText(1, customContent, uploadedFileName, transformationGoal, getFormattedSupplies())}
+                          {COMPILE_SCRIPTS[compileScript].steps[0]}
                         </span>
                         {compilationStep >= 1 && <Check className="w-4 h-4 text-teal-brand animate-pulse" />}
                       </div>
@@ -2478,7 +2417,7 @@ export default function App() {
                           02
                         </span>
                         <span className="flex-1 font-sans">
-                          {getDynamicCompilationStepText(2, customContent, uploadedFileName, transformationGoal, getFormattedSupplies())}
+                          {COMPILE_SCRIPTS[compileScript].steps[1]}
                         </span>
                         {compilationStep >= 2 && <Check className="w-4 h-4 text-amber-400 animate-pulse" />}
                       </div>
@@ -2490,7 +2429,7 @@ export default function App() {
                           03
                         </span>
                         <span className="flex-1 font-sans">
-                          {getDynamicCompilationStepText(3, customContent, uploadedFileName, transformationGoal, getFormattedSupplies())}
+                          {COMPILE_SCRIPTS[compileScript].steps[2]}
                         </span>
                         {compilationStep >= 3 && <Check className="w-4 h-4 text-emerald-400 animate-pulse" />}
                       </div>
