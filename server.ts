@@ -300,14 +300,32 @@ The instructor reading your output has roughly thirty minutes of paid preparatio
 
 1. FIND THE LEARNING GOAL BEFORE ANYTHING ELSE. Read the "Learning Goal(s)", "Objectives" or "Standards" section first. If none is stated, decide the single thing students must be able to do by the end. Everything you produce serves that one goal. Anything that does not serve it is cut, however interesting it is.
 
-2. BUDGET REAL MINUTES, NOT IDEAL ONES. Subtract setup, transitions and cleanup from the stated duration before planning anything, then plan only what remains:
-   - Ages 5-7: about 10 minutes of talking before hands must be on materials. Setup and cleanup consume 12-15 minutes of the hour.
-   - Ages 8-10: about 12-15 minutes of instruction. Setup and cleanup, 10 minutes.
-   - Ages 11 and up: about 15-20 minutes of instruction. Setup and cleanup, 8 minutes.
+   Where the source lists SEVERAL learning goals, it is describing a unit, not one class. Choose the one this session is actually about - the title and the main activity will tell you, so a lesson called "Discovery Lab: The Heart" is about the heart even when the goals also mention DNA, lungs and bones - and put the others in lessonScope.deferred as future sessions. Attempting four goals in one hour is how a plan becomes unteachable, and it is worst with the youngest children.
+
+1b. ONE NEW WORD, NOT A GLOSSARY. These children have been in school all day. Ages 5-7 can hold one new word per session; ages 8-10, two. Choose the single word the activity cannot be done without, define it in language a child that age would use, and put every other term in lessonScope.reviewVocabulary as words to revisit if time allows. A vocabulary list of six terms is a list nobody teaches.
+
+2. BUDGET REAL MINUTES, NOT IDEAL ONES. Subtract setup, transitions and cleanup from the stated duration before planning anything, then plan only what remains.
+
+   Attention span by age, which caps how long you may talk:
+   - Ages 5-7: about 10 minutes before hands must be on materials.
+   - Ages 8-10: about 12-15 minutes.
+   - Ages 11 and up: about 15-20 minutes.
+
+   Setup and settling costs roughly 10 minutes with any group of children, and more with the youngest.
+
+   Cleanup is driven by the MATERIALS, not the age, and instructors consistently underestimate it. Budget from what the activity actually touches:
+   - Water, soil, sand, paint, glue, plaster, food or anything that spills or stains: 15 minutes, and more for ages 5-7. These lessons need a genuinely short activity, and saying so is more useful than pretending otherwise.
+   - Scissors, tape, cardboard, string, small parts to collect and count back in: 8-10 minutes.
+   - Blocks, LEGO or kits that go back in a bin: 5-8 minutes.
+   - Paper and pencils only, or screens only: 2-5 minutes.
+
+   State the cleanup figure you used and what drove it in lessonScope.cleanupMinutes and lessonScope.cleanupReason. An instructor who sees "15 minutes, because of the water trays" can plan the sink run; one who is handed a plan assuming 5 minutes discovers the problem at the sink.
 
 3. ONE HANDS-ON ACTIVITY. A forty-five to sixty minute class with young children has room for one build, not a warm-up plus a practice activity plus a main project. Where the source contains several, choose the one that best serves the learning goal and defer the rest. Never quietly include them all.
 
 4. CUT OUT LOUD. Record what you removed and why. An instructor who can see what was dropped can put it back deliberately; one handed everything can find nothing.
+
+4b. NEVER CHANGE THE AGE GROUP. The instructor cannot send these children away and get older ones. Where the source activity is beyond the stated age - fine motor work, reading demands, multi-step sequencing - keep the age and simplify the activity instead: pre-assemble the fiddly parts, use larger components, cut the number of steps, or make it a teacher demonstration the children take turns in. Then say what you simplified and why in lessonScope.warning. Recommending a different age band is not an adaptation, it is handing the problem back.
 
 5. IF IT DOES NOT FIT, SAY SO. When the source cannot fit the stated duration for that age, say it plainly rather than compressing it into something unteachable. Instructors already know these plans are overstuffed; being told directly is a relief, not a failure.
 
@@ -461,7 +479,7 @@ ${groundedFindings}`
             lessonScope: {
               type: Type.OBJECT,
               description: "How the lesson was cut to fit the class. This is the instructor's evidence that the plan is teachable in the time they actually have.",
-              required: ["mainGoal", "teachableMinutes", "segments", "cut"],
+              required: ["mainGoal", "teachableMinutes", "cleanupMinutes", "cleanupReason", "segments", "cut"],
               properties: {
                 mainGoal: {
                   type: Type.STRING,
@@ -470,6 +488,14 @@ ${groundedFindings}`
                 teachableMinutes: {
                   type: Type.INTEGER,
                   description: "Minutes genuinely available for teaching, after subtracting setup, transitions and cleanup from the stated class duration.",
+                },
+                cleanupMinutes: {
+                  type: Type.INTEGER,
+                  description: "Minutes reserved for cleanup, chosen from what the materials actually require rather than from the age alone.",
+                },
+                cleanupReason: {
+                  type: Type.STRING,
+                  description: "What drove that figure, naming the messy material. E.g. 'Water trays and soil - 15 minutes including the sink run'.",
                 },
                 segments: {
                   type: Type.ARRAY,
@@ -495,6 +521,20 @@ ${groundedFindings}`
                       reason: { type: Type.STRING, description: "Why it did not survive the time budget or the learning goal." },
                     },
                   },
+                },
+                keyVocabulary: {
+                  type: Type.OBJECT,
+                  description: "The one word this session teaches. One for ages 5-7, at most two for 8-10.",
+                  required: ["word", "childDefinition"],
+                  properties: {
+                    word: { type: Type.STRING, description: "The single term the activity cannot be done without." },
+                    childDefinition: { type: Type.STRING, description: "Defined the way a child of this age would say it, in one short sentence." },
+                  },
+                },
+                reviewVocabulary: {
+                  type: Type.ARRAY,
+                  description: "Other terms from the source, kept aside to revisit if time allows rather than taught as new material.",
+                  items: { type: Type.STRING },
                 },
                 deferred: {
                   type: Type.ARRAY,

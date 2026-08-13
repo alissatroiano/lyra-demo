@@ -85,8 +85,12 @@ export interface ProcessedLesson {
   lessonScope?: {
     mainGoal: string;
     teachableMinutes: number;
+    cleanupMinutes?: number;
+    cleanupReason?: string;
     segments: { name: string; minutes: number; servesGoal: string }[];
     cut: { item: string; reason: string }[];
+    keyVocabulary?: { word: string; childDefinition: string };
+    reviewVocabulary?: string[];
     deferred?: string[];
     warning?: string;
   };
