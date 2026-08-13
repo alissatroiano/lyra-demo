@@ -281,6 +281,10 @@ export default function App() {
   const [currentView, setCurrentView] = useState<"landing" | "studio">("landing");
   // Cursor-led walkthrough for first-time visitors and judges.
   const [isDemoRunning, setIsDemoRunning] = useState<boolean>(false);
+  // Diagrams and photographs lifted out of the uploaded lesson. They go to
+  // Gemini with the text so the build it describes is the one in the document
+  // rather than one inferred from prose.
+  const [sourceFigures, setSourceFigures] = useState<{ mimeType: string; data: string }[]>([]);
   // Payment outcome shown to the customer on return from Stripe. Without this
   // a successful purchase looks identical to no purchase at all.
   const [paymentNotice, setPaymentNotice] = useState<
@@ -970,6 +974,7 @@ export default function App() {
     // directive cannot skew detection for the new document.
     setCustomPreferences("");
     setIsManuallyEdited(false);
+    setSourceFigures([]);
 
     // Chips picked for the previous lesson should not lock out detection on this
     // one, so the manual-selection flags reset alongside the directive.
@@ -1012,6 +1017,7 @@ export default function App() {
 
           if (data.text && data.text.trim().length > 0) {
             setCustomContent(data.text);
+            setSourceFigures(Array.isArray(data.figures) ? data.figures : []);
             triggerTempTextMaterialOpen();
             autoDetectCurriculumSettings(data.text, file.name, "");
             setShowPlanConfirmationModal(true);
@@ -1145,7 +1151,8 @@ export default function App() {
           customPreferences: customPreferences 
             ? `${customPreferences}. ${goalDirective}` 
             : goalDirective,
-          instructorMemory: combinedMemory
+          instructorMemory: combinedMemory,
+          figures: sourceFigures
         }),
       });
 

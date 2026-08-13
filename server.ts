@@ -173,6 +173,58 @@ try {
   console.error("Failed to initialize GoogleGenAI client:", error);
 }
 
+/**
+ * Pull the figures out of a .docx.
+ *
+ * Lesson plans carry photographs and diagrams of the finished build, and those
+ * pictures are frequently clearer than the written steps. Generating an
+ * illustration from the prose alone produced a plausible object rather than the
+ * one the children make — a windmill of paper cups and a straw came back as a
+ * wooden water wheel with spoons.
+ *
+ * Small images are skipped: logos, bullets and letterhead outnumber real
+ * figures and cost tokens without adding anything. The cap keeps a document
+ * with thirty screenshots from dominating the request.
+ */
+const MIN_FIGURE_BYTES = 25_000;
+const MAX_FIGURES = 4;
+
+const extractDocxFigures = async (buffer: Buffer): Promise<{ mimeType: string; data: string }[]> => {
+  const found: { mimeType: string; data: string; bytes: number }[] = [];
+
+  try {
+    await mammoth.convertToHtml(
+      { buffer },
+      {
+        convertImage: (mammoth as any).images.imgElement(async (image: any) => {
+          try {
+            const bytes = await image.readAsBuffer();
+            if (bytes.length >= MIN_FIGURE_BYTES) {
+              found.push({
+                mimeType: image.contentType || "image/png",
+                data: bytes.toString("base64"),
+                bytes: bytes.length,
+              });
+            }
+          } catch {
+            /* one unreadable image should not lose the rest */
+          }
+          return { src: "" };
+        }),
+      }
+    );
+  } catch (err: any) {
+    console.warn("Could not read figures from the document:", err?.message || err);
+    return [];
+  }
+
+  // Biggest first: the full-page build photo matters more than a small inset.
+  return found
+    .sort((a, b) => b.bytes - a.bytes)
+    .slice(0, MAX_FIGURES)
+    .map(({ mimeType, data }) => ({ mimeType, data }));
+};
+
 // API endpoint to extract text from pdf, docx, or text files
 app.post("/api/extract-text", async (req, res) => {
   const { fileBase64, fileName } = req.body;
@@ -186,6 +238,7 @@ app.post("/api/extract-text", async (req, res) => {
   try {
     const buffer = Buffer.from(fileBase64, "base64");
     let extractedText = "";
+    let figures: { mimeType: string; data: string }[] = [];
 
     if (extension === "pdf") {
       try {
@@ -214,13 +267,14 @@ app.post("/api/extract-text", async (req, res) => {
     } else if (extension === "docx") {
       const result = await mammoth.extractRawText({ buffer });
       extractedText = result.value || "";
+      figures = await extractDocxFigures(buffer);
     } else if (["txt", "md", "csv", "rtf", "json", "doc"].includes(extension)) {
       extractedText = buffer.toString("utf-8");
     } else {
       return res.status(400).json({ error: `Unsupported file extension: .${extension}` });
     }
 
-    res.json({ text: extractedText });
+    res.json({ text: extractedText, figures });
   } catch (error: any) {
     console.error("Error extracting document text:", error);
     res.status(500).json({
@@ -281,7 +335,7 @@ app.post("/api/process-lesson", async (req, res) => {
     });
   }
 
-  const { lessonContent, customPreferences, instructorMemory } = req.body;
+  const { lessonContent, customPreferences, instructorMemory, figures } = req.body;
 
   if (!lessonContent || typeof lessonContent !== "string") {
     return res.status(400).json({ error: "lessonContent string is required" });
@@ -444,9 +498,34 @@ ${groundedFindings}`
       : "";
 
     // PASS 2 - structured generation, with the research folded in.
+    // The figures from the source document go in alongside the text, so the
+    // build described back is the one the instructor is actually holding.
+    const sourceFigures = Array.isArray(figures) ? figures.slice(0, 4) : [];
+    const figureDirective = sourceFigures.length
+      ? `
+
+[SOURCE FIGURES]
+The ${sourceFigures.length} image(s) attached are the diagrams and photographs from this lesson document. They show the actual build. Read them before writing handsOnActivity and visualSuggestion.
+- Describe the apparatus you can SEE, not one you infer from the prose. Where the pictures and the written steps disagree, the pictures are the lesson.
+- Name the parts as they appear: their real shapes, how they join, what is on top of what.
+- visualSuggestion.prompt must describe THIS object closely enough that an illustrator who has not seen the photograph would draw the same thing.`
+      : "";
+
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
-      contents: userPrompt + groundedContext,
+      contents: sourceFigures.length
+        ? [
+            {
+              role: "user",
+              parts: [
+                ...sourceFigures.map((f: any) => ({
+                  inlineData: { mimeType: f.mimeType || "image/png", data: f.data },
+                })),
+                { text: userPrompt + groundedContext + figureDirective },
+              ],
+            },
+          ]
+        : userPrompt + groundedContext,
       config: {
         systemInstruction,
         responseMimeType: "application/json",
