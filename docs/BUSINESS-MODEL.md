@@ -35,6 +35,24 @@ artifacts ready for a classroom:
 That last one matters more than it sounds. Broken media is the single most common reason a
 perfectly good older lesson gets abandoned, and it's the least interesting problem to fix by hand.
 
+**But the thing instructors actually asked for was less, not more.** The complaint that shaped this
+product was not "I need materials" — it was that a forty-five minute class arrives as a seven-page
+plan, and an instructor with thirty minutes of paid prep for their entire week teaches one page of
+it. So Lyrah reads the lesson's stated learning goals first, budgets backwards from the clock —
+subtracting setup, transitions and a cleanup estimate driven by the materials and the age of the
+children — and then **cuts**, keeping one hands-on activity rather than three and one new
+vocabulary word rather than a glossary.
+
+It says what it removed and why. A shortened plan an instructor cannot interrogate is lossy; one
+that shows its reasoning is a colleague's judgment they can overrule. Given a real Pre-K lesson
+carrying four separate learning goals — DNA, the heart, lungs and bones, in one hour — Lyrah keeps
+the heart, defers the rest, and reserves fifteen minutes for cleanup because the activity uses
+water and food dye. Told to run a build too fine-motor for four-year-olds, it does not quietly move
+the lesson to an older age band; it keeps the age and tells the instructor to pre-drill the caps.
+
+That is the difference between a generator and a co-teacher, and it is the part of the product that
+came directly from instructors using it.
+
 **Gemini is the product, not a feature.** Two models do the work in the deployed application:
 `gemini-3.5-flash` for curriculum transformation and pedagogical structuring, and
 `gemini-3.1-flash-image` for classroom visuals. Without them there is no product — there is a text
@@ -75,62 +93,66 @@ outcomes are downstream of this product and we don't claim them.
 
 **B2C self-serve today, with a direct path into B2B.**
 
-### Live now — priced to acquire, not to earn
+### Live now
 
-Two tiers are live in Stripe in the deployed application, and the pricing page shows only these two.
+Two tiers are live in Stripe, and the pricing page shows only these two.
 
 | Tier | Price | Buyer |
 |---|---|---|
-| **Summer STEM Special** | $12.99 one-time | The individual instructor. The offer being put in front of real instructors this season, and the lead position on the pricing page |
-| **Camp Director Special** | $49.99/month (list $99.99) | Multi-site programmes, summer camps and franchises running several instructors |
+| **Summer STEM Special** | $12.99 one-time | The individual instructor. The offer being put in front of real instructors now, and the lead position on the pricing page |
+| **Instructor Monthly** | $9.99/month | The same instructor, once they are running new material every week through the school year |
 
-**$12.99 once is not a revenue model and is not intended as one.** It is priced against a Sunday
-evening, not against cost. The individual tier is effectively a giveaway, deliberately, for one
-season: the scarce thing right now is not money but evidence — instructors who have actually run a
-Lyrah-generated lesson in front of children and will say whether it held up. A price low enough to
-be an impulse decision buys that evidence faster than a free tier does, because a $12.99 charge
-still filters for genuine intent in a way "sign up free" does not.
+They are deliberately different shapes rather than a ladder. The one-time price is for a teacher
+paying out of pocket mid-season, where a recurring charge is a harder yes than the product has yet
+earned. The monthly price is for the same person once Lyrah is part of how their week works.
+Subscribers reach Stripe's hosted billing portal from their dashboard to change a card, pull a
+receipt or cancel without emailing anyone.
 
-The two tiers are deliberately different shapes. The instructor pays once, out of their own pocket,
-mid-season, where a recurring charge is a harder yes than the product has yet earned. The director
-tier recurs, because a programme buying for several instructors is a budget line rather than a
-personal purchase — and because multi-instructor usage is where inference cost actually lands.
+**$12.99 once is not a revenue model and is not presented as one.** It is priced against a Sunday
+evening, not against cost. The scarce thing at this stage is not money but evidence — instructors
+who have run a Lyrah-generated lesson in front of children and will say whether it held up. A price
+low enough to be an impulse decision buys that evidence faster than a free tier does, because a
+$12.99 charge still filters for genuine intent in a way "sign up free" does not.
 
-Because the director tier recurs, subscribers reach Stripe's hosted billing portal from their
-Lyrah dashboard to change a card, pull receipts or cancel unassisted.
+**The honest risk:** a one-time payment against ongoing inference cost has no natural ceiling. One
+instructor generating weekly all year can consume more than $12.99 of inference alone. That is
+acceptable while the goal is evidence rather than margin, and it is why the offer is framed as a
+season pass rather than a lifetime one — but it is a real exposure, bounded only by how long this
+pricing stays live. It closes 31 December.
 
-### The bet: summer acquisition, school-year conversion
+### The bet: acquire now, convert during the school year
 
 The sequence is the strategy.
 
-Summer is when camp and enrichment instructors are teaching and school-year staff are free — the
-one window where both halves of the market are reachable. Acquire in that window at a price that
-removes deliberation, then convert during the school year, when the product's actual retention
-argument becomes true: an instructor mid-term has a semester of accumulated materials and pacing
-memory inside Lyrah that they cannot rebuild elsewhere.
+The weeks either side of the school year starting are the one window where both halves of this
+market are reachable — camp and enrichment instructors are teaching, school-year staff are
+preparing. Acquire in that window at a price that removes deliberation. Convert during the term,
+when the retention argument becomes true rather than theoretical: an instructor in November has a
+semester of materials and pacing decisions inside Lyrah that they cannot rebuild elsewhere.
 
-That is what the held-back recurring tiers are for. They are not a fallback if the giveaway fails;
-they are the second half of a deliberate sequence, launched once there is renewal evidence to price
-against rather than a guess.
-
-**The honest risk in this plan:** a one-time payment against ongoing inference cost has no natural
-ceiling. A single instructor generating weekly all year can consume more than $12.99 of inference
-by themselves. That is acceptable while the goal is evidence rather than margin, and it is why the
-one-time price is framed as a *season* pass rather than a lifetime one — but it is a real cost
-exposure, not a rounding error, and it is bounded only by how long this pricing stays live.
+The one-time offer therefore has an end date rather than running indefinitely. Instructors who buy
+in this window keep that price if they later move to monthly — early buyers are not repriced for
+having arrived first. This is framed as founding pricing, not as a discount: a discount says the
+product is worth less, and it is not.
 
 ### Held back for a later launch
 
-Two recurring tiers are designed and priced but deliberately not shown. Running them alongside a
-$12.99 one-time offer would bury it, and subscription retention is the weakest part of this
-market (see below) — so they wait until there is renewal evidence to justify them. These are the
-school-year half of the sequence above, and the point at which the model has to start earning
-rather than acquiring.
+One tier is designed and priced but deliberately not shown.
 
 | Tier | Price | Buyer |
 |---|---|---|
-| **Educator Pro** | $9.99/mo | The individual instructor — unlimited curriculum transformation across all five modules |
-| **Educator Yearly** | $99.00/yr | The same buyer, prepaid annually at roughly $8.25/mo, trading discount for a full school year of commitment |
+| **Camp Director Special** | $49.99/month | Multi-site programmes, summer camps and franchises running several instructors |
+
+It was briefly live and was removed. Two reasons, both worth stating because both were learned
+rather than planned. A second tier splits the decision of an individual instructor who is the only
+buyer this product currently has. And selling to a programme is not a pricing question but a
+different sale — a budget line, a conversation, an invoice — for which a self-serve button on a
+pricing page is the wrong instrument.
+
+**The programme sale needs no new tier and is already possible.** Ten instructors at $12.99 is
+$129.90, which is both more than the removed tier charged and an honest description of what is
+being bought: access for ten people, not a premium version for one. That is the B2C-to-B2B wedge
+below, working with the machinery that already exists.
 
 A **Publisher API** contract tier — educational publishers turning static textbooks into
 interactive activities — remains the B2B end state, not a shipped product.
@@ -212,8 +234,9 @@ margin puts the ceiling at roughly **$2.00 of inference per subscriber per month
 figure the product has to be engineered against, and the single most important unmeasured number in
 this document.
 
-At any low price point a heavy user is the risk, not the win. Camp Director Special exists partly
-because multi-instructor programmes generate far more and must not be served at individual pricing.
+At any low price point a heavy user is the risk, not the win. This is the main argument for pricing
+programmes per instructor rather than per site: a programme running ten instructors generates
+roughly ten times the inference, and a flat site price would hide that until it hurt.
 
 Two mitigations already in the codebase: **image compression** on upload, and **graceful fallback
 to preloaded lessons** when keys are absent — so a cost spike degrades the experience rather than
@@ -300,6 +323,10 @@ not of scale, headcount, or a funding round.
 - **Google Search grounding** on lesson generation, so material is checked against current sources
   rather than model recall alone
 - **Five distinct output modules**, not a single-trick demo
+- **Scope discipline** — lessons are planned against the minutes the instructor actually has, with
+  the cuts shown and justified rather than made silently
+- **Server-side payment fulfilment** — access is granted by the Stripe webhook, so a customer who
+  closes the tab mid-redirect is still upgraded
 - **Stripe live in production**, taking real payments — hosted Checkout, promotion codes, and a
   self-serve billing portal for subscribers
 - **Firebase auth, Firestore, and Storage** in production use
@@ -315,10 +342,29 @@ being gathered this week.]`
 
 ### Evidence toward product-market fit
 
-`[This section is where instructor testing goes. The strongest possible content: N instructors, what
-they generated, measured prep time before and after, and whether they taught the output. One
+What exists is not usage volume. It is a short, documented loop: instructors used Lyrah, said what
+was wrong, and the product changed within a day. `docs/USER-STORIES.md` carries the dated table —
+what was reported, by whom, and what shipped in response.
+
+Three of those are worth naming here because each changed the product rather than the copy:
+
+- **Maia** generated a lesson that came back full of visible HTML tags, and separately found a
+  cardboard-and-string pulley build rendered as a block-coding exercise. Both were fixed the same
+  day; the second required rewriting how lesson type is detected, because the word "prevents"
+  contained "event".
+- **Mosi** said he did not know what to do once he arrived. The guided walkthrough exists because
+  of that sentence.
+- **Two instructors paid** and could not tell whether it had worked, because access was being
+  granted by the browser after checkout and failing silently. That is the most valuable report of
+  the three precisely because it is not flattering: real users, doing a real thing, finding a real
+  failure that no amount of internal testing had surfaced.
+
+`[Add: measured prep time before and after, for however many instructors will give it. One
 instructor saying "this saved me Sunday night" is worth more than every projection above — and
-unlike a projection, it can't be argued with.]`
+unlike a projection, it cannot be argued with.]`
+
+**Responsiveness is the claim this project can support right now. Usage volume is not**, and
+reaching for it invites a question with no good answer.
 
 ### How resources are preserved
 
