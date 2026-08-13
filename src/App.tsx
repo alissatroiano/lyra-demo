@@ -48,6 +48,7 @@ import {
   Save,
   Crown,
   CreditCard,
+  Target,
   Palette,
   Sun,
   Moon,
@@ -2615,6 +2616,73 @@ export default function App() {
                       {lesson.summary}
                     </p>
                   </div>
+
+            {/* What Lyrah cut, and the minutes it planned against. Instructors are
+                handed seven-page plans and teach one page; showing the goal, the
+                real time budget and the removals is the product's actual claim. */}
+            {lesson.lessonScope && (
+              <div className="mb-3 rounded-2xl border border-teal-brand/25 dark:border-teal-brand/20 bg-teal-50/60 dark:bg-teal-brand/5 overflow-hidden">
+                <div className="px-4 py-3 space-y-2.5">
+                  <div className="flex items-start gap-2.5">
+                    <Target className="w-4 h-4 text-teal-brand shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-teal-dark dark:text-teal-brand font-sans">
+                        The one thing this class is for
+                      </p>
+                      <p className="text-xs text-slate-800 dark:text-slate-200 font-sans leading-relaxed">
+                        {lesson.lessonScope.mainGoal}
+                      </p>
+                    </div>
+                  </div>
+
+                  {lesson.lessonScope.segments?.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5 pl-6.5">
+                      <span className="text-[10px] font-mono font-bold text-teal-dark dark:text-teal-brand">
+                        {lesson.lessonScope.teachableMinutes} min teachable
+                      </span>
+                      <span className="text-slate-400">·</span>
+                      {lesson.lessonScope.segments.map((seg) => (
+                        <span
+                          key={seg.name}
+                          title={seg.servesGoal}
+                          className="text-[10px] font-sans px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 border border-teal-brand/20 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+                        >
+                          {seg.name} · {seg.minutes}m
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {lesson.lessonScope.warning && (
+                    <p className="pl-6.5 text-[11px] text-amber-800 dark:text-amber-300 font-sans leading-relaxed">
+                      {lesson.lessonScope.warning}
+                    </p>
+                  )}
+                </div>
+
+                {lesson.lessonScope.cut?.length > 0 && (
+                  <details className="border-t border-teal-brand/20 dark:border-teal-brand/10 group">
+                    <summary className="px-4 py-2 text-[11px] font-bold text-teal-dark dark:text-teal-brand font-sans cursor-pointer hover:bg-teal-100/40 dark:hover:bg-teal-brand/10 transition-colors list-none flex items-center gap-1.5">
+                      <ChevronDown className="w-3.5 h-3.5 transition-transform group-open:rotate-180" />
+                      <span>Lyrah cut {lesson.lessonScope.cut.length} {lesson.lessonScope.cut.length === 1 ? "thing" : "things"} to fit the hour — see what</span>
+                    </summary>
+                    <div className="px-4 pb-3 pt-1 space-y-2">
+                      {lesson.lessonScope.cut.map((c) => (
+                        <div key={c.item} className="text-[11px] font-sans leading-relaxed">
+                          <span className="font-bold text-slate-800 dark:text-slate-200">{c.item}</span>
+                          <span className="text-secondary dark:text-slate-400"> — {c.reason}</span>
+                        </div>
+                      ))}
+                      {(lesson.lessonScope.deferred || []).length > 0 && (
+                        <p className="text-[11px] text-secondary dark:text-slate-400 font-sans pt-1 border-t border-black/[0.05] dark:border-slate-800">
+                          <span className="font-bold">Worth a later session:</span> {lesson.lessonScope.deferred!.join("; ")}
+                        </p>
+                      )}
+                    </div>
+                  </details>
+                )}
+              </div>
+            )}
 
             {/* Adaptive Reordering Indicator Banner */}
             <div className="flex items-center justify-between gap-2 px-3.5 py-2 bg-teal-50/80 dark:bg-teal-brand/10 border border-teal-brand/20 rounded-xl mb-3 text-xs text-teal-dark dark:text-teal-brand font-sans">

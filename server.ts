@@ -294,6 +294,25 @@ app.post("/api/process-lesson", async (req, res) => {
 Your mission is to help instructors transform standard, text-heavy, or dry lesson plans into immersive, gamified learning adventures for children (ages 5-14). You specialize in hands-on engineering challenges and block-based coding environments (Scratch, ScratchJr, EduBlocks, Code.org, Thunkable). You help instructors manage multi-session pacing and streamline heavy documentation into digestible, visually engaging student experiences.
 ${memoryDirective}
 
+TIME AND SCOPE DISCIPLINE - THIS OUTRANKS EVERY OTHER INSTRUCTION:
+
+The instructor reading your output has roughly thirty minutes of paid preparation for their entire week and forty-five to sixty minutes to actually teach. They are handed seven- and eight-page lesson plans and use one page of them. Your job is to CUT, not to add. A shorter plan that gets taught beats a thorough one that gets abandoned.
+
+1. FIND THE LEARNING GOAL BEFORE ANYTHING ELSE. Read the "Learning Goal(s)", "Objectives" or "Standards" section first. If none is stated, decide the single thing students must be able to do by the end. Everything you produce serves that one goal. Anything that does not serve it is cut, however interesting it is.
+
+2. BUDGET REAL MINUTES, NOT IDEAL ONES. Subtract setup, transitions and cleanup from the stated duration before planning anything, then plan only what remains:
+   - Ages 5-7: about 10 minutes of talking before hands must be on materials. Setup and cleanup consume 12-15 minutes of the hour.
+   - Ages 8-10: about 12-15 minutes of instruction. Setup and cleanup, 10 minutes.
+   - Ages 11 and up: about 15-20 minutes of instruction. Setup and cleanup, 8 minutes.
+
+3. ONE HANDS-ON ACTIVITY. A forty-five to sixty minute class with young children has room for one build, not a warm-up plus a practice activity plus a main project. Where the source contains several, choose the one that best serves the learning goal and defer the rest. Never quietly include them all.
+
+4. CUT OUT LOUD. Record what you removed and why. An instructor who can see what was dropped can put it back deliberately; one handed everything can find nothing.
+
+5. IF IT DOES NOT FIT, SAY SO. When the source cannot fit the stated duration for that age, say it plainly rather than compressing it into something unteachable. Instructors already know these plans are overstuffed; being told directly is a relief, not a failure.
+
+6. SLIDES ARE FOR THE BOARD. Three to five, with a handful of words each. Nobody delivers twelve slides and a build in one hour.
+
 OUTPUT FORMAT:
 - Every string you return is displayed to the instructor exactly as written. Write plain prose.
 - Never use HTML tags (<p>, <br>, <strong>, <li>) or Markdown syntax (**bold**, ## headings, - bullets) inside any field. The interface applies its own styling; your markup reaches the instructor as visible clutter in the middle of a lesson.
@@ -341,7 +360,7 @@ ${lessonContent}
 
 ${customPreferences ? `Teacher's Custom Request & Available Supplies/Tools: ${customPreferences}` : ""}
 
-Please convert this into a comprehensive, highly interactive lesson plan with slides, worksheets, quizzes, a hands-on activity, media backup queries, and a technical feasibility audit with realistic alternatives.`;
+Convert this into the shortest plan that still teaches the learning goal in the time available. Include slides, a worksheet, a quiz, one hands-on activity, media backup queries, and a feasibility audit - but only as much of each as fits the minutes and the age. Fill in lessonScope honestly, including what you cut.`;
 
     // PASS 1 - grounded research.
     //
@@ -439,6 +458,55 @@ ${groundedFindings}`
                 },
               },
             },
+            lessonScope: {
+              type: Type.OBJECT,
+              description: "How the lesson was cut to fit the class. This is the instructor's evidence that the plan is teachable in the time they actually have.",
+              required: ["mainGoal", "teachableMinutes", "segments", "cut"],
+              properties: {
+                mainGoal: {
+                  type: Type.STRING,
+                  description: "The single thing students must be able to do by the end, in one sentence, taken from the lesson's stated Learning Goals where present.",
+                },
+                teachableMinutes: {
+                  type: Type.INTEGER,
+                  description: "Minutes genuinely available for teaching, after subtracting setup, transitions and cleanup from the stated class duration.",
+                },
+                segments: {
+                  type: Type.ARRAY,
+                  description: "How those minutes are spent. Must sum to teachableMinutes or less. Usually two or three entries, not five.",
+                  items: {
+                    type: Type.OBJECT,
+                    required: ["name", "minutes", "servesGoal"],
+                    properties: {
+                      name: { type: Type.STRING, description: "E.g. 'Build the windmill'." },
+                      minutes: { type: Type.INTEGER, description: "Minutes for this segment." },
+                      servesGoal: { type: Type.STRING, description: "One line on how this segment moves students toward the main goal." },
+                    },
+                  },
+                },
+                cut: {
+                  type: Type.ARRAY,
+                  description: "What was removed from the source material and why. Be specific and honest - an instructor can put something back only if they can see it was taken out.",
+                  items: {
+                    type: Type.OBJECT,
+                    required: ["item", "reason"],
+                    properties: {
+                      item: { type: Type.STRING, description: "The activity, vocabulary set or section that was removed." },
+                      reason: { type: Type.STRING, description: "Why it did not survive the time budget or the learning goal." },
+                    },
+                  },
+                },
+                deferred: {
+                  type: Type.ARRAY,
+                  description: "Content worth teaching that belongs in a later session rather than this one.",
+                  items: { type: Type.STRING },
+                },
+                warning: {
+                  type: Type.STRING,
+                  description: "Present only when the source lesson genuinely cannot fit the stated duration for this age group. Say so plainly and name what would have to give.",
+                },
+              },
+            },
             extractedStyleNotes: {
               type: Type.STRING,
               description: "A short, one-sentence observation about this instructor's style, preferences, or technical level based on their inputs. Write in 3rd person singular/plural (e.g., 'Instructor prefers...').",
@@ -462,7 +530,7 @@ ${groundedFindings}`
             },
             slides: {
               type: Type.ARRAY,
-              description: "A series of 4-6 slide definitions for a presentation.",
+              description: "Three to five slides. Fewer is better - these are read off a board by children, not by the instructor.",
               items: {
                 type: Type.OBJECT,
                 required: ["title", "content", "visualConcept", "instructorNotes"],
