@@ -93,6 +93,18 @@ h4.font-display.font-bold {
   box-shadow: 0 8px 32px #0000005e;
 }
 
+/* The markup asks for these as `liquid-glass-light dark:liquid-glass-dark`,
+ * but these are plain CSS classes rather than Tailwind utilities, so the
+ * `dark:` variant is never generated and the light version wins in both
+ * themes — which is why the presentation header stayed white. Making the
+ * light class adapt under .dark fixes every usage regardless of how it was
+ * applied. */
+.dark .liquid-glass-light {
+  background: rgb(2, 8, 24);
+  border: 1px solid #00c2b240;
+  box-shadow: 0 8px 32px #0000005e;
+}
+
 h2.dark\:text-slate-100:where(.dark,.dark *) {
     color: var(--color-slate-100);
     max-height: 90vh;
@@ -113,7 +125,8 @@ span.text-teal-brand.font-sans {
     -webkit-backdrop-filter: blur(16px);
   }
 
-  .liquid-glass-dark {
+  .liquid-glass-dark,
+  .dark .liquid-glass-light {
     background: rgba(2, 8, 24, 0.88);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
