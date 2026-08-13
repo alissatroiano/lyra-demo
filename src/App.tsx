@@ -119,7 +119,7 @@ const CATEGORY_SIGNALS: { category: string; terms: string[] }[] = [
   // Build-and-make vocabulary matters as much as the word "engineering": a
   // spool-and-string pulley rig is a DIY engineering lesson even though the
   // write-up only ever says "gravity".
-  { category: "Engineering", terms: ["engineering", "bridge", "truss", "catapult", "tower", "prototype", "blueprint", "load-bearing", "design challenge", "robot", "robotics", "pulley", "lever", "simple machine", "gear", "axle", "winch", "hoist", "spool", "rig", "scaffold", "assemble", "construct"] },
+  { category: "Engineering", terms: ["engineering", "engineer", "windmill", "turbine", "build", "construct", "bridge", "truss", "catapult", "tower", "prototype", "blueprint", "load-bearing", "design challenge", "robot", "robotics", "pulley", "lever", "simple machine", "gear", "axle", "winch", "hoist", "spool", "rig", "scaffold", "assemble", "construct"] },
   { category: "Math", terms: ["math", "fraction", "geometry", "algebra", "equation", "graphing", "perimeter", "probability"] },
   { category: "Circuitry", terms: ["circuit", "voltage", "conductor", "insulator", "led", "battery"] },
   { category: "Art", terms: ["art", "drawing", "painting", "clay", "sculpture", "color theory", "poster", "infographic", "graphic design"] },
@@ -133,6 +133,20 @@ const GRADE_SIGNALS: { grade: string; terms: string[] }[] = [
   { grade: "6-8", terms: ["6-8", "6th grade", "7th grade", "8th grade", "sixth grade", "seventh grade", "eighth grade", "ages 11-13", "middle school"] },
   { grade: "9-12", terms: ["9-12", "9th grade", "10th grade", "11th grade", "12th grade", "ages 14-18", "high school"] },
 ];
+
+/**
+ * The lesson's own title, plus the filename.
+ *
+ * An instructor who titles a document "Engineering Mission" has already said
+ * what kind of lesson it is, and that one statement is worth more than any
+ * amount of body text. Scoring on body frequency alone read a windmill build
+ * as a science lesson, because "energy" appeared twenty-one times while
+ * "engineering" appeared five.
+ */
+const extractHeadline = (text: string, fileName?: string | null): string => {
+  const firstLine = (text || "").split(/\r?\n/).find((line) => line.trim().length > 0) || "";
+  return `${firstLine} ${fileName || ""}`.toLowerCase();
+};
 
 /** Count whole-word occurrences of a term. */
 const countTerm = (haystack: string, term: string): number => {
@@ -902,14 +916,31 @@ export default function App() {
     // A mention under a requirements heading is worth three in the body, so a
     // single "Software Required: Scratch 3.0" is decisive while three
     // stray narrative references are needed to reach the same confidence.
+    const headline = extractHeadline(textToScan, fileNameToScan);
+
     const REQUIREMENTS_WEIGHT = 3;
-    const CONFIDENCE_THRESHOLD = 3;
-    const scoreTerms = (terms: string[]) =>
-      terms.reduce(
-        (total, term) =>
-          total + countTerm(combined, term) + countTerm(requirements, term) * (REQUIREMENTS_WEIGHT - 1),
-        0
-      );
+    const HEADLINE_WEIGHT = 6;
+    const CONFIDENCE_THRESHOLD = 4;
+    // One word repeated is one signal, not twenty. Capping each term and adding
+    // a point per distinct term matched means four different engineering words
+    // outrank a single science word used throughout.
+    const REPEAT_CAP = 3;
+
+    const scoreTerms = (terms: string[]) => {
+      let score = 0;
+      let distinct = 0;
+
+      for (const term of terms) {
+        const inBody = countTerm(combined, term);
+        if (inBody > 0) distinct += 1;
+
+        score += Math.min(inBody, REPEAT_CAP);
+        score += countTerm(requirements, term) * (REQUIREMENTS_WEIGHT - 1);
+        score += countTerm(headline, term) * HEADLINE_WEIGHT;
+      }
+
+      return score + distinct;
+    };
 
     // 1. Grade / age range. Only explicit grade language counts — inferring
     // "Roblox therefore middle school" overrode instructors who had already
