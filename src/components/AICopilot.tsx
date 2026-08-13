@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+
 import { 
   Sparkles, 
   Send, 
@@ -26,6 +27,17 @@ import {
 } from "lucide-react";
 import { ProcessedLesson } from "../types";
 import { useFirebase } from "../context/FirebaseContext";
+
+/**
+ * The thread renders plain text, so Markdown the model emits arrives as
+ * literal "**bold**" and "## heading" in front of the instructor.
+ */
+const stripChatMarkdown = (text: string): string =>
+  (text || "")
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/(^|\s)\*(\S[^*]*?)\*(?=\s|$)/g, "$1$2")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/^\s*[-*]\s+/gm, "• ");
 
 interface AICopilotProps {
   lesson: ProcessedLesson;
@@ -510,7 +522,7 @@ Active Lesson Context:
       </div>
 
       {/* RIGHT WORKSPACE AREA */}
-      <div className="xl:col-span-9 bg-white border border-black/[0.06] rounded-2xl p-5.5 min-h-[500px] flex flex-col">
+      <div className="xl:col-span-9 bg-white dark:bg-slate-900 border border-black/[0.06] dark:border-slate-800 rounded-2xl p-5.5 min-h-[500px] flex flex-col">
         
         {/* ======================================================== */}
         {/* SUBTAB: 💬 CO-TEACHER CHAT */}
@@ -612,16 +624,16 @@ Active Lesson Context:
               {messages.map((m) => (
                 <div key={m.id} className={`flex gap-3 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                   {m.role !== "user" && (
-                    <div className="w-8 h-8 rounded-full bg-teal-light flex items-center justify-center text-teal-brand shrink-0 font-bold text-xs select-none border border-teal-brand/10">
+                    <div className="w-8 h-8 rounded-full bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center text-teal-brand shrink-0 font-bold text-xs select-none border border-teal-brand/10 dark:border-teal-brand/30">
                       Ly
                     </div>
                   )}
                   <div className={`max-w-[80%] rounded-2xl p-4 text-xs font-sans leading-relaxed ${
                     m.role === "user"
                       ? "bg-teal-dark text-white rounded-tr-none"
-                      : "bg-surface-0 border border-black/[0.04] text-primary rounded-tl-none"
+                      : "bg-surface-0 dark:bg-slate-800 border border-black/[0.04] dark:border-slate-700 text-primary dark:text-slate-100 rounded-tl-none"
                   }`}>
-                    <p className="whitespace-pre-line font-medium">{m.content}</p>
+                    <p className="whitespace-pre-line font-medium">{stripChatMarkdown(m.content)}</p>
 
                     {m.isGrounded && (
                       <div className="mt-2.5 pt-2 border-t border-black/[0.05] flex flex-col gap-1">
@@ -695,7 +707,7 @@ Active Lesson Context:
                         handleSendChatMessage("What are the most common misconceptions or errors students make on this topic and how do I address them?");
                       }
                     }}
-                    className="text-[10px] bg-white border border-black/[0.06] hover:bg-teal-light text-secondary hover:text-teal-brand font-sans font-bold px-3 py-1.5 rounded-xl cursor-pointer transition-all shrink-0"
+                    className="text-[10px] bg-white dark:bg-slate-800 border border-black/[0.06] dark:border-slate-700 hover:bg-teal-light dark:hover:bg-slate-700 text-secondary dark:text-slate-300 hover:text-teal-brand font-sans font-bold px-3 py-1.5 rounded-xl cursor-pointer transition-all shrink-0"
                   >
                     {preset} &rarr;
                   </button>

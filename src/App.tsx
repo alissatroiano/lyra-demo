@@ -1524,33 +1524,26 @@ export default function App() {
 
             {/* Nav Actions */}
             <div className="flex items-center gap-1.5 sm:gap-3">
-              {/* Fixed Top Navbar Link: My Lessons Vault Toggle */}
+              {/* "How to Use" replaces a second My Lessons control: the vault bar
+                  below already opens the same drawer, and what instructors asked
+                  for was a way to be shown around, not a duplicate button. */}
               <button
                 type="button"
                 onClick={() => {
-                  if (currentView !== "studio") {
-                    setCurrentView("studio");
-                  }
-                  setIsVaultExpanded(prev => !prev);
+                  setCurrentView("studio");
+                  setIsTextMaterialOpen(true);
+                  setCustomContent("");
+                  setIsDemoRunning(true);
                 }}
                 className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[38px] border ${
-                  isVaultExpanded
-                    ? "bg-teal-brand text-slate-950 border-teal-brand shadow-3xs"
-                    : isDarkMode 
-                      ? "bg-slate-800 text-teal-brand border-slate-700 hover:bg-slate-700 hover:border-teal-brand/40" 
-                      : "bg-teal-light/60 text-teal-dark border-teal-brand/30 hover:bg-teal-light hover:border-teal-brand/50"
+                  isDarkMode
+                    ? "bg-slate-800 text-teal-brand border-slate-700 hover:bg-slate-700 hover:border-teal-brand/40"
+                    : "bg-teal-light/60 text-teal-dark border-teal-brand/30 hover:bg-teal-light hover:border-teal-brand/50"
                 }`}
-                title="Toggle Firebase Cloud Storage Vault sticky-pad"
+                title="Show me how Lyrah works"
               >
-                <Cloud className="w-3.5 h-3.5" />
-                <span>My Lessons</span>
-                {user && savedLessons.length > 0 && (
-                  <span className={`px-1.5 py-0.2 font-mono text-[9px] font-extrabold rounded-full ${
-                    isVaultExpanded ? "bg-slate-950 text-teal-brand" : "bg-teal-brand text-slate-950"
-                  }`}>
-                    {savedLessons.length}
-                  </span>
-                )}
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>How to Use</span>
               </button>
 
               {/* 2026 Cyber STEM Lab Theme Switcher */}
@@ -3821,7 +3814,7 @@ export default function App() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.2 }}
-              className="w-[92vw] sm:w-[520px] max-h-[85vh] bg-white rounded-3xl border border-teal-brand/30 shadow-2xl overflow-hidden flex flex-col mb-2"
+              className="w-[92vw] sm:w-[520px] max-h-[85vh] bg-white dark:bg-slate-900 rounded-3xl border border-teal-brand/30 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col mb-2"
             >
               {/* Modal Header */}
               <div className="bg-teal-dark px-5 py-4 text-white flex items-center justify-between shrink-0">
@@ -3844,7 +3837,7 @@ export default function App() {
               </div>
 
               {/* Modal Body */}
-              <div className="p-4 overflow-y-auto flex-1 bg-surface-0/30">
+              <div className="p-4 overflow-y-auto flex-1 bg-surface-0/30 dark:bg-slate-950/40">
                 <AICopilot 
                   lesson={lesson} 
                   onTriggerPaidFlow={() => {

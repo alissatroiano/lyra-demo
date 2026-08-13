@@ -30,9 +30,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span>XPRIZE · Education & Human Potential</span>
             </div>
 
-            <h1 className="font-display text-3.5xl sm:text-5xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
+            <h2 className="font-display text-3.5xl sm:text-5xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
               Say goodbye to <span className="text-teal-700 dark:text-teal-brand underline decoration-amber-400 dark:decoration-amber-500 underline-offset-6">long, wordy lesson plans</span>
-            </h1>
+            </h2>
 
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans font-normal">
               Paste in the curriculum you already have. Get slides, a hands-on lab checklist, a printable
@@ -144,7 +144,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100 font-display leading-snug landing-snug">
                   {title}
                 </h4>
-                <p className="text-xs text-secondary dark:text-slate-400 font-display leading-relaxed">
+                <p className="text-xs text-secondary dark:text-slate-400 font-sans leading-relaxed">
                   {body}
                 </p>
               </div>
@@ -164,31 +164,31 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           {[
             {
               icon: FileCode,
-              tint: "bg-teal-brand/10 text-teal-brand",
+              tint: "text-teal-brand",
               title: "Material Ingestion",
               body: "Upload any textbook PDF, DOCX, or pasted lesson plan up to 50 pages long."
             },
             {
               icon: Check,
-              tint: "bg-emerald-500/10 text-emerald-500",
+              tint: "text-teal-brand",
               title: "Invariant Extraction",
               body: "Our AI extractors safely parse and outline key STEM concepts and learning goals."
             },
             {
               icon: Palette,
-              tint: "bg-gold-brand/10 text-gold-brand",
+              tint: "text-teal-brand",
               title: "Media Recommendation",
               body: "Generates high-yield safe search queries for animated videos and live science demos."
             },
             {
               icon: Layers,
-              tint: "bg-rose-500/10 text-rose-500",
+              tint: "text-teal-brand",
               title: "Layout Generation",
               body: "Assembles beautifully structured slide decks, teaching scripts, and gamified quizzes."
             },
             {
               icon: Activity,
-              tint: "bg-meridian/10 text-meridian",
+              tint: "text-teal-brand",
               title: "Student Adaptation",
               body: "Applies dyslexia-friendly bionic formatting and phonetic aids to the outputs."
             }
@@ -303,18 +303,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <div className="pt-4 space-y-8" id="pricing-section">
         <div className="text-center space-y-2">
           <span className="text-[10px] font-bold text-amber-800 dark:text-amber-200 uppercase tracking-widest font-sans bg-amber-100/60 dark:bg-amber-950/60 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-800">
-            THE INSTRUCTOR PLAN
+            INSTRUCTOR PLANS
           </span>
           <h3 className="font-display text-3xl font-bold text-slate-900 dark:text-slate-100">Simple, Transparent Pricing</h3>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-lg mx-auto font-sans">
-            One price, for the instructor preparing tomorrow’s class tonight.
+            Built for the instructor preparing tomorrow’s class tonight. Pay once, or subscribe for the term.
           </p>
         </div>
 
         {/* Two plans only. Educator Pro and Educator Yearly are held back for a
             later launch and documented in docs/BUSINESS-MODEL.md; showing them
             now would bury the $12.99 offer instructors are actually being given. */}
-        <div className="grid grid-cols-1 gap-6 max-w-md mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
           {/* Plan 1: Summer STEM Special - $12.99 ONE TIME (leads) */}
           <div className="bg-gradient-to-b from-teal-dark via-teal-900 to-slate-900 text-white rounded-3xl p-6 space-y-6 flex flex-col justify-between shadow-lg relative border-2 border-teal-brand/40 overflow-hidden">
             <div className="absolute top-0 right-0 bg-amber-400 text-slate-950 text-[10px] font-extrabold px-3.5 py-1 rounded-bl-xl uppercase tracking-wider font-mono shadow-xs">
@@ -375,6 +375,58 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </button>
           </div>
 
+          {/* Plan 2: Instructor Monthly - $9.99/mo */}
+          <div className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-6 flex flex-col justify-between shadow-sm hover:border-teal-brand transition-all relative">
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <span className="text-[10px] font-mono font-bold text-teal-900 dark:text-teal-brand uppercase tracking-wider bg-teal-50 dark:bg-teal-brand/20 px-2.5 py-1 rounded-md border border-teal-200 dark:border-teal-brand/30 inline-block">
+                  ONGOING ACCESS
+                </span>
+                <h4 className="font-display text-2xl font-bold text-slate-900 dark:text-slate-100">Instructor Monthly</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">For instructors running new material every week through the school year.</p>
+              </div>
+
+              <div className="flex items-baseline gap-1.5 pt-2">
+                <span className="font-display text-4xl font-extrabold text-teal-900 dark:text-teal-brand">$9.99</span>
+                <span className="text-xs text-slate-500 dark:text-slate-400 font-sans font-medium">/ month</span>
+              </div>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">Recurring monthly. Cancel anytime from your dashboard.</p>
+
+              <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2.5 text-xs text-slate-700 dark:text-slate-300 font-sans">
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
+                  <span><strong>Everything in the Summer STEM Special</strong></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
+                  <span>Unlimited lessons every month, not a one-off</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
+                  <span>Your lesson library carries across the whole term</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
+                  <span>Cancel yourself, any time, no email required</span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!user) {
+                  onSignIn();
+                } else {
+                  onSelectPlan();
+                }
+              }}
+              className="w-full py-3 bg-teal-800 dark:bg-teal-600 hover:bg-slate-900 dark:hover:bg-teal-500 text-white rounded-xl text-xs font-extrabold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <span>Get Instructor Monthly ($9.99/mo)</span>
+              <ArrowRight className="w-4 h-4 text-amber-300" />
+            </button>
+          </div>
         </div>
       </div>
 

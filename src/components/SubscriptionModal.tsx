@@ -186,16 +186,16 @@ export default function SubscriptionModal({
                     }`}
                   >
                     <span className="absolute -top-2.5 left-2 bg-teal-dark text-teal-brand text-[8px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs border border-teal-brand/40">
-                      Demo Incentive
+                      Monthly
                     </span>
                     <div className="flex justify-between items-start mt-1">
-                      <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100">Demo Intro Access</span>
+                      <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100">Instructor Monthly</span>
                       <input type="radio" checked={selectedPlan === "intro"} onChange={() => {}} className="accent-teal-700" />
                     </div>
                     <div className="mt-1.5 flex items-baseline gap-1">
                       <p className="text-lg font-serif font-extrabold text-teal-900 dark:text-teal-brand">$9.99<span className="text-[9px] font-sans font-normal text-slate-600 dark:text-slate-400"> / month</span></p>
                     </div>
-                    <p className="text-[9px] text-slate-600 dark:text-slate-400 mt-1 leading-tight">Recurring monthly. Cancel anytime.</p>
+                    <p className="text-[9px] text-slate-600 dark:text-slate-400 mt-1 leading-tight">Unlimited lessons, every month.</p>
                   </button>
 
                 </div>

@@ -52,16 +52,10 @@
 
 h4.font-display.font-bold {
   letter-spacing: .8px;
+  text-transform: uppercase;
 }
-/* Frosted panels.
- *
- * The translucent background is only applied where the blur behind it is
- * actually supported. Without the blur, a half-transparent panel just lets the
- * page beneath show through it — which is what made the vault unreadable on
- * mobile, with the hero heading legible straight through the panel. Opaque is
- * the default and the fallback; glass is the enhancement.
- */
-.liquid-glass-light {
+
+ .liquid-glass-light {
   background: rgb(255, 255, 255);
   border: 1px solid rgba(0, 194, 178, 0.18);
   box-shadow: 0 8px 32px 0 rgba(0, 194, 178, 0.08);
@@ -71,6 +65,19 @@ h4.font-display.font-bold {
   background: rgb(2, 8, 24);
   border: 1px solid #00c2b240;
   box-shadow: 0 8px 32px #0000005e;
+}
+
+h2.dark\:text-slate-100:where(.dark,.dark *) {
+    color: var(--color-slate-100);
+    max-height: 90vh;
+    overflow: auto;
+    font-size: 40px;
+    letter-spacing: .25px;
+}
+
+span.text-teal-brand.font-sans {
+    COLOR: orange;
+    margin-left: 2px;
 }
 
 @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
