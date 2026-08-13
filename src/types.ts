@@ -91,7 +91,7 @@ export interface ProcessedLesson {
     cut: { item: string; reason: string }[];
     keyVocabulary?: { word: string; childDefinition: string };
     reviewVocabulary?: string[];
-    deferred?: { activity: string; minutes: number; whyItWasHeld: string }[];
+    deferred?: string[];
     warning?: string;
   };
   /** Lyrah's own call on whether this lesson needs an illustration at all. */

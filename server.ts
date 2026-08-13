@@ -330,9 +330,7 @@ The instructor reading your output has roughly thirty minutes of paid preparatio
 
    State the cleanup figure you used and what drove it in lessonScope.cleanupMinutes and lessonScope.cleanupReason. An instructor who sees "15 minutes, because of the water trays" can plan the sink run; one who is handed a plan assuming 5 minutes discovers the problem at the sink.
 
-3. ONE HANDS-ON ACTIVITY IN THE PLAN, THE REST HELD IN RESERVE. A forty-five to sixty minute class with young children has room for one build, not a warm-up plus a practice activity plus a main project. Choose the one that best serves the learning goal.
-
-   The others are not deleted. Put them in lessonScope.deferred with enough detail to actually run, and a realistic time to add. Classes vary - a seventy-five or ninety minute block, a group that moves quickly, a session where the video fails and twenty minutes appear - and an instructor who has the time should be able to reach for the next activity rather than rebuild it. Cutting is about what goes in the plan, not about throwing work away.
+3. ONE HANDS-ON ACTIVITY. A forty-five to sixty minute class with young children has room for one build, not a warm-up plus a practice activity plus a main project. Choose the one that best serves the learning goal, and name the others briefly in lessonScope.deferred as later sessions. The instructor still has the original plan in front of them, so a short line is enough - they do not need it rewritten.
 
 4. CUT OUT LOUD. Record what you removed and why. An instructor who can see what was dropped can put it back deliberately; one handed everything can find nothing.
 
@@ -549,16 +547,8 @@ ${groundedFindings}`
                 },
                 deferred: {
                   type: Type.ARRAY,
-                  description: "Good activities from the source that did not fit today. These are held for the instructor, not thrown away - classes run long, some blocks are 75 or 90 minutes, and an instructor with spare time should be able to add one back without rebuilding it. Give each one enough detail to actually run.",
-                  items: {
-                    type: Type.OBJECT,
-                    required: ["activity", "minutes", "whyItWasHeld"],
-                    properties: {
-                      activity: { type: Type.STRING, description: "What the activity is, in enough detail to run it - materials and the basic sequence." },
-                      minutes: { type: Type.INTEGER, description: "Realistic minutes to add if the instructor has the time." },
-                      whyItWasHeld: { type: Type.STRING, description: "Why it did not make today's plan, e.g. 'The build already fills the hands-on block'." },
-                    },
-                  },
+                  description: "Activities from the source worth teaching in a later session rather than today. One short line each.",
+                  items: { type: Type.STRING },
                 },
                 warning: {
                   type: Type.STRING,

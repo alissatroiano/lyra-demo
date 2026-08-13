@@ -2616,37 +2616,6 @@ export default function App() {
                   )}
                 </div>
 
-                {(lesson.lessonScope.deferred || []).length > 0 && (
-                  <div className="border-t border-teal-brand/20 dark:border-teal-brand/10 px-4 py-3 space-y-2">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-teal-dark dark:text-teal-brand font-sans">
-                      If your class runs long
-                    </p>
-                    <p className="text-[11px] text-secondary dark:text-slate-400 font-sans leading-relaxed">
-                      Held back to fit the hour, not thrown away. Add one if you have the time.
-                    </p>
-                    <div className="space-y-2 pt-0.5">
-                      {lesson.lessonScope.deferred!.map((d) => (
-                        <div
-                          key={d.activity}
-                          className="rounded-xl bg-white dark:bg-slate-800/70 border border-black/[0.06] dark:border-slate-700 p-2.5 space-y-1"
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="text-[11px] font-bold text-slate-800 dark:text-slate-100 font-sans leading-snug">
-                              {d.activity}
-                            </p>
-                            <span className="shrink-0 text-[10px] font-mono font-extrabold px-2 py-0.5 rounded-full bg-teal-brand/15 text-teal-dark dark:text-teal-brand border border-teal-brand/30">
-                              +{d.minutes}m
-                            </span>
-                          </div>
-                          <p className="text-[10px] text-secondary dark:text-slate-400 font-sans leading-relaxed">
-                            {d.whyItWasHeld}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
                 {lesson.lessonScope.cut?.length > 0 && (
                   <details className="border-t border-teal-brand/20 dark:border-teal-brand/10 group">
                     <summary className="px-4 py-2 text-[11px] font-bold text-teal-dark dark:text-teal-brand font-sans cursor-pointer hover:bg-teal-100/40 dark:hover:bg-teal-brand/10 transition-colors list-none flex items-center gap-1.5">
@@ -2660,7 +2629,6 @@ export default function App() {
                           <span className="text-secondary dark:text-slate-400"> — {c.reason}</span>
                         </div>
                       ))}
-                      {(lesson.lessonScope.deferred || []).length === 0 && null}
                     </div>
                   </details>
                 )}
