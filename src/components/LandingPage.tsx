@@ -303,18 +303,18 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <div className="pt-4 space-y-8" id="pricing-section">
         <div className="text-center space-y-2">
           <span className="text-[10px] font-bold text-amber-800 dark:text-amber-200 uppercase tracking-widest font-sans bg-amber-100/60 dark:bg-amber-950/60 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-800">
-            INSTRUCTOR &amp; CAMP DIRECTOR PLANS
+            THE INSTRUCTOR PLAN
           </span>
           <h3 className="font-display text-3xl font-bold text-slate-900 dark:text-slate-100">Simple, Transparent Pricing</h3>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-lg mx-auto font-sans">
-            Transparent plans built for teachers, camps, and afterschool directors. Upgrade or cancel anytime.
+            One price, for the instructor preparing tomorrow’s class tonight.
           </p>
         </div>
 
         {/* Two plans only. Educator Pro and Educator Yearly are held back for a
             later launch and documented in docs/BUSINESS-MODEL.md; showing them
             now would bury the $12.99 offer instructors are actually being given. */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+        <div className="grid grid-cols-1 gap-6 max-w-md mx-auto">
           {/* Plan 1: Summer STEM Special - $12.99 ONE TIME (leads) */}
           <div className="bg-gradient-to-b from-teal-dark via-teal-900 to-slate-900 text-white rounded-3xl p-6 space-y-6 flex flex-col justify-between shadow-lg relative border-2 border-teal-brand/40 overflow-hidden">
             <div className="absolute top-0 right-0 bg-amber-400 text-slate-950 text-[10px] font-extrabold px-3.5 py-1 rounded-bl-xl uppercase tracking-wider font-mono shadow-xs">
@@ -375,67 +375,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </button>
           </div>
 
-          {/* Plan 2: Camp Director Special - $99.99 held at $49.99 */}
-          <div className="bg-white dark:bg-slate-900 border-2 border-teal-brand/60 rounded-3xl p-6 space-y-6 flex flex-col justify-between shadow-md hover:border-teal-brand transition-all relative">
-            <div className="absolute -top-3 right-4 bg-teal-brand text-slate-950 text-[10px] font-extrabold px-3 py-0.5 rounded-full uppercase tracking-wider font-mono shadow-xs">
-              MULTI-SITE
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-1">
-                <span className="text-[10px] font-mono font-bold text-teal-900 dark:text-teal-brand uppercase tracking-wider bg-teal-50 dark:bg-teal-brand/20 px-2.5 py-1 rounded-md border border-teal-200 dark:border-teal-brand/30 inline-block">
-                  PROGRAM DIRECTOR
-                </span>
-                <h4 className="font-display text-2xl font-bold text-slate-900 dark:text-slate-100">Camp Director Special</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">For directors running several instructors across sites or sessions.</p>
-              </div>
-
-              <div className="flex items-baseline gap-2 pt-2">
-                <span className="line-through text-slate-400 dark:text-slate-500 font-display text-2xl font-normal">$99.99</span>
-                <span className="font-display text-4xl font-extrabold text-teal-900 dark:text-teal-brand">$49.99</span>
-                <span className="text-xs text-slate-500 dark:text-slate-400 font-sans font-medium">/ month</span>
-              </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">Recurring monthly subscription. Cancel anytime from your dashboard.</p>
-
-              <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2.5 text-xs text-slate-700 dark:text-slate-300 font-sans">
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span><strong>Everything in the Summer STEM Special</strong></span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>Covers a program running several instructors</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>Priority access to new AI model updates</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>Dedicated director support channel</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>Persistent cloud storage for the season</span>
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                if (!user) {
-                  onSignIn();
-                } else {
-                  onSelectPlan();
-                }
-              }}
-              className="w-full py-3 bg-gradient-to-r from-teal-dark to-teal-800 dark:from-teal-600 dark:to-teal-500 hover:from-teal-900 hover:to-teal-950 text-white rounded-xl text-xs font-extrabold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <span>Get Camp Director Special ($49.99/mo)</span>
-              <ArrowRight className="w-4 h-4 text-amber-300" />
-            </button>
-          </div>
         </div>
       </div>
 
