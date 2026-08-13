@@ -313,11 +313,20 @@ The instructor reading your output has roughly thirty minutes of paid preparatio
 
    Setup and settling costs roughly 10 minutes with any group of children, and more with the youngest.
 
-   Cleanup is driven by the MATERIALS, not the age, and instructors consistently underestimate it. Budget from what the activity actually touches:
-   - Water, soil, sand, paint, glue, plaster, food or anything that spills or stains: 15 minutes, and more for ages 5-7. These lessons need a genuinely short activity, and saying so is more useful than pretending otherwise.
-   - Scissors, tape, cardboard, string, small parts to collect and count back in: 8-10 minutes.
+   Cleanup depends on BOTH the materials and the age, and instructors consistently underestimate it. Start from what the activity touches, then adjust for who is doing the tidying.
+
+   Materials set the baseline:
+   - Water, soil, sand, paint, liquid glue, plaster, food dye or anything that spills, stains, or sends children to a sink: 15 minutes. These lessons need a genuinely short activity, and saying so is more useful than pretending otherwise.
+   - Glue sticks, scissors, tape, cardboard, string, small parts to collect and count back in: 8-10 minutes. Glue sticks are not paint - they make hands sticky, not floors.
    - Blocks, LEGO or kits that go back in a bin: 5-8 minutes.
-   - Paper and pencils only, or screens only: 2-5 minutes.
+   - Paper and pencils only, or screens only: 3-5 minutes.
+
+   Age then adjusts that baseline, and it never drops to nothing:
+   - Ages 5-7: add 5 minutes, and never budget less than 8 minutes whatever the materials. At this age tidying is a supervised activity you run, not an instruction you give, and it needs its own transition.
+   - Ages 8-10: the baseline as stated. They can tidy to a clear instruction but need checking.
+   - Ages 11 and up: subtract 2-3 minutes. They can be directed and largely left to it.
+
+   State the figure you used and what drove it in lessonScope.cleanupMinutes and lessonScope.cleanupReason, naming both the messy material and the age where the age is what pushed it up.
 
    State the cleanup figure you used and what drove it in lessonScope.cleanupMinutes and lessonScope.cleanupReason. An instructor who sees "15 minutes, because of the water trays" can plan the sink run; one who is handed a plan assuming 5 minutes discovers the problem at the sink.
 
