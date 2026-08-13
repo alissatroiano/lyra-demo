@@ -208,6 +208,12 @@ export default function App() {
   const [currentView, setCurrentView] = useState<"landing" | "studio">("landing");
   // Cursor-led walkthrough for first-time visitors and judges.
   const [isDemoRunning, setIsDemoRunning] = useState<boolean>(false);
+  // Payment outcome shown to the customer on return from Stripe. Without this
+  // a successful purchase looks identical to no purchase at all.
+  const [paymentNotice, setPaymentNotice] = useState<
+    { state: "checking" } | { state: "success"; plan?: string } | { state: "failed"; detail: string } | null
+  >(null);
+  const handledCheckoutRef = React.useRef<string | null>(null);
   const [lesson, setLesson] = useState<ProcessedLesson>(INITIAL_PROCESSED_LESSON);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -382,30 +388,53 @@ export default function App() {
   // Lab material checking states
   const [checkedMaterials, setCheckedMaterials] = useState<Record<string, boolean>>({});
 
-  // Verify Stripe Checkout Session returning from Stripe
+  // Verify Stripe Checkout Session returning from Stripe.
+  //
+  // This waits for Firebase to restore the session before running. Returning
+  // from Stripe is a fresh page load, so auth.currentUser is still null for the
+  // first moments — granting the subscription then throws, and the customer is
+  // charged while the page still tells them to upgrade.
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get("payment");
     const sessionId = urlParams.get("session_id");
 
-    if (paymentStatus === "success" && sessionId) {
-      console.log("Verifying returning Stripe Checkout session:", sessionId);
-      fetch(`/api/verify-checkout-session?session_id=${sessionId}`)
-        .then((res) => res.json())
-        .then(async (data) => {
-          if (data.verified) {
-            console.log("Stripe payment successfully verified!", data);
-            await subscribeUser(data.plan || "Demo Incentive ($9.99 One-Time Fee)");
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
-        })
-        .catch((err) => {
-          console.error("Error verifying Stripe payment session:", err);
-        });
-    } else if (paymentStatus === "cancel") {
+    if (paymentStatus === "cancel") {
       window.history.replaceState({}, document.title, window.location.pathname);
+      return;
     }
-  }, []);
+
+    if (paymentStatus !== "success" || !sessionId) return;
+    if (!user) return; // wait for auth; this effect re-runs once it arrives
+    if (handledCheckoutRef.current === sessionId) return;
+
+    handledCheckoutRef.current = sessionId;
+    setPaymentNotice({ state: "checking" });
+
+    fetch(`/api/verify-checkout-session?session_id=${sessionId}`)
+      .then((res) => res.json())
+      .then(async (data) => {
+        if (!data.verified) {
+          setPaymentNotice({
+            state: "failed",
+            detail: "Stripe has not confirmed this payment yet. If you were charged, contact support and it will be applied.",
+          });
+          return;
+        }
+
+        await subscribeUser(data.plan || "Summer STEM Special ($12.99 One-Time Fee)");
+        setPaymentNotice({ state: "success", plan: data.plan });
+        window.history.replaceState({}, document.title, window.location.pathname);
+      })
+      .catch((err) => {
+        console.error("Error verifying Stripe payment session:", err);
+        // Never silently swallow this: the customer has already paid.
+        setPaymentNotice({
+          state: "failed",
+          detail: err?.message || "We could not confirm the payment automatically.",
+        });
+      });
+  }, [user]);
 
   // Worksheet simulated answers
   const [studentAnswers, setStudentAnswers] = useState<Record<string, string>>({});
@@ -3493,6 +3522,60 @@ export default function App() {
             onClose={() => setShowSubscriptionModal(false)}
             authLoading={authLoading}
           />
+        )}
+
+        {/* Payment outcome. Shown over everything, because a customer returning
+            from Stripe needs to know the charge landed before they need
+            anything else on the page. */}
+        {paymentNotice && (
+          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[80] w-[calc(100%-2rem)] max-w-md animate-fade-in">
+            <div
+              role="status"
+              className={`rounded-2xl border p-4 shadow-xl flex items-start gap-3 ${
+                paymentNotice.state === "success"
+                  ? "bg-emerald-950 border-emerald-400/50 text-emerald-50"
+                  : paymentNotice.state === "failed"
+                  ? "bg-red-950 border-red-400/50 text-red-50"
+                  : "bg-slate-900 border-slate-600 text-slate-100"
+              }`}
+            >
+              {paymentNotice.state === "success" ? (
+                <CheckCircle2 className="w-5 h-5 text-emerald-300 shrink-0 mt-0.5" />
+              ) : paymentNotice.state === "failed" ? (
+                <AlertCircle className="w-5 h-5 text-red-300 shrink-0 mt-0.5" />
+              ) : (
+                <RefreshCw className="w-5 h-5 text-slate-300 shrink-0 mt-0.5 animate-spin" />
+              )}
+
+              <div className="space-y-1 flex-1">
+                <p className="text-sm font-bold font-sans">
+                  {paymentNotice.state === "success"
+                    ? "Payment confirmed — you have full access"
+                    : paymentNotice.state === "failed"
+                    ? "We could not confirm your payment"
+                    : "Confirming your payment…"}
+                </p>
+                <p className="text-xs font-sans leading-relaxed opacity-90">
+                  {paymentNotice.state === "success"
+                    ? "Thanks — your receipt is on its way by email. Everything is unlocked, and your lessons save to the cloud from now on."
+                    : paymentNotice.state === "failed"
+                    ? paymentNotice.detail
+                    : "One moment while we check with Stripe."}
+                </p>
+              </div>
+
+              {paymentNotice.state !== "checking" && (
+                <button
+                  type="button"
+                  onClick={() => setPaymentNotice(null)}
+                  className="shrink-0 opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
+                  aria-label="Dismiss"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
         )}
 
         {/* Cursor-led walkthrough. Mounted only in the studio, where the
