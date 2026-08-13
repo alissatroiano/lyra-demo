@@ -173,6 +173,58 @@ try {
   console.error("Failed to initialize GoogleGenAI client:", error);
 }
 
+/**
+ * Pull the figures out of a .docx.
+ *
+ * Lesson plans carry photographs and diagrams of the finished build, and those
+ * pictures are frequently clearer than the written steps. Generating an
+ * illustration from the prose alone produced a plausible object rather than the
+ * one the children make — a windmill of paper cups and a straw came back as a
+ * wooden water wheel with spoons.
+ *
+ * Small images are skipped: logos, bullets and letterhead outnumber real
+ * figures and cost tokens without adding anything. The cap keeps a document
+ * with thirty screenshots from dominating the request.
+ */
+const MIN_FIGURE_BYTES = 25_000;
+const MAX_FIGURES = 4;
+
+const extractDocxFigures = async (buffer: Buffer): Promise<{ mimeType: string; data: string }[]> => {
+  const found: { mimeType: string; data: string; bytes: number }[] = [];
+
+  try {
+    await mammoth.convertToHtml(
+      { buffer },
+      {
+        convertImage: (mammoth as any).images.imgElement(async (image: any) => {
+          try {
+            const bytes = await image.readAsBuffer();
+            if (bytes.length >= MIN_FIGURE_BYTES) {
+              found.push({
+                mimeType: image.contentType || "image/png",
+                data: bytes.toString("base64"),
+                bytes: bytes.length,
+              });
+            }
+          } catch {
+            /* one unreadable image should not lose the rest */
+          }
+          return { src: "" };
+        }),
+      }
+    );
+  } catch (err: any) {
+    console.warn("Could not read figures from the document:", err?.message || err);
+    return [];
+  }
+
+  // Biggest first: the full-page build photo matters more than a small inset.
+  return found
+    .sort((a, b) => b.bytes - a.bytes)
+    .slice(0, MAX_FIGURES)
+    .map(({ mimeType, data }) => ({ mimeType, data }));
+};
+
 // API endpoint to extract text from pdf, docx, or text files
 app.post("/api/extract-text", async (req, res) => {
   const { fileBase64, fileName } = req.body;
@@ -186,6 +238,7 @@ app.post("/api/extract-text", async (req, res) => {
   try {
     const buffer = Buffer.from(fileBase64, "base64");
     let extractedText = "";
+    let figures: { mimeType: string; data: string }[] = [];
 
     if (extension === "pdf") {
       try {
@@ -214,13 +267,14 @@ app.post("/api/extract-text", async (req, res) => {
     } else if (extension === "docx") {
       const result = await mammoth.extractRawText({ buffer });
       extractedText = result.value || "";
+      figures = await extractDocxFigures(buffer);
     } else if (["txt", "md", "csv", "rtf", "json", "doc"].includes(extension)) {
       extractedText = buffer.toString("utf-8");
     } else {
       return res.status(400).json({ error: `Unsupported file extension: .${extension}` });
     }
 
-    res.json({ text: extractedText });
+    res.json({ text: extractedText, figures });
   } catch (error: any) {
     console.error("Error extracting document text:", error);
     res.status(500).json({
@@ -281,7 +335,7 @@ app.post("/api/process-lesson", async (req, res) => {
     });
   }
 
-  const { lessonContent, customPreferences, instructorMemory } = req.body;
+  const { lessonContent, customPreferences, instructorMemory, figures } = req.body;
 
   if (!lessonContent || typeof lessonContent !== "string") {
     return res.status(400).json({ error: "lessonContent string is required" });
@@ -444,9 +498,34 @@ ${groundedFindings}`
       : "";
 
     // PASS 2 - structured generation, with the research folded in.
+    // The figures from the source document go in alongside the text, so the
+    // build described back is the one the instructor is actually holding.
+    const sourceFigures = Array.isArray(figures) ? figures.slice(0, 4) : [];
+    const figureDirective = sourceFigures.length
+      ? `
+
+[SOURCE FIGURES]
+The ${sourceFigures.length} image(s) attached are the diagrams and photographs from this lesson document. They show the actual build. Read them before writing handsOnActivity and visualSuggestion.
+- Describe the apparatus you can SEE, not one you infer from the prose. Where the pictures and the written steps disagree, the pictures are the lesson.
+- Name the parts as they appear: their real shapes, how they join, what is on top of what.
+- visualSuggestion.prompt must describe THIS object closely enough that an illustrator who has not seen the photograph would draw the same thing.`
+      : "";
+
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
-      contents: userPrompt + groundedContext,
+      contents: sourceFigures.length
+        ? [
+            {
+              role: "user",
+              parts: [
+                ...sourceFigures.map((f: any) => ({
+                  inlineData: { mimeType: f.mimeType || "image/png", data: f.data },
+                })),
+                { text: userPrompt + groundedContext + figureDirective },
+              ],
+            },
+          ]
+        : userPrompt + groundedContext,
       config: {
         systemInstruction,
         responseMimeType: "application/json",
@@ -468,20 +547,20 @@ ${groundedFindings}`
           properties: {
             visualSuggestion: {
               type: Type.OBJECT,
-              description: "Whether this specific lesson genuinely benefits from a generated illustration. Most lessons do not: a hands-on build with clear written steps, or a coding lesson whose blocks are already written out, needs no picture. Recommend one only when a single image would remove real ambiguity - an unfamiliar apparatus, a spatial arrangement, or a physical setup that is hard to picture from text.",
+              description: "Whether this lesson needs a generated illustration. This is a real decision with a wrong answer in both directions: a confusing picture in front of a class is worse than none, and a build with no picture leaves children guessing.",
               required: ["needed", "reason"],
               properties: {
                 needed: {
                   type: Type.BOOLEAN,
-                  description: "True only if an illustration would materially help the instructor or students. Default to false.",
+                  description: "Judge this for a BRAND NEW INSTRUCTOR who has never run this activity before - not for an experienced one who could picture it from the steps. That person is the reason the picture exists. An experienced instructor can skip it; a new counsellor handed written steps alone ends up asking a colleague for a live demonstration. Answer true whenever children ASSEMBLE anything physical. Builds in engineering, circuitry and hands-on science are almost always true, including ones that look obvious to someone who has run them before - a balloon taped to a straw on a string still has a nozzle direction and a tape position a newcomer gets wrong. Answer false for everything else, and most lessons are everything else: discussion, reading, worksheets, observation, sorting, coding whose blocks are already written out as text, or a build so simple it is one obvious step (blow up a balloon and let it go). If the written steps already leave nothing ambiguous, the answer is false even for a hands-on lesson. Do not answer true because a picture would be nice, decorative or engaging - the only question is whether an instructor or a child would otherwise be unsure what the thing is supposed to look like. When genuinely torn, answer false.",
                 },
                 reason: {
                   type: Type.STRING,
-                  description: "One short sentence explaining the decision, written for the instructor (e.g. 'The steps are clear in text; a picture would not add anything.').",
+                  description: "One short sentence for the instructor, naming what makes it ambiguous or what makes it obvious. Write 'The straw threads through the cup at a right angle, which is hard to picture from the steps' rather than 'a visual aid supports comprehension'.",
                 },
                 prompt: {
                   type: Type.STRING,
-                  description: "Only when needed is true. Describe the finished build using the EXACT materials from handsOnActivity.materials, naming each one, so the picture shows what these children will actually make rather than a generic version of it. A windmill built from paper cups, a bendable straw and metal washers must not be drawn as a wooden water wheel with spoons. State the arrangement, forbid substituting similar-looking objects, and ask for a plain background with no text. Omit when needed is false.",
+                  description: "Only when needed is true. Ask for a NUMBERED STEP-BY-STEP ASSEMBLY DIAGRAM - four to six panels showing the build coming together in order, each panel captioned with what happens in it and the parts labelled with plain arrows. A single picture of the finished object is what makes a new instructor ask for a live demonstration: they cannot see how it got there. Panel one starts with loose materials on a table; the last panel shows the completed build in use. Name the EXACT materials from handsOnActivity.materials in every panel they appear in, and forbid substituting similar-looking objects - a windmill of paper cups, a bendable straw and metal washers must never be drawn as a wooden water wheel with spoons. Ask for clean black line art on a white background, the style of a childrens how-to-draw guide. Omit when needed is false.",
                 },
               },
             },

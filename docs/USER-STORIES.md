@@ -38,6 +38,30 @@ description of their report before this is shown to anyone.
 | "I don't know what to do once I'm here" — landing in the studio meant facing an empty text box with no indication of what belonged in it | **Mosi**, `[ROLE]` | A cursor-led walkthrough was added to the landing page. It drives the real controls — types a sample lesson into the real input and presses the real Generate button — so it ends on a genuinely generated lesson. No sign-in required. |
 | After paying, the "Unlock Full Access" banner stayed on screen and there was no confirmation the payment had worked | `[THE TWO PAYING INSTRUCTORS — CONFIRM WHETHER TO NAME THEM]` | Two separate faults. Access was granted before Firebase had restored the session, so the upgrade silently failed and the error went only to the browser console. And nothing ever told the customer the charge had succeeded. Verification now waits for sign-in, and the outcome — confirmed, pending, or failed — is stated on screen. |
 
+### The instructor who said no
+
+One co-instructor was shown Lyrah and did not sign up. His reason, as reported: he would rather
+stick with what he is already comfortable with, and he identified a "risk" in adopting it.
+
+`[Ask him to name the risk in his own words before this is quoted anywhere. Do not paraphrase it —
+the specific wording is the whole value of this entry. Candidates worth ruling out: trusting AI
+output in front of children, losing his own lesson materials, being seen to use AI by a supervisor,
+or the time cost of learning another tool mid-season. Each implies a different response, and
+guessing wrong is worse than leaving it blank.]`
+
+This is recorded because it is the most useful single data point available. Three instructors
+liking something is not evidence of a market; one declining it, for a reason he can articulate, is
+the beginning of understanding who this is not for — and a submission that reports a refusal reads
+as more credible than one reporting only enthusiasm.
+
+**What it likely is not:** the passwordless sign-in. That confusion was reported separately and by
+different people, and he named a risk rather than a confusion. Attributing his answer to the thing
+already fixed would be the comfortable reading, not the honest one.
+
+**What it may legitimately mean:** the switching cost is real and this product does not yet beat it
+for an instructor who has a working system. That is a market boundary, not a bug, and pretending
+otherwise in a business plan invites the judge's obvious question.
+
 **What has not been fixed yet, and should be said plainly:** access is still granted by the
 browser after payment rather than by the server, so a customer who closes the tab mid-redirect is
 charged without being upgraded. No instructor has hit this. It is known, not discovered.
