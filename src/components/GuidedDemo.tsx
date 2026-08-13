@@ -23,13 +23,18 @@ type Step = {
 
 const STEPS: Step[] = [
   {
-    target: "#demo-lesson-input",
-    caption: "Start with the lesson plan you already have — paste it in as-is.",
-    hold: 1600,
+    target: "#demo-upload-option",
+    caption: "Two ways in. Upload the file you were handed — PDF, Word, whatever it came as.",
+    hold: 2200,
   },
   {
     target: "#demo-lesson-input",
-    caption: "No reformatting. Wordy is fine.",
+    caption: "Or just paste the text straight in. Either works.",
+    hold: 1800,
+  },
+  {
+    target: "#demo-lesson-input",
+    caption: "No reformatting needed. Wordy is fine — that's the point.",
     hold: 900,
     action: "type",
   },
