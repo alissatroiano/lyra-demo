@@ -30,6 +30,32 @@
   --color-cyber-card: #131929;
 }
 
+/* Dark theme surfaces.
+ *
+ * These are the same semantic tokens the light theme uses, re-pointed rather
+ * than overridden per component. Panels were written as bg-surface-0 or
+ * bg-teal-light and stayed pale in dark mode — the Media Fixer and the
+ * Curriculum Core Pillars were both unreadable — and patching each one in the
+ * markup means the next panel someone writes has the same bug.
+ *
+ * Only the surfaces and text colours move. The brand teals and golds are
+ * deliberately unchanged: they carry the identity in both themes.
+ */
+.dark {
+  --color-primary: #f1f5f9;
+  --color-secondary: #94a3b8;
+  --color-muted: #64748b;
+
+  --color-surface-0: #0f172a;
+  --color-surface-1: #1e293b;
+  --color-surface-2: #0b0f19;
+
+  --color-teal-light: #10322f;
+  --color-teal-dark: #5eead4;
+
+  --color-gold-light: #422006;
+}
+
 /* 2026 Liquid Glass & Micro Glow Utilities */
 .font-display .logo {
   font-weight: 700;
