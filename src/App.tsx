@@ -540,8 +540,9 @@ export default function App() {
     }
   };
 
-  // Curriculum Text Material fold state (Folded by default)
-  const [isTextMaterialOpen, setIsTextMaterialOpen] = useState<boolean>(false);
+  // Pasting a lesson is one of the two ways in, and the landing page promises
+  // it. Folding it away by default left uploading as the only visible option.
+  const [isTextMaterialOpen, setIsTextMaterialOpen] = useState<boolean>(true);
   const textMaterialTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Instructor Tool Bar fold state. It stays folded until the instructor opens
@@ -1989,7 +1990,7 @@ export default function App() {
                 <div className="flex items-center gap-2 text-left flex-wrap">
                   <FileText className="w-4 h-4 text-teal-brand shrink-0" />
                   <span className="text-xs font-bold text-teal-dark dark:text-teal-brand font-sans">
-                    Curriculum Text Material & Outline
+                    Or paste your lesson plan
                   </span>
                   {customContent ? (
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1 font-bold">
@@ -1997,8 +1998,8 @@ export default function App() {
                       {uploadedFileName ? uploadedFileName : `${customContent.length} chars loaded`}
                     </span>
                   ) : (
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
-                      Folded (Optional)
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-teal-brand/15 text-teal-dark dark:text-teal-brand border border-teal-brand/30">
+                      No file? Paste here
                     </span>
                   )}
                 </div>
@@ -2013,7 +2014,7 @@ export default function App() {
               {isTextMaterialOpen && (
                 <div className="p-4 space-y-3 animate-fade-in border-t border-black/[0.05] dark:border-slate-800">
                   <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold text-teal-dark dark:text-teal-brand font-sans">Curriculum Text Material:</label>
+                    <label className="text-xs font-bold text-teal-dark dark:text-teal-brand font-sans">Paste your lesson plan:</label>
                     {customContent && (
                       <button
                         type="button"
