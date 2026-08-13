@@ -1,5 +1,5 @@
 import React from "react";
-import { Sparkles, ArrowRight, Layers, Activity, Palette, HelpCircle, Link2Off, Check, Database, FileCode, BookOpen, LogIn, Clock, Users, Briefcase } from "lucide-react";
+import { Sparkles, ArrowRight, Layers, Activity, Palette, HelpCircle, Link2Off, Check, Database, FileCode, BookOpen, LogIn, Clock, Users, Briefcase, Play } from "lucide-react";
 import { RobotBunnyMascot } from "../App";
 
 interface LandingPageProps {
@@ -7,6 +7,7 @@ interface LandingPageProps {
   onSelectPlan: () => void;
   user: any;
   onSignIn: () => void;
+  onWatchDemo: () => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
@@ -14,6 +15,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onSelectPlan,
   user,
   onSignIn,
+  onWatchDemo,
 }) => {
   return (
     <main className="px-6 sm:px-8 py-8 space-y-12 animate-fade-in flex-1 max-w-7xl mx-auto w-full">
@@ -28,9 +30,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <span>XPRIZE · Education & Human Potential</span>
             </div>
 
-            <h1 className="font-display text-3.5xl sm:text-5xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
+            <h2 className="font-display text-3.5xl sm:text-5xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
               Say goodbye to <span className="text-teal-700 dark:text-teal-brand underline decoration-amber-400 dark:decoration-amber-500 underline-offset-6">long, wordy lesson plans</span>
-            </h1>
+            </h2>
 
             <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans font-normal">
               Paste in the curriculum you already have. Get slides, a hands-on lab checklist, a printable
@@ -61,6 +63,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </button>
               )}
 
+              {/* Watching Lyrah run once is a faster explanation than any amount
+                  of landing copy, and it needs no sign-in. */}
+              <button
+                type="button"
+                onClick={onWatchDemo}
+                className="px-5 py-3.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-2xl text-xs sm:text-sm font-bold transition-all border border-teal-brand/40 dark:border-teal-brand/30 shadow-3xs cursor-pointer flex items-center gap-2 group"
+              >
+                <Play className="w-4 h-4 text-teal-brand" />
+                <span>Watch a 30-second demo</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => document.getElementById("pricing-section")?.scrollIntoView({ behavior: "smooth" })}
@@ -69,6 +82,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <span>View Pricing Plans</span>
               </button>
             </div>
+
+            {/* Instructors read "no password" as "no real account" and hesitate at
+                checkout. Saying why there is no password turns it into a reason
+                to trust the sign-in rather than a gap in it. */}
+            {!user && (
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans pt-1">
+                No new password to remember — sign in with the Google account you already use.
+              </p>
+            )}
           </div>
 
           {/* Mascot Illustration */}
@@ -122,7 +144,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100 font-display leading-snug landing-snug">
                   {title}
                 </h4>
-                <p className="text-xs text-secondary dark:text-slate-400 font-display leading-relaxed">
+                <p className="text-xs text-secondary dark:text-slate-400 font-sans leading-relaxed">
                   {body}
                 </p>
               </div>
@@ -142,31 +164,31 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           {[
             {
               icon: FileCode,
-              tint: "bg-teal-brand/10 text-teal-brand",
+              tint: "text-teal-brand",
               title: "Material Ingestion",
               body: "Upload any textbook PDF, DOCX, or pasted lesson plan up to 50 pages long."
             },
             {
               icon: Check,
-              tint: "bg-emerald-500/10 text-emerald-500",
+              tint: "text-teal-brand",
               title: "Invariant Extraction",
               body: "Our AI extractors safely parse and outline key STEM concepts and learning goals."
             },
             {
               icon: Palette,
-              tint: "bg-gold-brand/10 text-gold-brand",
+              tint: "text-teal-brand",
               title: "Media Recommendation",
               body: "Generates high-yield safe search queries for animated videos and live science demos."
             },
             {
               icon: Layers,
-              tint: "bg-rose-500/10 text-rose-500",
+              tint: "text-teal-brand",
               title: "Layout Generation",
               body: "Assembles beautifully structured slide decks, teaching scripts, and gamified quizzes."
             },
             {
               icon: Activity,
-              tint: "bg-meridian/10 text-meridian",
+              tint: "text-teal-brand",
               title: "Student Adaptation",
               body: "Applies dyslexia-friendly bionic formatting and phonetic aids to the outputs."
             }
@@ -281,11 +303,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <div className="pt-4 space-y-8" id="pricing-section">
         <div className="text-center space-y-2">
           <span className="text-[10px] font-bold text-amber-800 dark:text-amber-200 uppercase tracking-widest font-sans bg-amber-100/60 dark:bg-amber-950/60 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-800">
-            INSTRUCTOR &amp; CAMP DIRECTOR PLANS
+            INSTRUCTOR PLANS
           </span>
           <h3 className="font-display text-3xl font-bold text-slate-900 dark:text-slate-100">Simple, Transparent Pricing</h3>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-lg mx-auto font-sans">
-            Transparent plans built for teachers, camps, and afterschool directors. Upgrade or cancel anytime.
+            Built for the instructor preparing tomorrow’s class tonight. Pay once, or subscribe for the term.
           </p>
         </div>
 
@@ -353,27 +375,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </button>
           </div>
 
-          {/* Plan 2: Camp Director Special - $99.99 held at $49.99 */}
-          <div className="bg-white dark:bg-slate-900 border-2 border-teal-brand/60 rounded-3xl p-6 space-y-6 flex flex-col justify-between shadow-md hover:border-teal-brand transition-all relative">
-            <div className="absolute -top-3 right-4 bg-teal-brand text-slate-950 text-[10px] font-extrabold px-3 py-0.5 rounded-full uppercase tracking-wider font-mono shadow-xs">
-              MULTI-SITE
-            </div>
-
+          {/* Plan 2: Instructor Monthly - $9.99/mo */}
+          <div className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-6 flex flex-col justify-between shadow-sm hover:border-teal-brand transition-all relative">
             <div className="space-y-4">
               <div className="space-y-1">
                 <span className="text-[10px] font-mono font-bold text-teal-900 dark:text-teal-brand uppercase tracking-wider bg-teal-50 dark:bg-teal-brand/20 px-2.5 py-1 rounded-md border border-teal-200 dark:border-teal-brand/30 inline-block">
-                  PROGRAM DIRECTOR
+                  ONGOING ACCESS
                 </span>
-                <h4 className="font-display text-2xl font-bold text-slate-900 dark:text-slate-100">Camp Director Special</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">For directors running several instructors across sites or sessions.</p>
+                <h4 className="font-display text-2xl font-bold text-slate-900 dark:text-slate-100">Instructor Monthly</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">For instructors running new material every week through the school year.</p>
               </div>
 
-              <div className="flex items-baseline gap-2 pt-2">
-                <span className="line-through text-slate-400 dark:text-slate-500 font-display text-2xl font-normal">$99.99</span>
-                <span className="font-display text-4xl font-extrabold text-teal-900 dark:text-teal-brand">$49.99</span>
+              <div className="flex items-baseline gap-1.5 pt-2">
+                <span className="font-display text-4xl font-extrabold text-teal-900 dark:text-teal-brand">$9.99</span>
                 <span className="text-xs text-slate-500 dark:text-slate-400 font-sans font-medium">/ month</span>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">Recurring monthly subscription. Cancel anytime from your dashboard.</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">Recurring monthly. Cancel anytime from your dashboard.</p>
 
               <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2.5 text-xs text-slate-700 dark:text-slate-300 font-sans">
                 <div className="flex items-center gap-2">
@@ -382,19 +399,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>Covers a program running several instructors</span>
+                  <span>Unlimited lessons every month, not a one-off</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>Priority access to new AI model updates</span>
+                  <span>Your lesson library carries across the whole term</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>Dedicated director support channel</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>Persistent cloud storage for the season</span>
+                  <span>Cancel yourself, any time, no email required</span>
                 </div>
               </div>
             </div>
@@ -408,9 +421,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   onSelectPlan();
                 }
               }}
-              className="w-full py-3 bg-gradient-to-r from-teal-dark to-teal-800 dark:from-teal-600 dark:to-teal-500 hover:from-teal-900 hover:to-teal-950 text-white rounded-xl text-xs font-extrabold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3 bg-teal-800 dark:bg-teal-600 hover:bg-slate-900 dark:hover:bg-teal-500 text-white rounded-xl text-xs font-extrabold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>Get Camp Director Special ($49.99/mo)</span>
+              <span>Get Instructor Monthly ($9.99/mo)</span>
               <ArrowRight className="w-4 h-4 text-amber-300" />
             </button>
           </div>

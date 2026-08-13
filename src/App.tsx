@@ -48,6 +48,7 @@ import {
   Save,
   Crown,
   CreditCard,
+  Target,
   Palette,
   Sun,
   Moon,
@@ -58,6 +59,7 @@ import {
   Gamepad2
 } from "lucide-react";
 import { PRELOADED_LESSONS } from "./data/preloadedLessons";
+import GuidedDemo from "./components/GuidedDemo";
 import { INITIAL_PROCESSED_LESSON } from "./data/initialProcessedLesson";
 import { CATEGORY_SUPPLIES } from "./data/categorySupplies";
 import { ProcessedLesson, PreloadedLesson } from "./types";
@@ -80,6 +82,64 @@ export const RobotBunnyMascot = ({ className = "w-28 h-28" }: { className?: stri
  * to one piece of state, so they have to agree on the stored value even though
  * they show different labels.
  */
+/**
+ * What Lyrah says while it works.
+ *
+ * "Compiling Gamified Curriculum" described the machinery. These describe what
+ * the instructor is getting, and a different set runs each time so the wait
+ * does not feel like the same wait.
+ */
+const COMPILE_SCRIPTS: { header: string; steps: [string, string, string] }[] = [
+  {
+    header: "Reading it so you don't have to…",
+    steps: [
+      "Reading all eight pages of it",
+      "Cutting the parts nobody ever teaches",
+      "Making tomorrow morning easier",
+    ],
+  },
+  {
+    header: "Generating a headache-free lesson…",
+    steps: [
+      "Finding the one thing this class is actually for",
+      "Counting the minutes you really have",
+      "Leaving you something you can teach",
+    ],
+  },
+  {
+    header: "Turning eight pages into one…",
+    steps: [
+      "Skimming past the wordy bits",
+      "Keeping what the kids will remember",
+      "Packing it down to a single page",
+    ],
+  },
+  {
+    header: "Making your class easier…",
+    steps: [
+      "Working out what fits and what waits",
+      "Budgeting for cleanup, honestly",
+      "Getting your evening back",
+    ],
+  },
+  {
+    header: "Doing the boring part for you…",
+    steps: [
+      "Hunting down the one clear learning goal",
+      "Deciding what to cut, and why",
+      "Nearly ready to teach",
+    ],
+  },
+  {
+    header: "Shrinking the lesson plan…",
+    steps: [
+      "Checking the clock against the age group",
+      "Choosing one activity instead of three",
+      "Tidying up the last few slides",
+    ],
+  },
+];
+
 /** Lessons an unsubscribed instructor can generate before checkout is required. */
 const FREE_LESSON_LIMIT = 3;
 
@@ -118,7 +178,7 @@ const CATEGORY_SIGNALS: { category: string; terms: string[] }[] = [
   // Build-and-make vocabulary matters as much as the word "engineering": a
   // spool-and-string pulley rig is a DIY engineering lesson even though the
   // write-up only ever says "gravity".
-  { category: "Engineering", terms: ["engineering", "bridge", "truss", "catapult", "tower", "prototype", "blueprint", "load-bearing", "design challenge", "robot", "robotics", "pulley", "lever", "simple machine", "gear", "axle", "winch", "hoist", "spool", "rig", "scaffold", "assemble", "construct"] },
+  { category: "Engineering", terms: ["engineering", "engineer", "windmill", "turbine", "build", "construct", "bridge", "truss", "catapult", "tower", "prototype", "blueprint", "load-bearing", "design challenge", "robot", "robotics", "pulley", "lever", "simple machine", "gear", "axle", "winch", "hoist", "spool", "rig", "scaffold", "assemble", "construct"] },
   { category: "Math", terms: ["math", "fraction", "geometry", "algebra", "equation", "graphing", "perimeter", "probability"] },
   { category: "Circuitry", terms: ["circuit", "voltage", "conductor", "insulator", "led", "battery"] },
   { category: "Art", terms: ["art", "drawing", "painting", "clay", "sculpture", "color theory", "poster", "infographic", "graphic design"] },
@@ -132,6 +192,20 @@ const GRADE_SIGNALS: { grade: string; terms: string[] }[] = [
   { grade: "6-8", terms: ["6-8", "6th grade", "7th grade", "8th grade", "sixth grade", "seventh grade", "eighth grade", "ages 11-13", "middle school"] },
   { grade: "9-12", terms: ["9-12", "9th grade", "10th grade", "11th grade", "12th grade", "ages 14-18", "high school"] },
 ];
+
+/**
+ * The lesson's own title, plus the filename.
+ *
+ * An instructor who titles a document "Engineering Mission" has already said
+ * what kind of lesson it is, and that one statement is worth more than any
+ * amount of body text. Scoring on body frequency alone read a windmill build
+ * as a science lesson, because "energy" appeared twenty-one times while
+ * "engineering" appeared five.
+ */
+const extractHeadline = (text: string, fileName?: string | null): string => {
+  const firstLine = (text || "").split(/\r?\n/).find((line) => line.trim().length > 0) || "";
+  return `${firstLine} ${fileName || ""}`.toLowerCase();
+};
 
 /** Count whole-word occurrences of a term. */
 const countTerm = (haystack: string, term: string): number => {
@@ -205,6 +279,14 @@ export default function App() {
   
   // App states
   const [currentView, setCurrentView] = useState<"landing" | "studio">("landing");
+  // Cursor-led walkthrough for first-time visitors and judges.
+  const [isDemoRunning, setIsDemoRunning] = useState<boolean>(false);
+  // Payment outcome shown to the customer on return from Stripe. Without this
+  // a successful purchase looks identical to no purchase at all.
+  const [paymentNotice, setPaymentNotice] = useState<
+    { state: "checking" } | { state: "success"; plan?: string } | { state: "failed"; detail: string } | null
+  >(null);
+  const handledCheckoutRef = React.useRef<string | null>(null);
   const [lesson, setLesson] = useState<ProcessedLesson>(INITIAL_PROCESSED_LESSON);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -243,131 +325,11 @@ export default function App() {
 
   // 2026 Micro-delay Compilation & Block Simulation states
   const [compilationStep, setCompilationStep] = useState<number>(0);
+  const [compileScript, setCompileScript] = useState<number>(0);
   const [simulatingBlockStep, setSimulatingBlockStep] = useState<number>(-1);
   const [isSimulatingBlock, setIsSimulatingBlock] = useState<boolean>(false);
 
   // Helper to derive dynamic progress compilation messages per curriculum
-  const getDynamicCompilationStepText = (
-    step: number, 
-    content: string, 
-    fileName: string | null, 
-    goal: string,
-    tech?: string
-  ): string => {
-    // Primary content text scan (prioritize actual user content/filename over fallback supplies)
-    const primaryText = ((content || "") + " " + (fileName || "")).toLowerCase();
-    const fullText = (primaryText + " " + (tech || "")).toLowerCase();
-
-    // The instructor's own platform selection wins over anything scanned out of
-    // the document. Previously this ran the other way, so one incidental mention
-    // ("you could also try this in Roblox") flipped the whole pipeline.
-    // "Custom Tools / Software" is the empty-Other placeholder, not a real pick.
-    const techText = (tech || "").toLowerCase();
-    const hasExplicitTech = !!techText && !techText.includes("custom tools / software");
-
-    // Count mentions rather than taking the first hit: the platform a lesson is
-    // actually about gets named repeatedly; a passing example gets named once.
-    const countOf = (needles: string[]) =>
-      needles.reduce((n, needle) => n + (primaryText.split(needle).length - 1), 0);
-
-    const platformScores: Record<string, number> = {
-      scratchJr: countOf(["scratchjr", "scratch jr", "junior scratch"]),
-      scratch: countOf(["scratch", "sprite", "costume", "green flag", "backdrop"]),
-      roblox: countOf(["roblox", "lua"]),
-      eduBlocks: countOf(["edublocks", "edu blocks"]),
-      thunkable: countOf(["thunkable", "app inventor"]),
-      codeOrg: countOf(["code.org", "game lab", "sprite lab"]),
-      microBit: countOf(["micro:bit", "microbit"]),
-      python: countOf(["python"]),
-    };
-
-    // A platform must be named at least twice before it defines the lesson.
-    const ranked = Object.entries(platformScores)
-      .filter(([, n]) => n > 1)
-      .sort((a, b) => b[1] - a[1]);
-    const winner = ranked.length ? ranked[0][0] : null;
-
-    const picked = (key: string, ...aliases: string[]) =>
-      hasExplicitTech ? aliases.some(a => techText.includes(a)) : winner === key;
-
-    const isScratchJr = picked("scratchJr", "scratch jr", "scratchjr");
-    const isScratch = picked("scratch", "scratch") && !isScratchJr;
-    const isRoblox = picked("roblox", "roblox");
-    const isEduBlocks = picked("eduBlocks", "edublocks", "edu blocks");
-    const isThunkable = picked("thunkable", "thunkable", "app inventor");
-    const isCodeOrg = picked("codeOrg", "code.org");
-    const isMicroBit = picked("microBit", "micro:bit", "microbit");
-    const isPython = picked("python", "python") && !isEduBlocks;
-    const isRobotics = fullText.includes("lego") || fullText.includes("spike") || fullText.includes("ev3") || fullText.includes("robot") || fullText.includes("sensor");
-    const isEngineering = fullText.includes("catapult") || fullText.includes("bridge") || fullText.includes("tower") || fullText.includes("physics") || fullText.includes("gravity") || fullText.includes("truss");
-    const isScience = fullText.includes("chem") || fullText.includes("bio") || fullText.includes("cell") || fullText.includes("plant") || fullText.includes("eco");
-    const isMath = fullText.includes("math") || fullText.includes("fraction") || fullText.includes("geometry") || fullText.includes("equation");
-    const isGaming = fullText.includes("gaming") || fullText.includes("game design") || isScratch || isScratchJr || isRoblox || isCodeOrg;
-
-    if (step === 1) {
-      if (isScratchJr) return "Parsing ScratchJR yellow trigger blocks, motion grids & story loops";
-      if (isScratch) return "Parsing Scratch 3.0 sprite blocks, costumes, broadcasts & stage events";
-      if (isRoblox) return "Parsing Roblox Studio Lua scripts, workspace parts & 3D physics";
-      if (isEduBlocks) return "Parsing EduBlocks Python drag-and-drop workspace & block logic";
-      if (isThunkable) return "Parsing Thunkable mobile app screens, buttons & event handlers";
-      if (isCodeOrg) return "Parsing Code.org Game Lab sprites, draw loops & key controls";
-      if (isMicroBit) return "Parsing Micro:bit LED matrix display, buttons & sensor blocks";
-      if (isPython) return "Parsing Python code syntax, variable logic & function loops";
-      if (isRobotics) return "Parsing Robotics sensor loops, motor actuators & hardware logic";
-      if (isEngineering) return "Parsing physical engineering mechanics, forces & structural stress";
-      if (isScience) return "Parsing biological structures, chemical reactions & lab safety";
-      if (isMath) return "Parsing mathematical concepts, spatial geometry & equation logic";
-      if (isGaming) return "Parsing game design mechanics, player controls & reward loops";
-      if (fileName) {
-        const cleanName = fileName.replace(/\.[^/.]+$/, "").replace(/[_]/g, " ").replace(/[-]/g, " ");
-        return `Parsing "${cleanName.length > 25 ? cleanName.slice(0, 25) + '...' : cleanName}" logic pathways`;
-      }
-      return "Parsing curriculum logic & learning objectives";
-    }
-
-    if (step === 2) {
-      if (goal === "presentation") {
-        return "Building visual slide concepts & teaching analogies";
-      }
-      if (isScratchJr) return "Linking ScratchJR tap/bump triggers, character motion & sound blocks";
-      if (isScratch) return "Linking Scratch 2D motion loops, green flag triggers & variable backpacks";
-      if (isRoblox) return "Linking Roblox player collision triggers, leaderstats & GUI events";
-      if (isEduBlocks) return "Linking EduBlocks Python terminal outputs, loop blocks & functions";
-      if (isThunkable) return "Linking Thunkable event handlers, sound triggers & cloud variables";
-      if (isCodeOrg) return "Linking Code.org collision detection, variable scores & sound effects";
-      if (isMicroBit) return "Linking Micro:bit radio signals, pin inputs & sensor loops";
-      if (isPython) return "Linking Python conditional logic, list iterations & console scripts";
-      if (isRobotics) return "Linking LEGO robotics motor speeds, ultrasonic sensors & gears";
-      if (isEngineering) return "Linking catapult trajectory angles, tension physics & prototype build steps";
-      if (isScience) return "Formulating hands-on lab experiments, molecular models & observation steps";
-      if (isMath) return "Structuring interactive math manipulatives, visual proofs & puzzle steps";
-      if (isGaming) return "Linking game sprite events, win/loss conditions & score tracking";
-      if (fileName) {
-        const cleanName = fileName.replace(/\.[^/.]+$/, "").replace(/[_]/g, " ").replace(/[-]/g, " ");
-        return `Linking active STEM challenges for ${cleanName.length > 20 ? cleanName.slice(0, 20) + '...' : cleanName}`;
-      }
-      return "Linking active STEM challenges & interactive models";
-    }
-
-    if (step === 3) {
-      if (goal === "presentation") {
-        return "Synthesizing presentation slide deck & discussion points";
-      }
-      if (isScratchJr) return "Synthesizing ScratchJR visual story cards, slide deck & smart quiz";
-      if (isScratch) return "Synthesizing Scratch block-stack guide, slide deck & smart quiz";
-      if (isRoblox) return "Synthesizing Roblox 3D game quest guide, slide deck & smart quiz";
-      if (isEduBlocks) return "Synthesizing EduBlocks block-to-Python lab guide & smart quiz";
-      if (isThunkable) return "Synthesizing Thunkable app development guide & smart quiz";
-      if (isCodeOrg) return "Synthesizing Code.org interactive game lab guide & smart quiz";
-      if (isMicroBit) return "Synthesizing Micro:bit hardware coding guide & smart quiz";
-      if (isPython) return "Synthesizing Python coding challenge, slide deck & smart quiz";
-      if (isRobotics) return "Synthesizing Robotics lab challenge, slide deck & smart quiz";
-      if (isEngineering) return "Synthesizing hands-on engineering lab, slide deck & smart quiz";
-      return "Synthesizing interactive slides, lab guide & smart quiz";
-    }
-
-    return "";
-  };
   
   // Interactive Quiz states
   const [currentQuizIndex, setCurrentQuizIndex] = useState<number>(0);
@@ -379,30 +341,53 @@ export default function App() {
   // Lab material checking states
   const [checkedMaterials, setCheckedMaterials] = useState<Record<string, boolean>>({});
 
-  // Verify Stripe Checkout Session returning from Stripe
+  // Verify Stripe Checkout Session returning from Stripe.
+  //
+  // This waits for Firebase to restore the session before running. Returning
+  // from Stripe is a fresh page load, so auth.currentUser is still null for the
+  // first moments — granting the subscription then throws, and the customer is
+  // charged while the page still tells them to upgrade.
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const paymentStatus = urlParams.get("payment");
     const sessionId = urlParams.get("session_id");
 
-    if (paymentStatus === "success" && sessionId) {
-      console.log("Verifying returning Stripe Checkout session:", sessionId);
-      fetch(`/api/verify-checkout-session?session_id=${sessionId}`)
-        .then((res) => res.json())
-        .then(async (data) => {
-          if (data.verified) {
-            console.log("Stripe payment successfully verified!", data);
-            await subscribeUser(data.plan || "Demo Incentive ($9.99 One-Time Fee)");
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
-        })
-        .catch((err) => {
-          console.error("Error verifying Stripe payment session:", err);
-        });
-    } else if (paymentStatus === "cancel") {
+    if (paymentStatus === "cancel") {
       window.history.replaceState({}, document.title, window.location.pathname);
+      return;
     }
-  }, []);
+
+    if (paymentStatus !== "success" || !sessionId) return;
+    if (!user) return; // wait for auth; this effect re-runs once it arrives
+    if (handledCheckoutRef.current === sessionId) return;
+
+    handledCheckoutRef.current = sessionId;
+    setPaymentNotice({ state: "checking" });
+
+    fetch(`/api/verify-checkout-session?session_id=${sessionId}`)
+      .then((res) => res.json())
+      .then(async (data) => {
+        if (!data.verified) {
+          setPaymentNotice({
+            state: "failed",
+            detail: "Stripe has not confirmed this payment yet. If you were charged, contact support and it will be applied.",
+          });
+          return;
+        }
+
+        await subscribeUser(data.plan || "Summer STEM Special ($12.99 One-Time Fee)");
+        setPaymentNotice({ state: "success", plan: data.plan });
+        window.history.replaceState({}, document.title, window.location.pathname);
+      })
+      .catch((err) => {
+        console.error("Error verifying Stripe payment session:", err);
+        // Never silently swallow this: the customer has already paid.
+        setPaymentNotice({
+          state: "failed",
+          detail: err?.message || "We could not confirm the payment automatically.",
+        });
+      });
+  }, [user]);
 
   // Worksheet simulated answers
   const [studentAnswers, setStudentAnswers] = useState<Record<string, string>>({});
@@ -457,13 +442,21 @@ export default function App() {
   const userSetGradeRef = React.useRef(false);
   const userSetSuppliesRef = React.useRef(false);
 
+  // Which lesson those manual choices belong to. A hand-picked platform should
+  // survive reopening the plan for the same lesson, but must not carry over to
+  // the next one — otherwise the chips stop reflecting the document on screen
+  // and quietly describe whatever was chosen an hour ago.
+  const detectedForRef = React.useRef<string>("");
+
   // Track if a curriculum plan is uploaded or text is provided
   const hasPlanUploaded = Boolean((customContent && customContent.trim().length > 0) || uploadedFileName);
 
-  // Helper to toggle supply selection (Restricted to max 1 item for single selection consistency)
+  // Supplies are multi-select. A lesson runs on paper cups AND straws AND
+  // washers; forcing a single choice made the instructor pick one and lose the
+  // rest, and made auto-detection look wrong when it had read the list correctly.
   const toggleSupply = (val: string) => {
     userSetSuppliesRef.current = true;
-    setSelectedSupplies(prev => (prev.includes(val) ? [] : [val]));
+    setSelectedSupplies(prev => (prev.includes(val) ? prev.filter(v => v !== val) : [...prev, val]));
   };
 
   // Hand the instructor over to Stripe's own billing portal, where they can
@@ -494,8 +487,9 @@ export default function App() {
     }
   };
 
-  // Curriculum Text Material fold state (Folded by default)
-  const [isTextMaterialOpen, setIsTextMaterialOpen] = useState<boolean>(false);
+  // Pasting a lesson is one of the two ways in, and the landing page promises
+  // it. Folding it away by default left uploading as the only visible option.
+  const [isTextMaterialOpen, setIsTextMaterialOpen] = useState<boolean>(true);
   const textMaterialTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Instructor Tool Bar fold state. It stays folded until the instructor opens
@@ -554,15 +548,24 @@ export default function App() {
     return CATEGORY_SUPPLIES[activeSupplyCategoryKey] || CATEGORY_SUPPLIES["Science"];
   }, [activeSupplyCategoryKey]);
 
-  // When active category key changes, supply initial default choices if switching domains
+  // Switching domain by hand clears supplies that no longer apply — Scratch is
+  // not a choice once the lesson is Circuitry.
+  //
+  // Auto-detection also changes the category, and this effect used to run a
+  // render later and wipe the supplies it had just matched, leaving exactly one
+  // chip selected. The flag lets a detected list through untouched.
+  const suppliesJustDetectedRef = React.useRef(false);
   const prevCategoryKeyRef = React.useRef(activeSupplyCategoryKey);
   React.useEffect(() => {
-    if (prevCategoryKeyRef.current !== activeSupplyCategoryKey) {
-      prevCategoryKeyRef.current = activeSupplyCategoryKey;
-      const available = CATEGORY_SUPPLIES[activeSupplyCategoryKey] || CATEGORY_SUPPLIES["Science"];
-      const defaultInit = available.slice(0, 1).map(s => s.id);
-      setSelectedSupplies(defaultInit);
+    if (prevCategoryKeyRef.current === activeSupplyCategoryKey) return;
+    prevCategoryKeyRef.current = activeSupplyCategoryKey;
+
+    if (suppliesJustDetectedRef.current) {
+      suppliesJustDetectedRef.current = false;
+      return;
     }
+
+    setSelectedSupplies([]);
   }, [activeSupplyCategoryKey]);
 
   // Prototype Carousel & Zoom Modal States for Google Search Grounded build examples
@@ -707,72 +710,25 @@ export default function App() {
   // Retrieve 4 Google Search Grounded build prototype examples for the active hands-on activity / software
 
   // Reorder Active Curriculum Suite tabs based on learned instructor memory & category focus
+  // A fixed order, deliberately.
+  //
+  // These tabs used to be scored and reordered from the lesson and the saved
+  // profile, which meant Visual Studio could land first — an instructor opening
+  // a lesson to teach it was shown the picture generator before the lab steps.
+  // Prep order is stable: run the activity, put it on the board, then decorate.
   const getInstructorDynamicTabs = React.useCallback(() => {
-    const learnedNotes = (
-      (profile?.instructorNotes || "") + " " + 
-      (profile?.customPreferences || "") + " " + 
-      (customPreferences || "") + " " + 
-      (selectedCategory || "") + " " +
-      (lesson?.lessonTitle || "")
-    ).toLowerCase();
-
-    const allTabs = [
-      // Ordered by what saves an instructor the most prep time. Visual Studio
-      // is a nice-to-have, so it sits last rather than third.
+    return [
+      {
+        id: "lab",
+        label: selectedCategory === "Software" ? "Coding Blocks" : "Hands-On Lab",
+        icon: selectedCategory === "Software" ? Terminal : Activity,
+      },
       { id: "slides", label: "Interactive Slides", icon: Layers },
-      { id: "lab", label: selectedCategory === "Software" ? "Coding Blocks" : "Hands-On Lab", icon: selectedCategory === "Software" ? Terminal : Activity },
+      { id: "nana-banana", label: "Visual Studio", icon: Palette },
       { id: "quiz", label: "Smartboard Quiz", icon: HelpCircle },
       { id: "media", label: "Media Fixer", icon: Link2Off },
-      { id: "nana-banana", label: "Visual Studio", icon: Palette }
     ];
-
-    const scores: Record<string, number> = {
-      slides: 0,
-      lab: 0,
-      "nana-banana": 0,
-      quiz: 0,
-      media: 0
-    };
-
-    // Category base weight
-    if (selectedCategory === "Gaming" || isGamingLesson) {
-      scores.lab += 30;
-      scores.slides += 10;
-      scores["nana-banana"] += 10;
-    } else if (selectedCategory === "Technology" || selectedCategory === "Engineering") {
-      scores.lab += 20;
-      scores.slides += 8;
-      scores["nana-banana"] += 12;
-    } else if (selectedCategory === "Art") {
-      scores.lab += 15;
-      scores["nana-banana"] += 25;
-      scores.slides += 10;
-    } else if (selectedCategory === "Math") {
-      scores.quiz += 20;
-      scores.slides += 8;
-    } else {
-      // Science
-      scores.slides += 20;
-      scores.lab += 10;
-      scores["nana-banana"] += 8;
-    }
-
-    // Instructor Memory and Directives Boost
-    if (learnedNotes.includes("gaming") || learnedNotes.includes("scratch") || learnedNotes.includes("coding") || learnedNotes.includes("lab") || learnedNotes.includes("hands-on") || learnedNotes.includes("experiment") || learnedNotes.includes("robot")) {
-      scores.lab += 15;
-    }
-    if (learnedNotes.includes("visual") || learnedNotes.includes("art") || learnedNotes.includes("image") || learnedNotes.includes("diagram") || learnedNotes.includes("studio") || learnedNotes.includes("nana")) {
-      scores["nana-banana"] += 20;
-    }
-    if (learnedNotes.includes("quiz") || learnedNotes.includes("assessment") || learnedNotes.includes("jeopardy") || learnedNotes.includes("test") || learnedNotes.includes("question")) {
-      scores.quiz += 15;
-    }
-    if (learnedNotes.includes("slide") || learnedNotes.includes("deck") || learnedNotes.includes("lecture") || learnedNotes.includes("presentation")) {
-      scores.slides += 15;
-    }
-
-    return [...allTabs].sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0));
-  }, [profile, customPreferences, selectedCategory, lesson?.lessonTitle, isCodingLesson, isGamingLesson]);
+  }, [selectedCategory]);
 
   // Redirect to studio whenever user logs in or creates account from landing
   useEffect(() => {
@@ -810,17 +766,32 @@ export default function App() {
   }, [selectedCategory, selectedGrade, customGradeInput, selectedSize, selectedDuration, getFormattedSupplies, isManuallyEdited]);
 
   // Load preferences from Firebase Profile when logged in
+  // Saved preferences seed the chips ONCE, when the profile first arrives.
+  //
+  // This effect used to re-run on every profile change, restoring the platform
+  // and grade the instructor picked in some earlier session on top of whatever
+  // the current document had just been detected as. The plan modal then showed
+  // last week's answer for this week's lesson.
+  //
+  // Class size and duration are genuinely stable preferences and still load.
+  // Grade and platform belong to the lesson in front of you, so they are seeded
+  // only while nothing has been detected yet.
+  const profileSeededRef = React.useRef(false);
   useEffect(() => {
-    if (profile) {
-      if (profile.customPreferences !== undefined && profile.customPreferences !== "") {
-        setCustomPreferences(profile.customPreferences);
-        setIsManuallyEdited(true);
-      }
+    if (!profile || profileSeededRef.current) return;
+    profileSeededRef.current = true;
+
+    if (profile.customPreferences !== undefined && profile.customPreferences !== "") {
+      setCustomPreferences(profile.customPreferences);
+      setIsManuallyEdited(true);
+    }
+    if (profile.classSize) setSelectedSize(profile.classSize);
+    if (profile.duration) setSelectedDuration(profile.duration);
+
+    if (!detectedForRef.current) {
       if (profile.grade) setSelectedGrade(profile.grade);
-      if (profile.classSize) setSelectedSize(profile.classSize);
-      if (profile.duration) setSelectedDuration(profile.duration);
       if (profile.tech) {
-        const loaded = profile.tech.split(", ").map(t => t.trim()).filter(Boolean);
+        const loaded = profile.tech.split(", ").map((t: string) => t.trim()).filter(Boolean);
         if (loaded.length > 0) setSelectedSupplies(loaded);
       }
     }
@@ -865,19 +836,46 @@ export default function App() {
     const combined = ((textToScan || "") + " " + (fileNameToScan || "") + " " + (directiveToScan || "")).toLowerCase();
     if (!combined.trim()) return;
 
+    // A different lesson is a fresh start: manual picks are scoped to the
+    // document they were made against, not to the session.
+    const signature = `${fileNameToScan || ""}::${(textToScan || "").length}::${(textToScan || "").slice(0, 240)}`;
+    if (signature !== detectedForRef.current) {
+      detectedForRef.current = signature;
+      userSetCategoryRef.current = false;
+      userSetGradeRef.current = false;
+      userSetSuppliesRef.current = false;
+    }
+
     const requirements = extractRequirementsText(combined);
 
     // A mention under a requirements heading is worth three in the body, so a
     // single "Software Required: Scratch 3.0" is decisive while three
     // stray narrative references are needed to reach the same confidence.
+    const headline = extractHeadline(textToScan, fileNameToScan);
+
     const REQUIREMENTS_WEIGHT = 3;
-    const CONFIDENCE_THRESHOLD = 3;
-    const scoreTerms = (terms: string[]) =>
-      terms.reduce(
-        (total, term) =>
-          total + countTerm(combined, term) + countTerm(requirements, term) * (REQUIREMENTS_WEIGHT - 1),
-        0
-      );
+    const HEADLINE_WEIGHT = 6;
+    const CONFIDENCE_THRESHOLD = 4;
+    // One word repeated is one signal, not twenty. Capping each term and adding
+    // a point per distinct term matched means four different engineering words
+    // outrank a single science word used throughout.
+    const REPEAT_CAP = 3;
+
+    const scoreTerms = (terms: string[]) => {
+      let score = 0;
+      let distinct = 0;
+
+      for (const term of terms) {
+        const inBody = countTerm(combined, term);
+        if (inBody > 0) distinct += 1;
+
+        score += Math.min(inBody, REPEAT_CAP);
+        score += countTerm(requirements, term) * (REQUIREMENTS_WEIGHT - 1);
+        score += countTerm(headline, term) * HEADLINE_WEIGHT;
+      }
+
+      return score + distinct;
+    };
 
     // 1. Grade / age range. Only explicit grade language counts — inferring
     // "Roblox therefore middle school" overrode instructors who had already
@@ -924,10 +922,31 @@ export default function App() {
       }
     }
 
-    // Leave the instructor's own supply list alone; only replace it when we are
-    // confident enough to name a platform.
-    if (!userSetSuppliesRef.current && detectedSupply) {
-      setSelectedSupplies([detectedSupply]);
+    // Match every supply chip the lesson actually calls for, not just one.
+    // A windmill build needs cups AND straws AND bottle caps; picking a single
+    // item made the instructor re-enter a list the document already contained.
+    // The materials section counts double, since that is where the real list is.
+    if (!userSetSuppliesRef.current) {
+      const catalogue = CATEGORY_SUPPLIES[detectedCat] || [];
+      const matched = catalogue
+        .filter((option) => option.id !== "Other")
+        .filter((option) => {
+          const words = `${option.id} ${option.label} ${option.description || ""}`
+            .toLowerCase()
+            .split(/[^a-z0-9:.]+/)
+            .filter((w) => w.length > 3);
+          return words.some((w) => countTerm(requirements, w) > 0 || countTerm(combined, w) > 1);
+        })
+        .map((option) => option.id);
+
+      // The detected platform belongs in the list even if its chip label never
+      // appears verbatim in the lesson text.
+      const finalSupplies = Array.from(new Set([...(detectedSupply ? [detectedSupply] : []), ...matched]));
+
+      if (finalSupplies.length > 0) {
+        suppliesJustDetectedRef.current = true;
+        setSelectedSupplies(finalSupplies);
+      }
     }
 
     // Auto-update generated instruction directive if not manually edited
@@ -957,6 +976,7 @@ export default function App() {
     userSetCategoryRef.current = false;
     userSetGradeRef.current = false;
     userSetSuppliesRef.current = false;
+    detectedForRef.current = "";
 
     const fileExt = file.name.split('.').pop()?.toLowerCase();
 
@@ -1082,6 +1102,7 @@ export default function App() {
       return;
     }
 
+    setCompileScript(Math.floor(Math.random() * COMPILE_SCRIPTS.length));
     setIsLoading(true);
     setCompilationStep(1);
     setError(null);
@@ -1460,33 +1481,26 @@ export default function App() {
 
             {/* Nav Actions */}
             <div className="flex items-center gap-1.5 sm:gap-3">
-              {/* Fixed Top Navbar Link: My Lessons Vault Toggle */}
+              {/* "How to Use" replaces a second My Lessons control: the vault bar
+                  below already opens the same drawer, and what instructors asked
+                  for was a way to be shown around, not a duplicate button. */}
               <button
                 type="button"
                 onClick={() => {
-                  if (currentView !== "studio") {
-                    setCurrentView("studio");
-                  }
-                  setIsVaultExpanded(prev => !prev);
+                  setCurrentView("studio");
+                  setIsTextMaterialOpen(true);
+                  setCustomContent("");
+                  setIsDemoRunning(true);
                 }}
                 className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[38px] border ${
-                  isVaultExpanded
-                    ? "bg-teal-brand text-slate-950 border-teal-brand shadow-3xs"
-                    : isDarkMode 
-                      ? "bg-slate-800 text-teal-brand border-slate-700 hover:bg-slate-700 hover:border-teal-brand/40" 
-                      : "bg-teal-light/60 text-teal-dark border-teal-brand/30 hover:bg-teal-light hover:border-teal-brand/50"
+                  isDarkMode
+                    ? "bg-slate-800 text-teal-brand border-slate-700 hover:bg-slate-700 hover:border-teal-brand/40"
+                    : "bg-teal-light/60 text-teal-dark border-teal-brand/30 hover:bg-teal-light hover:border-teal-brand/50"
                 }`}
-                title="Toggle Firebase Cloud Storage Vault sticky-pad"
+                title="Show me how Lyrah works"
               >
-                <Cloud className="w-3.5 h-3.5" />
-                <span>My Lessons</span>
-                {user && savedLessons.length > 0 && (
-                  <span className={`px-1.5 py-0.2 font-mono text-[9px] font-extrabold rounded-full ${
-                    isVaultExpanded ? "bg-slate-950 text-teal-brand" : "bg-teal-brand text-slate-950"
-                  }`}>
-                    {savedLessons.length}
-                  </span>
-                )}
+                <HelpCircle className="w-3.5 h-3.5" />
+                <span>How to Use</span>
               </button>
 
               {/* 2026 Cyber STEM Lab Theme Switcher */}
@@ -1717,7 +1731,15 @@ export default function App() {
 
         {currentView === "landing" ? (
           <LandingPage 
-            onLaunchStudio={() => setCurrentView("studio")} 
+            onLaunchStudio={() => setCurrentView("studio")}
+            onWatchDemo={() => {
+              setCurrentView("studio");
+              // The lesson input lives inside a panel that is folded by default,
+              // so the demo cannot point at it until the panel is open.
+              setIsTextMaterialOpen(true);
+              setCustomContent("");
+              setIsDemoRunning(true);
+            }} 
             onSelectPlan={() => setShowSubscriptionModal(true)}
             user={user}
             onSignIn={handleSignInAndRedirect}
@@ -1798,7 +1820,7 @@ export default function App() {
                   {/* Selection of transformation goal with high fidelity toggle buttons */}
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-teal-dark dark:text-teal-brand block font-sans">Upload Option:</label>
-                    <div className="p-4 rounded-xl border border-teal-brand bg-teal-light/20 dark:bg-teal-brand/10 text-teal-dark dark:text-teal-brand shadow-3xs flex items-center justify-between gap-3">
+                    <div id="demo-upload-option" className="p-4 rounded-xl border border-teal-brand bg-teal-light/20 dark:bg-teal-brand/10 text-teal-dark dark:text-teal-brand shadow-3xs flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-xl bg-teal-brand text-white flex items-center justify-center shrink-0 shadow-3xs">
                           <Upload className="w-5 h-5" />
@@ -1918,7 +1940,7 @@ export default function App() {
                 <div className="flex items-center gap-2 text-left flex-wrap">
                   <FileText className="w-4 h-4 text-teal-brand shrink-0" />
                   <span className="text-xs font-bold text-teal-dark dark:text-teal-brand font-sans">
-                    Curriculum Text Material & Outline
+                    Or paste your lesson plan
                   </span>
                   {customContent ? (
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 flex items-center gap-1 font-bold">
@@ -1926,8 +1948,8 @@ export default function App() {
                       {uploadedFileName ? uploadedFileName : `${customContent.length} chars loaded`}
                     </span>
                   ) : (
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400">
-                      Folded (Optional)
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-teal-brand/15 text-teal-dark dark:text-teal-brand border border-teal-brand/30">
+                      No file? Paste here
                     </span>
                   )}
                 </div>
@@ -1942,7 +1964,7 @@ export default function App() {
               {isTextMaterialOpen && (
                 <div className="p-4 space-y-3 animate-fade-in border-t border-black/[0.05] dark:border-slate-800">
                   <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold text-teal-dark dark:text-teal-brand font-sans">Curriculum Text Material:</label>
+                    <label className="text-xs font-bold text-teal-dark dark:text-teal-brand font-sans">Paste your lesson plan:</label>
                     {customContent && (
                       <button
                         type="button"
@@ -1957,6 +1979,7 @@ export default function App() {
                     )}
                   </div>
                   <textarea
+                    id="demo-lesson-input"
                     value={customContent}
                     onChange={(e) => setCustomContent(e.target.value)}
                     rows={4}
@@ -2360,12 +2383,12 @@ export default function App() {
                 {isLoading ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin text-teal-brand" />
-                    <span>Orchestrating 2026 STEM Logic Pathways...</span>
+                    <span>{COMPILE_SCRIPTS[compileScript].header}</span>
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4.5 h-4.5 text-amber-300 group-hover:rotate-12 transition-transform" />
-                    <span>Generate Gamified STEM Pack (2026 AI Engine)</span>
+                    <span>Turn this into a lesson I can teach</span>
                     <ArrowRight className="w-4 h-4 text-teal-brand group-hover:translate-x-1 transition-transform" />
                   </>
                 )}
@@ -2385,7 +2408,7 @@ export default function App() {
                       </div>
                       <div>
                         <span className="text-[10px] font-mono font-extrabold uppercase tracking-widest text-teal-brand">2026 STEM Engine Execution</span>
-                        <h3 className="text-sm font-bold font-sans text-slate-100">Compiling Gamified Curriculum...</h3>
+                        <h3 className="text-sm font-bold font-sans text-slate-100">{COMPILE_SCRIPTS[compileScript].header}</h3>
                       </div>
                     </div>
 
@@ -2398,7 +2421,7 @@ export default function App() {
                           01
                         </span>
                         <span className="flex-1 font-sans">
-                          {getDynamicCompilationStepText(1, customContent, uploadedFileName, transformationGoal, getFormattedSupplies())}
+                          {COMPILE_SCRIPTS[compileScript].steps[0]}
                         </span>
                         {compilationStep >= 1 && <Check className="w-4 h-4 text-teal-brand animate-pulse" />}
                       </div>
@@ -2410,7 +2433,7 @@ export default function App() {
                           02
                         </span>
                         <span className="flex-1 font-sans">
-                          {getDynamicCompilationStepText(2, customContent, uploadedFileName, transformationGoal, getFormattedSupplies())}
+                          {COMPILE_SCRIPTS[compileScript].steps[1]}
                         </span>
                         {compilationStep >= 2 && <Check className="w-4 h-4 text-amber-400 animate-pulse" />}
                       </div>
@@ -2422,7 +2445,7 @@ export default function App() {
                           03
                         </span>
                         <span className="flex-1 font-sans">
-                          {getDynamicCompilationStepText(3, customContent, uploadedFileName, transformationGoal, getFormattedSupplies())}
+                          {COMPILE_SCRIPTS[compileScript].steps[2]}
                         </span>
                         {compilationStep >= 3 && <Check className="w-4 h-4 text-emerald-400 animate-pulse" />}
                       </div>
@@ -2550,18 +2573,69 @@ export default function App() {
                     </p>
                   </div>
 
-            {/* Adaptive Reordering Indicator Banner */}
-            <div className="flex items-center justify-between gap-2 px-3.5 py-2 bg-teal-50/80 dark:bg-teal-brand/10 border border-teal-brand/20 rounded-xl mb-3 text-xs text-teal-dark dark:text-teal-brand font-sans">
-              <div className="flex items-center gap-2 font-semibold">
-                <Brain className="w-4 h-4 text-teal-brand shrink-0" />
-                <span>Suite tabs reordered based on learned instructor memory & <strong>{selectedCategory}</strong> category focus</span>
-              </div>
-              <span className="text-[10px] font-mono font-extrabold uppercase px-2 py-0.5 bg-teal-brand/20 text-teal-brand rounded shrink-0">
-                Adaptive Layout
-              </span>
-            </div>
+            {/* What Lyrah cut, and the minutes it planned against. Instructors are
+                handed seven-page plans and teach one page; showing the goal, the
+                real time budget and the removals is the product's actual claim. */}
+            {lesson.lessonScope && (
+              <div className="mb-3 rounded-2xl border border-teal-brand/25 dark:border-teal-brand/20 bg-teal-50/60 dark:bg-teal-brand/5 overflow-hidden">
+                <div className="px-4 py-3 space-y-2.5">
+                  <div className="flex items-start gap-2.5">
+                    <Target className="w-4 h-4 text-teal-brand shrink-0 mt-0.5" />
+                    <div className="space-y-0.5">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-teal-dark dark:text-teal-brand font-sans">
+                        The one thing this class is for
+                      </p>
+                      <p className="text-xs text-slate-800 dark:text-slate-200 font-sans leading-relaxed">
+                        {lesson.lessonScope.mainGoal}
+                      </p>
+                    </div>
+                  </div>
 
-            {/* Touch-Friendly Mobile Scrollable Resource Pills Tabs (Dynamic Order) */}
+                  {lesson.lessonScope.segments?.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1.5 pl-6.5">
+                      <span className="text-[10px] font-mono font-bold text-teal-dark dark:text-teal-brand">
+                        {lesson.lessonScope.teachableMinutes} min teachable
+                      </span>
+                      <span className="text-slate-400">·</span>
+                      {lesson.lessonScope.segments.map((seg) => (
+                        <span
+                          key={seg.name}
+                          title={seg.servesGoal}
+                          className="text-[10px] font-sans px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 border border-teal-brand/20 dark:border-slate-700 text-slate-700 dark:text-slate-300"
+                        >
+                          {seg.name} · {seg.minutes}m
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {lesson.lessonScope.warning && (
+                    <p className="pl-6.5 text-[11px] text-amber-800 dark:text-amber-300 font-sans leading-relaxed">
+                      {lesson.lessonScope.warning}
+                    </p>
+                  )}
+                </div>
+
+                {lesson.lessonScope.cut?.length > 0 && (
+                  <details className="border-t border-teal-brand/20 dark:border-teal-brand/10 group">
+                    <summary className="px-4 py-2 text-[11px] font-bold text-teal-dark dark:text-teal-brand font-sans cursor-pointer hover:bg-teal-100/40 dark:hover:bg-teal-brand/10 transition-colors list-none flex items-center gap-1.5">
+                      <ChevronDown className="w-3.5 h-3.5 transition-transform group-open:rotate-180" />
+                      <span>Lyrah cut {lesson.lessonScope.cut.length} {lesson.lessonScope.cut.length === 1 ? "thing" : "things"} to fit the hour — see what</span>
+                    </summary>
+                    <div className="px-4 pb-3 pt-1 space-y-2">
+                      {lesson.lessonScope.cut.map((c) => (
+                        <div key={c.item} className="text-[11px] font-sans leading-relaxed">
+                          <span className="font-bold text-slate-800 dark:text-slate-200">{c.item}</span>
+                          <span className="text-secondary dark:text-slate-400"> — {c.reason}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
+              </div>
+            )}
+
+            {/* Resource tabs, in a fixed prep order */}
             <div className="flex border border-black/[0.06] dark:border-slate-800 overflow-x-auto no-scrollbar scroll-smooth gap-1.5 bg-surface-0 dark:bg-slate-950/80 p-1.5 rounded-2xl mb-6 font-sans w-full">
               {getInstructorDynamicTabs().map((tab) => {
                 const TabIcon = tab.icon;
@@ -2697,121 +2771,6 @@ export default function App() {
                     {/* Left Panel: Grounded Build Examples / SVG Diagrams & Logistics Checklist */}
                     <div className="md:col-span-5 space-y-4">
                       
-                      {/* Grounded Prototype Examples & Nana Banana Pro SVG Diagram Component (ON THE LEFT) */}
-                      {lesson && (
-                        <div className="bg-surface-0/90 dark:bg-slate-900/90 border border-teal-brand/30 rounded-2xl p-4.5 space-y-3.5 shadow-xs relative overflow-hidden">
-                          <div className="space-y-2 border-b border-black/[0.06] dark:border-slate-800 pb-3">
-                            <div className="flex items-center justify-between gap-2 flex-wrap">
-                              <div className="flex items-center gap-2">
-                                <div className="w-6 h-6 rounded-lg bg-sky-500/20 text-sky-600 dark:text-sky-400 flex items-center justify-center">
-                                  <Search className="w-3.5 h-3.5" />
-                                </div>
-                                <h4 className="text-xs font-bold font-sans uppercase text-teal-dark dark:text-teal-brand flex items-center gap-1.5">
-                                  <span>Visual Diagrams & Grounded Images</span>
-                                </h4>
-                              </div>
-                              {identifiedSoftware && (
-                                <span className="text-[9px] font-mono px-2 py-0.5 bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 rounded-full font-extrabold flex items-center gap-1">
-                                  <Terminal className="w-2.5 h-2.5 text-amber-500" /> {identifiedSoftware}
-                                </span>
-                              )}
-                            </div>
-
-                          </div>
-
-
-                          {/* MODE 2: Nana Banana Pro SVG Diagram Generator */}
-                          {labVisualMode === "diagram" && (
-                            <div className="space-y-3">
-                              {/* Dynamic SVG Diagram for Software Block / STEM Lab */}
-                              <div className="w-full bg-slate-950 p-3 rounded-xl border border-teal-brand/30 space-y-2">
-                                <div className="flex items-center justify-between text-[10px] font-mono text-teal-brand">
-                                  <span className="font-bold flex items-center gap-1">
-                                    <Sparkles className="w-3 h-3 text-amber-400" />
-                                    {identifiedSoftware ? `${identifiedSoftware} SVG Block Diagram` : "STEM Lab Vector Diagram"}
-                                  </span>
-                                  <span className="px-1.5 py-0.5 bg-amber-400/20 text-amber-300 rounded font-bold text-[9px]">Nana Banana SVG</span>
-                                </div>
-
-                                {/* Custom SVG Diagram rendering based on identified software */}
-                                {(identifiedSoftware || "").toLowerCase().includes("scratch jr") || (identifiedSoftware || "").toLowerCase().includes("scratchjr") ? (
-                                  <svg viewBox="0 0 520 120" className="w-full h-auto drop-shadow-md">
-                                    <g transform="translate(10, 20)">
-                                      <rect x="0" y="0" width="110" height="70" rx="12" fill="#EAB308" stroke="#CA8A04" strokeWidth="2" />
-                                      <circle cx="35" cy="35" r="18" fill="#15803D" />
-                                      <polygon points="30,25 30,45 45,35" fill="#FFFFFF" />
-                                      <text x="62" y="40" fill="#FFFFFF" fontSize="11" fontWeight="bold">START</text>
-                                    </g>
-                                    <g transform="translate(130, 20)">
-                                      <rect x="0" y="0" width="110" height="70" rx="12" fill="#0284C7" stroke="#0369A1" strokeWidth="2" />
-                                      <path d="M 25 35 L 55 35 M 45 25 L 55 35 L 45 45" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                                      <rect x="65" y="42" width="22" height="20" rx="4" fill="#FFFFFF" />
-                                      <text x="72" y="56" fill="#0369A1" fontSize="12" fontWeight="bold" fontFamily="monospace">4</text>
-                                    </g>
-                                    <g transform="translate(250, 20)">
-                                      <rect x="0" y="0" width="110" height="70" rx="12" fill="#22C55E" stroke="#15803D" strokeWidth="2" />
-                                      <path d="M 25 45 Q 40 15 55 45" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" fill="none" />
-                                      <polyline points="50,38 55,45 60,38" stroke="#FFFFFF" strokeWidth="3" fill="none" />
-                                      <rect x="65" y="42" width="22" height="20" rx="4" fill="#FFFFFF" />
-                                      <text x="72" y="56" fill="#15803D" fontSize="12" fontWeight="bold" fontFamily="monospace">2</text>
-                                    </g>
-                                    <g transform="translate(370, 20)">
-                                      <rect x="0" y="0" width="130" height="70" rx="12" fill="#A855F7" stroke="#7E22CE" strokeWidth="2" />
-                                      <path d="M 30 35 A 15 15 0 1 1 50 20" stroke="#FFFFFF" strokeWidth="4" fill="none" strokeLinecap="round" />
-                                      <polygon points="52,12 52,28 64,20" fill="#FFFFFF" />
-                                      <text x="65" y="40" fill="#FFFFFF" fontSize="10" fontWeight="bold">REPEAT</text>
-                                    </g>
-                                  </svg>
-                                ) : isCodingLesson ? (
-                                  <svg viewBox="0 0 480 160" className="w-full h-auto drop-shadow-md">
-                                    <path d="M 10 25 Q 50 10 90 25 L 260 25 C 270 25 275 30 275 35 L 275 55 C 275 60 270 65 260 65 L 40 65 C 35 65 30 70 30 75 L 10 75 Z" fill="#FFBF00" stroke="#D9A000" strokeWidth="1.5" />
-                                    <text x="30" y="48" fill="#FFFFFF" fontSize="12" fontWeight="bold">when 🏁 clicked</text>
-                                    
-                                    <g transform="translate(10, 65)">
-                                      <rect x="0" y="0" width="280" height="38" rx="6" fill="#4C97FF" stroke="#3373CC" strokeWidth="1.5" />
-                                      <text x="15" y="24" fill="#FFFFFF" fontSize="12" fontWeight="bold">move</text>
-                                      <rect x="60" y="9" width="30" height="20" rx="10" fill="#FFFFFF" />
-                                      <text x="68" y="23" fill="#3373CC" fontSize="11" fontWeight="bold" fontFamily="monospace">10</text>
-                                      <text x="100" y="24" fill="#FFFFFF" fontSize="12" fontWeight="bold">steps</text>
-                                    </g>
-
-                                    <g transform="translate(10, 108)">
-                                      <rect x="0" y="0" width="280" height="38" rx="6" fill="#9966FF" stroke="#7742E6" strokeWidth="1.5" />
-                                      <text x="15" y="24" fill="#FFFFFF" fontSize="12" fontWeight="bold">play sound</text>
-                                      <rect x="95" y="9" width="80" height="20" rx="10" fill="#FFFFFF" />
-                                      <text x="105" y="23" fill="#7742E6" fontSize="11" fontWeight="bold">"Pop" 🔊</text>
-                                    </g>
-                                  </svg>
-                                ) : (
-                                  <svg viewBox="0 0 480 150" className="w-full h-auto drop-shadow-md">
-                                    <rect x="40" y="120" width="400" height="15" rx="4" fill="#334155" stroke="#475569" strokeWidth="2" />
-                                    <polygon points="180,120 210,75 240,120" fill="#0D9488" stroke="#14B8A6" strokeWidth="2" />
-                                    <rect x="80" y="90" width="300" height="10" rx="3" fill="#F59E0B" stroke="#D97706" strokeWidth="2" transform="rotate(-10, 210, 95)" />
-                                    <rect x="75" y="55" width="30" height="30" rx="6" fill="#EF4444" stroke="#B91C1C" strokeWidth="2" />
-                                    <text x="81" y="74" fill="#FFFFFF" fontSize="9" fontWeight="bold">LOAD</text>
-                                    <path d="M 370 30 L 370 70" stroke="#38BDF8" strokeWidth="3" strokeDasharray="4 2" />
-                                    <polygon points="365,70 370,80 375,70" fill="#38BDF8" />
-                                    <text x="330" y="22" fill="#38BDF8" fontSize="10" fontWeight="bold">FORCE</text>
-                                  </svg>
-                                )}
-                              </div>
-
-                              <p className="text-[10px] text-slate-300 font-sans leading-relaxed">
-                                <strong>Nana Banana Pro Diagram:</strong> Clean, vector-scaled visual schematic customized for {lesson.handsOnActivity.title || lesson.lessonTitle}.
-                              </p>
-
-                              <button
-                                type="button"
-                                onClick={() => setActiveTab("nana-banana")}
-                                className="w-full py-2 bg-gradient-to-r from-amber-500 to-teal-500 hover:from-amber-600 hover:to-teal-600 text-slate-950 font-extrabold rounded-xl text-[10px] uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer"
-                              >
-                                <Sparkles className="w-3.5 h-3.5 text-slate-950" />
-                                <span>🎨 Generate AI Diagram with Nana Banana Pro</span>
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
 
                       {/* Left Logistics & Checklist panel */}
                       <div className="bg-surface-0/40 dark:bg-slate-900/60 border border-black/[0.06] dark:border-slate-800 rounded-2xl p-5 space-y-4">
@@ -3483,6 +3442,71 @@ export default function App() {
           />
         )}
 
+        {/* Payment outcome. Shown over everything, because a customer returning
+            from Stripe needs to know the charge landed before they need
+            anything else on the page. */}
+        {paymentNotice && (
+          <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[80] w-[calc(100%-2rem)] max-w-md animate-fade-in">
+            <div
+              role="status"
+              className={`rounded-2xl border p-4 shadow-xl flex items-start gap-3 ${
+                paymentNotice.state === "success"
+                  ? "bg-emerald-950 border-emerald-400/50 text-emerald-50"
+                  : paymentNotice.state === "failed"
+                  ? "bg-red-950 border-red-400/50 text-red-50"
+                  : "bg-slate-900 border-slate-600 text-slate-100"
+              }`}
+            >
+              {paymentNotice.state === "success" ? (
+                <CheckCircle2 className="w-5 h-5 text-emerald-300 shrink-0 mt-0.5" />
+              ) : paymentNotice.state === "failed" ? (
+                <AlertCircle className="w-5 h-5 text-red-300 shrink-0 mt-0.5" />
+              ) : (
+                <RefreshCw className="w-5 h-5 text-slate-300 shrink-0 mt-0.5 animate-spin" />
+              )}
+
+              <div className="space-y-1 flex-1">
+                <p className="text-sm font-bold font-sans">
+                  {paymentNotice.state === "success"
+                    ? "Payment confirmed — you have full access"
+                    : paymentNotice.state === "failed"
+                    ? "We could not confirm your payment"
+                    : "Confirming your payment…"}
+                </p>
+                <p className="text-xs font-sans leading-relaxed opacity-90">
+                  {paymentNotice.state === "success"
+                    ? "Thanks — your receipt is on its way by email. Everything is unlocked, and your lessons save to the cloud from now on."
+                    : paymentNotice.state === "failed"
+                    ? paymentNotice.detail
+                    : "One moment while we check with Stripe."}
+                </p>
+              </div>
+
+              {paymentNotice.state !== "checking" && (
+                <button
+                  type="button"
+                  onClick={() => setPaymentNotice(null)}
+                  className="shrink-0 opacity-70 hover:opacity-100 transition-opacity cursor-pointer"
+                  aria-label="Dismiss"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Cursor-led walkthrough. Mounted only in the studio, where the
+            controls it points at actually exist. */}
+        {isDemoRunning && currentView === "studio" && (
+          <GuidedDemo
+            sampleText={PRELOADED_LESSONS[0]?.rawContent || ""}
+            onType={(text) => setCustomContent(text)}
+            onGenerate={() => handleProcessLesson(true)}
+            onFinish={() => setIsDemoRunning(false)}
+          />
+        )}
+
         {/* Lyrah Plan Preview & Confirmation Pop-Up Modal */}
         {showPlanConfirmationModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-md p-4 overflow-y-auto">
@@ -3683,7 +3707,7 @@ export default function App() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ duration: 0.2 }}
-              className="w-[92vw] sm:w-[520px] max-h-[85vh] bg-white rounded-3xl border border-teal-brand/30 shadow-2xl overflow-hidden flex flex-col mb-2"
+              className="w-[92vw] sm:w-[520px] max-h-[85vh] bg-white dark:bg-slate-900 rounded-3xl border border-teal-brand/30 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col mb-2"
             >
               {/* Modal Header */}
               <div className="bg-teal-dark px-5 py-4 text-white flex items-center justify-between shrink-0">
@@ -3706,7 +3730,7 @@ export default function App() {
               </div>
 
               {/* Modal Body */}
-              <div className="p-4 overflow-y-auto flex-1 bg-surface-0/30">
+              <div className="p-4 overflow-y-auto flex-1 bg-surface-0/30 dark:bg-slate-950/40">
                 <AICopilot 
                   lesson={lesson} 
                   onTriggerPaidFlow={() => {

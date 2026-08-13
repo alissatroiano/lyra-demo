@@ -52,20 +52,46 @@
 
 h4.font-display.font-bold {
   letter-spacing: .8px;
+  text-transform: uppercase;
 }
-.liquid-glass-light {
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+
+ .liquid-glass-light {
+  background: rgb(255, 255, 255);
   border: 1px solid rgba(0, 194, 178, 0.18);
   box-shadow: 0 8px 32px 0 rgba(0, 194, 178, 0.08);
 }
 
 .liquid-glass-dark {
+  background: rgb(2, 8, 24);
+  border: 1px solid #00c2b240;
+  box-shadow: 0 8px 32px #0000005e;
+}
+
+h2.dark\:text-slate-100:where(.dark,.dark *) {
+    color: var(--color-slate-100);
+    max-height: 90vh;
+    overflow: auto;
+    font-size: 40px;
+    letter-spacing: .25px;
+}
+
+span.text-teal-brand.font-sans {
+    COLOR: orange;
+    margin-left: 2px;
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .liquid-glass-light {
+    background: rgba(255, 255, 255, 0.86);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .liquid-glass-dark {
+    background: rgba(2, 8, 24, 0.88);
+    backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    background: #02081887;
-    border: 1px solid #00c2b240;
-    box-shadow: 0 8px 32px #0000005e;
+  }
 }
 
 .micro-glow-teal {

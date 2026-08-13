@@ -77,6 +77,23 @@ export interface ProcessedLesson {
   extractedStyleNotes?: string;
   generatedVisuals?: SavedVisual[];
   feasibilityAudit?: FeasibilityAudit;
+  /**
+   * How the lesson was cut to fit the class. Instructors are handed seven-page
+   * plans and teach one page of them; this is the record of what Lyrah dropped
+   * and why, so putting something back is a decision rather than an excavation.
+   */
+  lessonScope?: {
+    mainGoal: string;
+    teachableMinutes: number;
+    cleanupMinutes?: number;
+    cleanupReason?: string;
+    segments: { name: string; minutes: number; servesGoal: string }[];
+    cut: { item: string; reason: string }[];
+    keyVocabulary?: { word: string; childDefinition: string };
+    reviewVocabulary?: string[];
+    deferred?: string[];
+    warning?: string;
+  };
   /** Lyrah's own call on whether this lesson needs an illustration at all. */
   visualSuggestion?: {
     needed: boolean;

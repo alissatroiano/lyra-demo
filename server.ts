@@ -17,6 +17,63 @@ const app = express();
 // the local default.
 const PORT = Number(process.env.PORT) || 3000;
 
+/**
+ * Server-side Firestore, used to grant access when Stripe says a payment
+ * succeeded.
+ *
+ * Fulfilment used to depend entirely on the browser completing the redirect
+ * back from Stripe. A customer who closed the tab was charged and never
+ * upgraded, and nothing recorded that it had happened. The webhook is the only
+ * party that hears about a payment regardless of what the browser does.
+ *
+ * Credentials come from the Cloud Run service account, so no key file is
+ * needed — but that account lives in a different project from Firestore and
+ * must be granted access to it explicitly.
+ */
+let firestore: any = null;
+const getFirestore = async () => {
+  if (firestore) return firestore;
+  try {
+    const { Firestore } = await import("@google-cloud/firestore");
+    firestore = new Firestore({
+      projectId: process.env.FIREBASE_PROJECT_ID || "gen-lang-client-0481032669",
+      databaseId: process.env.FIRESTORE_DATABASE_ID || "ai-studio-lyra-4093db80-c113-4f0d-9b6e-ec52a27130c5",
+    });
+    return firestore;
+  } catch (err: any) {
+    console.error("Could not initialise Firestore admin client:", err?.message || err);
+    return null;
+  }
+};
+
+/** Mark a user as paid. Safe to call twice for the same checkout session. */
+const grantAccess = async (uid: string, plan: string, source: string) => {
+  if (!uid) {
+    console.error(`Cannot grant access from ${source}: no uid on the session.`);
+    return;
+  }
+
+  const db = await getFirestore();
+  if (!db) return;
+
+  try {
+    await db.collection("users").doc(uid).set(
+      {
+        uid,
+        isSubscribed: true,
+        stripeSubscriptionPlan: plan,
+        subscriptionSource: source,
+        subscriptionDate: new Date(),
+        updatedAt: new Date(),
+      },
+      { merge: true }
+    );
+    console.log(`Granted access to ${uid} (${plan}) via ${source}.`);
+  } catch (err: any) {
+    console.error(`Failed to grant access to ${uid}:`, err?.message || err);
+  }
+};
+
 // Stripe Webhook Endpoint (requires raw body before express.json parsing)
 app.post("/api/webhook/stripe", express.raw({ type: "application/json" }), async (req, res) => {
   const sig = req.headers["stripe-signature"];
@@ -62,6 +119,13 @@ app.post("/api/webhook/stripe", express.raw({ type: "application/json" }), async
       case "checkout.session.completed": {
         const session = event.data.object;
         console.log(`Checkout session completed for ${session.customer_email || session.customer}`);
+        // The uid is put on the session at checkout precisely so this moment
+        // does not depend on the customer's browser coming back.
+        await grantAccess(
+          session.client_reference_id || session.metadata?.uid,
+          session.metadata?.plan || "summer_1299",
+          "stripe_webhook"
+        );
         break;
       }
       case "customer.subscription.created":
@@ -230,6 +294,52 @@ app.post("/api/process-lesson", async (req, res) => {
 Your mission is to help instructors transform standard, text-heavy, or dry lesson plans into immersive, gamified learning adventures for children (ages 5-14). You specialize in hands-on engineering challenges and block-based coding environments (Scratch, ScratchJr, EduBlocks, Code.org, Thunkable). You help instructors manage multi-session pacing and streamline heavy documentation into digestible, visually engaging student experiences.
 ${memoryDirective}
 
+TIME AND SCOPE DISCIPLINE - THIS OUTRANKS EVERY OTHER INSTRUCTION:
+
+The instructor reading your output has roughly thirty minutes of paid preparation for their entire week and forty-five to sixty minutes to actually teach. They are handed seven- and eight-page lesson plans and use one page of them. Your job is to CUT, not to add. A shorter plan that gets taught beats a thorough one that gets abandoned.
+
+1. FIND THE LEARNING GOAL BEFORE ANYTHING ELSE. Read the "Learning Goal(s)", "Objectives" or "Standards" section first. If none is stated, decide the single thing students must be able to do by the end. Everything you produce serves that one goal. Anything that does not serve it is cut, however interesting it is.
+
+   Where the source lists SEVERAL learning goals, it is describing a unit, not one class. Choose the one this session is actually about - the title and the main activity will tell you, so a lesson called "Discovery Lab: The Heart" is about the heart even when the goals also mention DNA, lungs and bones - and put the others in lessonScope.deferred as future sessions. Attempting four goals in one hour is how a plan becomes unteachable, and it is worst with the youngest children.
+
+1b. ONE NEW WORD, NOT A GLOSSARY. These children have been in school all day. Ages 5-7 can hold one new word per session; ages 8-10, two. Choose the single word the activity cannot be done without, define it in language a child that age would use, and put every other term in lessonScope.reviewVocabulary as words to revisit if time allows. A vocabulary list of six terms is a list nobody teaches.
+
+2. BUDGET REAL MINUTES, NOT IDEAL ONES. Subtract setup, transitions and cleanup from the stated duration before planning anything, then plan only what remains.
+
+   Attention span by age, which caps how long you may talk:
+   - Ages 5-7: about 10 minutes before hands must be on materials.
+   - Ages 8-10: about 12-15 minutes.
+   - Ages 11 and up: about 15-20 minutes.
+
+   Setup and settling costs roughly 10 minutes with any group of children, and more with the youngest.
+
+   Cleanup depends on BOTH the materials and the age, and instructors consistently underestimate it. Start from what the activity touches, then adjust for who is doing the tidying.
+
+   Materials set the baseline:
+   - Water, soil, sand, paint, liquid glue, plaster, food dye or anything that spills, stains, or sends children to a sink: 15 minutes. These lessons need a genuinely short activity, and saying so is more useful than pretending otherwise.
+   - Glue sticks, scissors, tape, cardboard, string, small parts to collect and count back in: 8-10 minutes. Glue sticks are not paint - they make hands sticky, not floors.
+   - Blocks, LEGO or kits that go back in a bin: 5-8 minutes.
+   - Paper and pencils only, or screens only: 3-5 minutes.
+
+   Age then adjusts that baseline, and it never drops to nothing:
+   - Ages 5-7: add 5 minutes, and never budget less than 8 minutes whatever the materials. At this age tidying is a supervised activity you run, not an instruction you give, and it needs its own transition.
+   - Ages 8-10: the baseline as stated. They can tidy to a clear instruction but need checking.
+   - Ages 11 and up: subtract 2-3 minutes. They can be directed and largely left to it.
+
+   State the figure you used and what drove it in lessonScope.cleanupMinutes and lessonScope.cleanupReason, naming both the messy material and the age where the age is what pushed it up.
+
+   State the cleanup figure you used and what drove it in lessonScope.cleanupMinutes and lessonScope.cleanupReason. An instructor who sees "15 minutes, because of the water trays" can plan the sink run; one who is handed a plan assuming 5 minutes discovers the problem at the sink.
+
+3. ONE HANDS-ON ACTIVITY. A forty-five to sixty minute class with young children has room for one build, not a warm-up plus a practice activity plus a main project. Choose the one that best serves the learning goal, and name the others briefly in lessonScope.deferred as later sessions. The instructor still has the original plan in front of them, so a short line is enough - they do not need it rewritten.
+
+4. CUT OUT LOUD. Record what you removed and why. An instructor who can see what was dropped can put it back deliberately; one handed everything can find nothing.
+
+4b. NEVER CHANGE THE AGE GROUP. The instructor cannot send these children away and get older ones. Where the source activity is beyond the stated age - fine motor work, reading demands, multi-step sequencing - keep the age and simplify the activity instead: pre-assemble the fiddly parts, use larger components, cut the number of steps, or make it a teacher demonstration the children take turns in. Then say what you simplified and why in lessonScope.warning. Recommending a different age band is not an adaptation, it is handing the problem back.
+
+5. IF IT DOES NOT FIT, SAY SO. When the source cannot fit the stated duration for that age, say it plainly rather than compressing it into something unteachable. Instructors already know these plans are overstuffed; being told directly is a relief, not a failure.
+
+6. SLIDES ARE FOR THE BOARD. Three to five, with a handful of words each. Nobody delivers twelve slides and a build in one hour.
+
 OUTPUT FORMAT:
 - Every string you return is displayed to the instructor exactly as written. Write plain prose.
 - Never use HTML tags (<p>, <br>, <strong>, <li>) or Markdown syntax (**bold**, ## headings, - bullets) inside any field. The interface applies its own styling; your markup reaches the instructor as visible clutter in the middle of a lesson.
@@ -277,7 +387,7 @@ ${lessonContent}
 
 ${customPreferences ? `Teacher's Custom Request & Available Supplies/Tools: ${customPreferences}` : ""}
 
-Please convert this into a comprehensive, highly interactive lesson plan with slides, worksheets, quizzes, a hands-on activity, media backup queries, and a technical feasibility audit with realistic alternatives.`;
+Convert this into the shortest plan that still teaches the learning goal in the time available. Include slides, a worksheet, a quiz, one hands-on activity, media backup queries, and a feasibility audit - but only as much of each as fits the minutes and the age. Fill in lessonScope honestly, including what you cut.`;
 
     // PASS 1 - grounded research.
     //
@@ -371,7 +481,78 @@ ${groundedFindings}`
                 },
                 prompt: {
                   type: Type.STRING,
-                  description: "Only when needed is true: a single concrete image prompt describing exactly what to draw for this lesson. Omit when needed is false.",
+                  description: "Only when needed is true. Describe the finished build using the EXACT materials from handsOnActivity.materials, naming each one, so the picture shows what these children will actually make rather than a generic version of it. A windmill built from paper cups, a bendable straw and metal washers must not be drawn as a wooden water wheel with spoons. State the arrangement, forbid substituting similar-looking objects, and ask for a plain background with no text. Omit when needed is false.",
+                },
+              },
+            },
+            lessonScope: {
+              type: Type.OBJECT,
+              description: "How the lesson was cut to fit the class. This is the instructor's evidence that the plan is teachable in the time they actually have.",
+              required: ["mainGoal", "teachableMinutes", "cleanupMinutes", "cleanupReason", "segments", "cut"],
+              properties: {
+                mainGoal: {
+                  type: Type.STRING,
+                  description: "The single thing students must be able to do by the end, in one sentence, taken from the lesson's stated Learning Goals where present.",
+                },
+                teachableMinutes: {
+                  type: Type.INTEGER,
+                  description: "Minutes genuinely available for teaching, after subtracting setup, transitions and cleanup from the stated class duration.",
+                },
+                cleanupMinutes: {
+                  type: Type.INTEGER,
+                  description: "Minutes reserved for cleanup, chosen from what the materials actually require rather than from the age alone.",
+                },
+                cleanupReason: {
+                  type: Type.STRING,
+                  description: "What drove that figure, naming the messy material. E.g. 'Water trays and soil - 15 minutes including the sink run'.",
+                },
+                segments: {
+                  type: Type.ARRAY,
+                  description: "How those minutes are spent. Must sum to teachableMinutes or less. Usually two or three entries, not five.",
+                  items: {
+                    type: Type.OBJECT,
+                    required: ["name", "minutes", "servesGoal"],
+                    properties: {
+                      name: { type: Type.STRING, description: "E.g. 'Build the windmill'." },
+                      minutes: { type: Type.INTEGER, description: "Minutes for this segment." },
+                      servesGoal: { type: Type.STRING, description: "One line on how this segment moves students toward the main goal." },
+                    },
+                  },
+                },
+                cut: {
+                  type: Type.ARRAY,
+                  description: "What was removed from the source material and why. Be specific and honest - an instructor can put something back only if they can see it was taken out.",
+                  items: {
+                    type: Type.OBJECT,
+                    required: ["item", "reason"],
+                    properties: {
+                      item: { type: Type.STRING, description: "The activity, vocabulary set or section that was removed." },
+                      reason: { type: Type.STRING, description: "Why it did not survive the time budget or the learning goal." },
+                    },
+                  },
+                },
+                keyVocabulary: {
+                  type: Type.OBJECT,
+                  description: "The one word this session teaches. One for ages 5-7, at most two for 8-10.",
+                  required: ["word", "childDefinition"],
+                  properties: {
+                    word: { type: Type.STRING, description: "The single term the activity cannot be done without." },
+                    childDefinition: { type: Type.STRING, description: "Defined the way a child of this age would say it, in one short sentence." },
+                  },
+                },
+                reviewVocabulary: {
+                  type: Type.ARRAY,
+                  description: "Other terms from the source, kept aside to revisit if time allows rather than taught as new material.",
+                  items: { type: Type.STRING },
+                },
+                deferred: {
+                  type: Type.ARRAY,
+                  description: "Activities from the source worth teaching in a later session rather than today. One short line each.",
+                  items: { type: Type.STRING },
+                },
+                warning: {
+                  type: Type.STRING,
+                  description: "Present only when the source lesson genuinely cannot fit the stated duration for this age group. Say so plainly and name what would have to give.",
                 },
               },
             },
@@ -398,7 +579,7 @@ ${groundedFindings}`
             },
             slides: {
               type: Type.ARRAY,
-              description: "A series of 4-6 slide definitions for a presentation.",
+              description: "Three to five slides. Fewer is better - these are read off a board by children, not by the instructor.",
               items: {
                 type: Type.OBJECT,
                 required: ["title", "content", "visualConcept", "instructorNotes"],

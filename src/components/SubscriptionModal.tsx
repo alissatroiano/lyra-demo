@@ -18,7 +18,7 @@ export default function SubscriptionModal({
   onClose,
   authLoading
 }: SubscriptionModalProps) {
-  const [selectedPlan, setSelectedPlan] = useState<"intro" | "summer" | "yearly">("summer");
+  const [selectedPlan, setSelectedPlan] = useState<"intro" | "summer">("summer");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,10 +28,8 @@ export default function SubscriptionModal({
     setLoading(true);
     setError(null);
 
-    const priceId = selectedPlan === "summer" 
-      ? "price_1U2YXoKExpIuZ5d51zCqxK1f" 
-      : selectedPlan === "yearly" 
-      ? "price_1U2YXSKExpIuZ5d54aTeLf1u" 
+    const priceId = selectedPlan === "summer"
+      ? "price_1U2YXoKExpIuZ5d51zCqxK1f"
       : "price_1U2OwBKExpIuZ5d5bmfH68py";
 
     try {
@@ -42,7 +40,7 @@ export default function SubscriptionModal({
         body: JSON.stringify({
           uid: user.uid,
           email: user.email,
-          plan: selectedPlan === "summer" ? "summer_1299" : selectedPlan === "yearly" ? "annual" : "intro_999",
+          plan: selectedPlan === "summer" ? "summer_1299" : "intro_999",
           priceId
         })
       });
@@ -110,7 +108,7 @@ export default function SubscriptionModal({
               <div>
                 <h3 className="font-serif font-bold text-amber-950 dark:text-amber-200 text-lg">Step 1: Sign In First</h3>
                 <p className="text-xs text-amber-900/90 dark:text-amber-300 mt-1 max-w-md mx-auto">
-                  You must be logged in to connect your Stripe subscription to your Lyrah account.
+                  Signing in links your purchase to your account, so your lessons are waiting for you next time.
                 </p>
               </div>
               <button
@@ -120,8 +118,13 @@ export default function SubscriptionModal({
                 className="px-6 py-3 bg-teal-dark hover:bg-teal-900 text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 mx-auto cursor-pointer"
               >
                 <LogIn className="w-4 h-4 text-teal-brand" />
-                <span>{authLoading ? "Connecting..." : "Sign In with Google / Email"}</span>
+                <span>{authLoading ? "Connecting..." : "Sign In with Google"}</span>
               </button>
+              {/* Instructors read "no password" as "no real account", and hesitate
+                  to pay. Naming the choice turns an absence into a reason. */}
+              <p className="text-[11px] text-amber-900/80 dark:text-amber-300/80 max-w-sm mx-auto leading-relaxed">
+                No new password to remember — your Google account signs you in and keeps your lessons secure.
+              </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -148,13 +151,13 @@ export default function SubscriptionModal({
               {/* Plan Picker */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider block">Choose Plan</label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 gap-2.5">
                   {/* Summer Special leads: it spans the full row so it reads as
                       the intended choice, not one option among equals. */}
                   <button
                     type="button"
                     onClick={() => setSelectedPlan("summer")}
-                    className={`sm:col-span-2 p-3.5 rounded-xl border text-left transition-all relative cursor-pointer ${
+                    className={`p-3.5 rounded-xl border text-left transition-all relative cursor-pointer ${
                       selectedPlan === "summer"
                         ? "border-amber-500 dark:border-amber-400 bg-amber-50/80 dark:bg-amber-950/30 shadow-sm ring-2 ring-amber-500/30"
                         : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50"
@@ -183,41 +186,18 @@ export default function SubscriptionModal({
                     }`}
                   >
                     <span className="absolute -top-2.5 left-2 bg-teal-dark text-teal-brand text-[8px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs border border-teal-brand/40">
-                      Demo Incentive
+                      Monthly
                     </span>
                     <div className="flex justify-between items-start mt-1">
-                      <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100">Demo Intro Access</span>
+                      <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100">Instructor Monthly</span>
                       <input type="radio" checked={selectedPlan === "intro"} onChange={() => {}} className="accent-teal-700" />
                     </div>
                     <div className="mt-1.5 flex items-baseline gap-1">
-                      <span className="text-[10px] font-serif line-through text-slate-400 dark:text-slate-500">$29.00</span>
-                      <p className="text-lg font-serif font-extrabold text-teal-900 dark:text-teal-brand">$9.99<span className="text-[9px] font-sans font-normal text-slate-600 dark:text-slate-400"> one-time</span></p>
+                      <p className="text-lg font-serif font-extrabold text-teal-900 dark:text-teal-brand">$9.99<span className="text-[9px] font-sans font-normal text-slate-600 dark:text-slate-400"> / month</span></p>
                     </div>
-                    <p className="text-[9px] text-slate-600 dark:text-slate-400 mt-1 leading-tight">Introductory access fee</p>
+                    <p className="text-[9px] text-slate-600 dark:text-slate-400 mt-1 leading-tight">Unlimited lessons, every month.</p>
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setSelectedPlan("yearly")}
-                    className={`p-3.5 rounded-xl border text-left transition-all relative cursor-pointer ${
-                      selectedPlan === "yearly"
-                        ? "border-teal-600 dark:border-teal-brand bg-teal-50 dark:bg-teal-brand/10 shadow-sm ring-2 ring-teal-500/30"
-                        : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/50"
-                    }`}
-                  >
-                    <span className="absolute -top-2.5 right-2 bg-teal-700 text-white text-[8px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs">
-                      Multi-Site
-                    </span>
-                    <div className="flex justify-between items-start mt-1">
-                      <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100">Camp Director Special</span>
-                      <input type="radio" checked={selectedPlan === "yearly"} onChange={() => {}} className="accent-teal-700" />
-                    </div>
-                    <div className="mt-1.5 flex items-baseline gap-1">
-                      <span className="text-[10px] font-serif line-through text-slate-400 dark:text-slate-500">$99.99</span>
-                      <p className="text-lg font-serif font-bold text-teal-900 dark:text-teal-brand">$49.99<span className="text-[9px] font-sans font-normal text-slate-600 dark:text-slate-400"> / month</span></p>
-                    </div>
-                    <p className="text-[9px] text-slate-600 dark:text-slate-400 mt-1 leading-tight">For programs running several instructors</p>
-                  </button>
                 </div>
               </div>
 
@@ -241,6 +221,13 @@ export default function SubscriptionModal({
                 </div>
               )}
 
+              {/* Ties the charge to a named account. Someone unsure whether they
+                  "really have an account" is being asked for money — showing whose
+                  purchase this is answers that at the moment it matters. */}
+              <p className="text-center text-[11px] text-slate-600 dark:text-slate-400">
+                Purchasing as <span className="font-bold text-slate-800 dark:text-slate-200">{user.email}</span>
+              </p>
+
               {/* Submit CTA */}
               <button
                 type="submit"
@@ -248,7 +235,7 @@ export default function SubscriptionModal({
                 className="w-full py-3.5 bg-gradient-to-r from-teal-dark to-teal-800 hover:from-teal-800 hover:to-teal-dark text-white font-bold text-sm rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 <ShieldCheck className="w-4 h-4 text-teal-brand" />
-                <span>{loading ? "Processing Stripe Payment..." : `Pay ${selectedPlan === "summer" ? "$12.99" : selectedPlan === "yearly" ? "$49.99" : "$9.99"} & Activate`}</span>
+                <span>{loading ? "Processing Stripe Payment..." : `Pay ${selectedPlan === "summer" ? "$12.99" : "$9.99"} & Activate`}</span>
               </button>
 
               <div className="text-center text-[10px] text-slate-500 dark:text-slate-400 flex items-center justify-center gap-2">
