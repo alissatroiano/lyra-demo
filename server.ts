@@ -17,6 +17,63 @@ const app = express();
 // the local default.
 const PORT = Number(process.env.PORT) || 3000;
 
+/**
+ * Server-side Firestore, used to grant access when Stripe says a payment
+ * succeeded.
+ *
+ * Fulfilment used to depend entirely on the browser completing the redirect
+ * back from Stripe. A customer who closed the tab was charged and never
+ * upgraded, and nothing recorded that it had happened. The webhook is the only
+ * party that hears about a payment regardless of what the browser does.
+ *
+ * Credentials come from the Cloud Run service account, so no key file is
+ * needed — but that account lives in a different project from Firestore and
+ * must be granted access to it explicitly.
+ */
+let firestore: any = null;
+const getFirestore = async () => {
+  if (firestore) return firestore;
+  try {
+    const { Firestore } = await import("@google-cloud/firestore");
+    firestore = new Firestore({
+      projectId: process.env.FIREBASE_PROJECT_ID || "gen-lang-client-0481032669",
+      databaseId: process.env.FIRESTORE_DATABASE_ID || "ai-studio-lyra-4093db80-c113-4f0d-9b6e-ec52a27130c5",
+    });
+    return firestore;
+  } catch (err: any) {
+    console.error("Could not initialise Firestore admin client:", err?.message || err);
+    return null;
+  }
+};
+
+/** Mark a user as paid. Safe to call twice for the same checkout session. */
+const grantAccess = async (uid: string, plan: string, source: string) => {
+  if (!uid) {
+    console.error(`Cannot grant access from ${source}: no uid on the session.`);
+    return;
+  }
+
+  const db = await getFirestore();
+  if (!db) return;
+
+  try {
+    await db.collection("users").doc(uid).set(
+      {
+        uid,
+        isSubscribed: true,
+        stripeSubscriptionPlan: plan,
+        subscriptionSource: source,
+        subscriptionDate: new Date(),
+        updatedAt: new Date(),
+      },
+      { merge: true }
+    );
+    console.log(`Granted access to ${uid} (${plan}) via ${source}.`);
+  } catch (err: any) {
+    console.error(`Failed to grant access to ${uid}:`, err?.message || err);
+  }
+};
+
 // Stripe Webhook Endpoint (requires raw body before express.json parsing)
 app.post("/api/webhook/stripe", express.raw({ type: "application/json" }), async (req, res) => {
   const sig = req.headers["stripe-signature"];
@@ -62,6 +119,13 @@ app.post("/api/webhook/stripe", express.raw({ type: "application/json" }), async
       case "checkout.session.completed": {
         const session = event.data.object;
         console.log(`Checkout session completed for ${session.customer_email || session.customer}`);
+        // The uid is put on the session at checkout precisely so this moment
+        // does not depend on the customer's browser coming back.
+        await grantAccess(
+          session.client_reference_id || session.metadata?.uid,
+          session.metadata?.plan || "summer_1299",
+          "stripe_webhook"
+        );
         break;
       }
       case "customer.subscription.created":
