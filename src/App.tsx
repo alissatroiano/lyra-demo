@@ -443,6 +443,12 @@ export default function App() {
   const userSetGradeRef = React.useRef(false);
   const userSetSuppliesRef = React.useRef(false);
 
+  // Which lesson those manual choices belong to. A hand-picked platform should
+  // survive reopening the plan for the same lesson, but must not carry over to
+  // the next one — otherwise the chips stop reflecting the document on screen
+  // and quietly describe whatever was chosen an hour ago.
+  const detectedForRef = React.useRef<string>("");
+
   // Track if a curriculum plan is uploaded or text is provided
   const hasPlanUploaded = Boolean((customContent && customContent.trim().length > 0) || uploadedFileName);
 
@@ -797,17 +803,32 @@ export default function App() {
   }, [selectedCategory, selectedGrade, customGradeInput, selectedSize, selectedDuration, getFormattedSupplies, isManuallyEdited]);
 
   // Load preferences from Firebase Profile when logged in
+  // Saved preferences seed the chips ONCE, when the profile first arrives.
+  //
+  // This effect used to re-run on every profile change, restoring the platform
+  // and grade the instructor picked in some earlier session on top of whatever
+  // the current document had just been detected as. The plan modal then showed
+  // last week's answer for this week's lesson.
+  //
+  // Class size and duration are genuinely stable preferences and still load.
+  // Grade and platform belong to the lesson in front of you, so they are seeded
+  // only while nothing has been detected yet.
+  const profileSeededRef = React.useRef(false);
   useEffect(() => {
-    if (profile) {
-      if (profile.customPreferences !== undefined && profile.customPreferences !== "") {
-        setCustomPreferences(profile.customPreferences);
-        setIsManuallyEdited(true);
-      }
+    if (!profile || profileSeededRef.current) return;
+    profileSeededRef.current = true;
+
+    if (profile.customPreferences !== undefined && profile.customPreferences !== "") {
+      setCustomPreferences(profile.customPreferences);
+      setIsManuallyEdited(true);
+    }
+    if (profile.classSize) setSelectedSize(profile.classSize);
+    if (profile.duration) setSelectedDuration(profile.duration);
+
+    if (!detectedForRef.current) {
       if (profile.grade) setSelectedGrade(profile.grade);
-      if (profile.classSize) setSelectedSize(profile.classSize);
-      if (profile.duration) setSelectedDuration(profile.duration);
       if (profile.tech) {
-        const loaded = profile.tech.split(", ").map(t => t.trim()).filter(Boolean);
+        const loaded = profile.tech.split(", ").map((t: string) => t.trim()).filter(Boolean);
         if (loaded.length > 0) setSelectedSupplies(loaded);
       }
     }
@@ -851,6 +872,16 @@ export default function App() {
   const autoDetectCurriculumSettings = (textToScan: string, fileNameToScan?: string | null, directiveToScan?: string) => {
     const combined = ((textToScan || "") + " " + (fileNameToScan || "") + " " + (directiveToScan || "")).toLowerCase();
     if (!combined.trim()) return;
+
+    // A different lesson is a fresh start: manual picks are scoped to the
+    // document they were made against, not to the session.
+    const signature = `${fileNameToScan || ""}::${(textToScan || "").length}::${(textToScan || "").slice(0, 240)}`;
+    if (signature !== detectedForRef.current) {
+      detectedForRef.current = signature;
+      userSetCategoryRef.current = false;
+      userSetGradeRef.current = false;
+      userSetSuppliesRef.current = false;
+    }
 
     const requirements = extractRequirementsText(combined);
 
@@ -961,6 +992,7 @@ export default function App() {
     userSetCategoryRef.current = false;
     userSetGradeRef.current = false;
     userSetSuppliesRef.current = false;
+    detectedForRef.current = "";
 
     const fileExt = file.name.split('.').pop()?.toLowerCase();
 
