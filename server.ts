@@ -1027,12 +1027,55 @@ app.post("/api/generate-music", async (req, res) => {
 });
 
 // API endpoint for Co-Teacher multi-turn chat assistant
+/**
+ * Per-account daily cap on the copilot.
+ *
+ * /api/chat was open: no account required, no ceiling, and every message is a
+ * billed Gemini call. Anyone who found the endpoint could spend the project's
+ * inference budget from a terminal, and the budget running dry takes lesson
+ * generation down with it.
+ *
+ * The counter is in memory, so it resets when the instance recycles and is not
+ * shared across instances. That is a deliberate trade: it stops casual abuse
+ * and runaway loops without adding a datastore round-trip to every message.
+ * A determined attacker with many accounts is a different problem, and one this
+ * product does not have yet.
+ */
+const CHAT_DAILY_LIMIT = 40;
+const chatUsage = new Map<string, { day: string; count: number }>();
+
+const chatQuotaExceeded = (uid: string): boolean => {
+  const today = new Date().toISOString().slice(0, 10);
+  const seen = chatUsage.get(uid);
+
+  if (!seen || seen.day !== today) {
+    chatUsage.set(uid, { day: today, count: 1 });
+    return false;
+  }
+
+  seen.count += 1;
+  return seen.count > CHAT_DAILY_LIMIT;
+};
+
 app.post("/api/chat", async (req, res) => {
   if (!ai) {
     return res.status(500).json({ error: "Gemini client not initialized." });
   }
 
-  const { messages, model, systemInstruction, useSearch, thinkingLevel } = req.body;
+  const { messages, model, systemInstruction, useSearch, thinkingLevel, uid } = req.body;
+
+  // Signed-in only. Every message here costs inference, and an open endpoint
+  // is an open tab on someone else's bill.
+  if (!uid || typeof uid !== "string") {
+    return res.status(401).json({ error: "Sign in to chat with Lyrah." });
+  }
+
+  if (chatQuotaExceeded(uid)) {
+    return res.status(429).json({
+      error: `You have reached today's limit of ${CHAT_DAILY_LIMIT} copilot messages. It resets tomorrow.`,
+    });
+  }
+
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: "messages array is required" });
   }

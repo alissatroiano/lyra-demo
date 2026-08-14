@@ -3795,7 +3795,16 @@ export default function App() {
           {/* Floating Action Button */}
           <button
             type="button"
-            onClick={() => setCopilotOpen(!copilotOpen)}
+            onClick={() => {
+              // The copilot costs inference on every message, so it is a
+              // signed-in feature. Sending someone to sign-in is clearer than
+              // opening a panel whose first reply is a refusal.
+              if (!user) {
+                signInWithGoogle();
+                return;
+              }
+              setCopilotOpen(!copilotOpen);
+            }}
             className={`group relative px-4 py-3.5 rounded-full font-bold text-xs shadow-xl transition-all duration-300 flex items-center gap-2.5 cursor-pointer border ${
               copilotOpen
                 ? "bg-slate-900 text-white border-slate-700 hover:bg-slate-800"

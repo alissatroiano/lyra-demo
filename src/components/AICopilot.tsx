@@ -200,7 +200,8 @@ Active Lesson Context:
           model: chatModel,
           systemInstruction,
           useSearch,
-          thinkingLevel: chatModel === "gemini-3.1-pro-preview" ? "HIGH" : undefined
+          thinkingLevel: chatModel === "gemini-3.1-pro-preview" ? "HIGH" : undefined,
+          uid: profile?.uid
         })
       });
 
