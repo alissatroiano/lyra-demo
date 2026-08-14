@@ -327,6 +327,74 @@ const stripMarkupFromLesson = (node: any): any => {
   return node;
 };
 
+/**
+ * How many lessons an account may generate before paying.
+ *
+ * Zero. Generation is the expensive call in this product and the thing being
+ * sold; giving it away by default meant paying for strangers' inference with
+ * no way to reach them afterwards.
+ *
+ * The previous allowance lived in localStorage, so a private window or a
+ * cleared cache reset it — not a gate at all, while every generation still
+ * cost real money. Evaluation access is granted per account instead, by
+ * marking that account subscribed, which is deliberate and revocable.
+ */
+const FREE_LESSONS_PER_ACCOUNT = 0;
+
+type LessonQuota = { allowed: boolean; used: number; subscribed: boolean };
+
+/**
+ * Previously, generation had no server-side Firestore dependency at all -
+ * subscription status was read once on the client at sign-in and cached
+ * there. This check adds a live Firestore read to every generation call,
+ * including a subscriber's. A brief blip on that single read must not turn
+ * into "subscription required" for someone who has already paid, so a
+ * genuine subscriber gets one retry before the fail-closed default applies.
+ * Zero free lessons stays the policy either way - retrying does not grant
+ * anyone an allowance, it only protects a real subscriber from a transient
+ * read failure on a call that used to never touch Firestore.
+ */
+const readQuotaDoc = async (db: any, uid: string) => {
+  const ref = db.collection("users").doc(uid);
+  const snap = await ref.get();
+  return { ref, data: snap.exists ? snap.data() : {} };
+};
+
+const checkLessonQuota = async (uid: string): Promise<LessonQuota> => {
+  const db = await getFirestore();
+
+  // Fails closed. Zero free lessons is the actual policy, so a Firestore
+  // outage defaulting to "let them through" would mean free generation for
+  // anyone rather than a blocked instructor - the opposite of the intent.
+  if (!db) return { allowed: false, used: 0, subscribed: false };
+
+  let lastErr: any = null;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const { ref, data } = await readQuotaDoc(db, uid);
+
+      if (data?.isSubscribed === true) {
+        return { allowed: true, used: data?.freeLessonsUsed || 0, subscribed: true };
+      }
+
+      const used = data?.freeLessonsUsed || 0;
+      if (used >= FREE_LESSONS_PER_ACCOUNT) {
+        return { allowed: false, used, subscribed: false };
+      }
+
+      await ref.set({ uid, freeLessonsUsed: used + 1, updatedAt: new Date() }, { merge: true });
+      return { allowed: true, used: used + 1, subscribed: false };
+    } catch (err: any) {
+      lastErr = err;
+      if (attempt === 0) await new Promise((r) => setTimeout(r, 250));
+    }
+  }
+
+  console.error("Lesson quota check failed twice, blocking:", lastErr?.message || lastErr);
+  return { allowed: false, used: 0, subscribed: false };
+};
+
 // API endpoint to process lesson plan using Gemini
 app.post("/api/process-lesson", async (req, res) => {
   if (!ai) {
@@ -335,10 +403,29 @@ app.post("/api/process-lesson", async (req, res) => {
     });
   }
 
-  const { lessonContent, customPreferences, instructorMemory, figures } = req.body;
+  const { lessonContent, customPreferences, instructorMemory, figures, uid } = req.body;
 
   if (!lessonContent || typeof lessonContent !== "string") {
     return res.status(400).json({ error: "lessonContent string is required" });
+  }
+
+  // Generation is the expensive call in this product, so it requires an
+  // account. Anonymous access meant anyone could spend the inference budget
+  // without ever being reachable.
+  if (!uid || typeof uid !== "string") {
+    return res.status(401).json({ error: "Sign in to generate a lesson." });
+  }
+
+  const quota = await checkLessonQuota(uid);
+  if (!quota.allowed) {
+    return res.status(402).json({
+      error:
+        FREE_LESSONS_PER_ACCOUNT === 0
+          ? "A subscription is required to generate lessons."
+          : "You have used your free lessons.",
+      details: "Your account is signed in — adding a plan unlocks generation straight away.",
+      quotaExhausted: true,
+    });
   }
 
   try {
