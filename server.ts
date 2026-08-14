@@ -560,7 +560,7 @@ The ${sourceFigures.length} image(s) attached are the diagrams and photographs f
                 },
                 prompt: {
                   type: Type.STRING,
-                  description: "Only when needed is true. Ask for a NUMBERED STEP-BY-STEP ASSEMBLY DIAGRAM - four to six panels showing the build coming together in order, each panel captioned with what happens in it and the parts labelled with plain arrows. A single picture of the finished object is what makes a new instructor ask for a live demonstration: they cannot see how it got there. Panel one starts with loose materials on a table; the last panel shows the completed build in use. Name the EXACT materials from handsOnActivity.materials in every panel they appear in, and forbid substituting similar-looking objects - a windmill of paper cups, a bendable straw and metal washers must never be drawn as a wooden water wheel with spoons. Ask for clean black line art on a white background, the style of a childrens how-to-draw guide. Omit when needed is false.",
+                  description: "Only when needed is true. Describe ONE clear picture of the completed build, seen from an angle that shows how the parts connect - not a sequence of panels, which crowds the detail that matters into thumbnails. Name the EXACT materials from handsOnActivity.materials, so the picture shows what these children actually make: forbid substituting similar-looking objects, since a windmill of paper cups, a bendable straw and metal washers must never be drawn as a wooden water wheel with spoons. State which part joins to which and at what angle, label nothing with text, and ask for a clean uncluttered illustration on a plain background. Omit when needed is false.",
                 },
               },
             },
@@ -1027,12 +1027,55 @@ app.post("/api/generate-music", async (req, res) => {
 });
 
 // API endpoint for Co-Teacher multi-turn chat assistant
+/**
+ * Per-account daily cap on the copilot.
+ *
+ * /api/chat was open: no account required, no ceiling, and every message is a
+ * billed Gemini call. Anyone who found the endpoint could spend the project's
+ * inference budget from a terminal, and the budget running dry takes lesson
+ * generation down with it.
+ *
+ * The counter is in memory, so it resets when the instance recycles and is not
+ * shared across instances. That is a deliberate trade: it stops casual abuse
+ * and runaway loops without adding a datastore round-trip to every message.
+ * A determined attacker with many accounts is a different problem, and one this
+ * product does not have yet.
+ */
+const CHAT_DAILY_LIMIT = 40;
+const chatUsage = new Map<string, { day: string; count: number }>();
+
+const chatQuotaExceeded = (uid: string): boolean => {
+  const today = new Date().toISOString().slice(0, 10);
+  const seen = chatUsage.get(uid);
+
+  if (!seen || seen.day !== today) {
+    chatUsage.set(uid, { day: today, count: 1 });
+    return false;
+  }
+
+  seen.count += 1;
+  return seen.count > CHAT_DAILY_LIMIT;
+};
+
 app.post("/api/chat", async (req, res) => {
   if (!ai) {
     return res.status(500).json({ error: "Gemini client not initialized." });
   }
 
-  const { messages, model, systemInstruction, useSearch, thinkingLevel } = req.body;
+  const { messages, model, systemInstruction, useSearch, thinkingLevel, uid } = req.body;
+
+  // Signed-in only. Every message here costs inference, and an open endpoint
+  // is an open tab on someone else's bill.
+  if (!uid || typeof uid !== "string") {
+    return res.status(401).json({ error: "Sign in to chat with Lyrah." });
+  }
+
+  if (chatQuotaExceeded(uid)) {
+    return res.status(429).json({
+      error: `You have reached today's limit of ${CHAT_DAILY_LIMIT} copilot messages. It resets tomorrow.`,
+    });
+  }
+
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: "messages array is required" });
   }
@@ -1348,6 +1391,72 @@ app.get("/api/verify-checkout-session", async (req, res) => {
       error: "Failed to verify Stripe payment session.",
       details: error?.message || String(error)
     });
+  }
+});
+
+/**
+ * Last-resort fulfilment: has this person paid, and do they have access?
+ *
+ * Three things already grant access — the browser after checkout, the Stripe
+ * webhook, and the checkout verification on return. Each can fail
+ * independently: a closed tab, a rotated webhook secret, a signed-out session.
+ * Two instructors paid and got nothing, so this exists to make that
+ * unrecoverable-by-the-user case recoverable.
+ *
+ * It asks Stripe directly whether this email has ever completed a payment, and
+ * grants access if so. Safe to call repeatedly and safe to call by someone who
+ * has not paid: Stripe is the authority, not the caller.
+ */
+app.post("/api/restore-access", async (req, res) => {
+  const { uid, email } = req.body || {};
+
+  if (!uid || !email) {
+    return res.status(400).json({ error: "Sign in first so the payment can be matched to your account." });
+  }
+
+  const stripeSecret = process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecret) {
+    return res.status(400).json({ error: "STRIPE_SECRET_KEY not configured on server." });
+  }
+
+  try {
+    const Stripe = (await import("stripe")).default;
+    const stripe = new Stripe(stripeSecret);
+
+    const customers = await stripe.customers.list({ email, limit: 5 });
+
+    for (const customer of customers.data) {
+      // A completed checkout is the strongest signal, and covers both the
+      // one-time price and the subscription.
+      const sessions = await stripe.checkout.sessions.list({ customer: customer.id, limit: 20 });
+      const paid = sessions.data.find(
+        (s: any) => s.payment_status === "paid" || s.status === "complete"
+      );
+
+      if (paid) {
+        await grantAccess(uid, (paid.metadata as any)?.plan || "restored", "restore_endpoint");
+        return res.json({
+          restored: true,
+          plan: (paid.metadata as any)?.plan || "restored",
+          message: "Your payment was found and your access has been restored.",
+        });
+      }
+
+      // A live subscription without a checkout session still counts.
+      const subs = await stripe.subscriptions.list({ customer: customer.id, status: "active", limit: 5 });
+      if (subs.data.length > 0) {
+        await grantAccess(uid, "subscription", "restore_endpoint");
+        return res.json({ restored: true, plan: "subscription", message: "Your subscription was found and restored." });
+      }
+    }
+
+    return res.json({
+      restored: false,
+      message: "No completed payment was found for this email address.",
+    });
+  } catch (error: any) {
+    console.error("Restore access error:", error);
+    res.status(500).json({ error: "Could not check your payment.", details: error?.message || String(error) });
   }
 });
 

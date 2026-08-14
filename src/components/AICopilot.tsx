@@ -66,6 +66,53 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
   const [chatRole, setChatRole] = useState<string>("Pedagogical Advisor");
   const [useSearch, setUseSearch] = useState<boolean>(false);
   const [chatInput, setChatInput] = useState<string>("");
+  // Dictation for the chat box.
+  //
+  // This uses the browser's own speech recognition, not a model call, so an
+  // instructor can talk to Lyrah while their hands are busy without it costing
+  // anything per use. Support is not universal, so the button only appears
+  // where the API exists rather than offering something that silently fails.
+  const [isDictating, setIsDictating] = useState<boolean>(false);
+  const recognitionRef = useRef<any>(null);
+  const speechSupported =
+    typeof window !== "undefined" &&
+    !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
+
+  const toggleDictation = () => {
+    if (!speechSupported) return;
+
+    if (isDictating) {
+      recognitionRef.current?.stop();
+      return;
+    }
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = false;
+
+    // Anything already typed is kept; dictation appends rather than replaces.
+    const existing = chatInput.trim();
+
+    recognition.onresult = (event: any) => {
+      let transcript = "";
+      for (let i = 0; i < event.results.length; i += 1) {
+        transcript += event.results[i][0].transcript;
+      }
+      setChatInput(existing ? `${existing} ${transcript}` : transcript);
+    };
+    recognition.onerror = () => setIsDictating(false);
+    recognition.onend = () => setIsDictating(false);
+
+    recognitionRef.current = recognition;
+    setIsDictating(true);
+    recognition.start();
+  };
+
+  // Stop the microphone if the panel closes mid-sentence.
+  useEffect(() => () => recognitionRef.current?.stop(), []);
   const [isChatLoading, setIsChatLoading] = useState<boolean>(false);
   const [chatError, setChatError] = useState<string>("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -153,7 +200,8 @@ Active Lesson Context:
           model: chatModel,
           systemInstruction,
           useSearch,
-          thinkingLevel: chatModel === "gemini-3.1-pro-preview" ? "HIGH" : undefined
+          thinkingLevel: chatModel === "gemini-3.1-pro-preview" ? "HIGH" : undefined,
+          uid: profile?.uid
         })
       });
 
@@ -487,7 +535,7 @@ Active Lesson Context:
       <div className="xl:col-span-3 flex flex-row xl:flex-col gap-2.5 bg-surface-0 border border-black/[0.05] rounded-2xl p-4 xl:p-4.5 overflow-x-auto shrink-0">
         <div className="hidden xl:block border-b border-black/[0.05] pb-3 mb-2.5">
           <span className="text-[10px] font-bold text-teal-brand uppercase tracking-wider font-mono">Lyrah Copilot Hub</span>
-          <h4 className="text-xs font-bold text-teal-dark font-sans">AI Assistant Suite</h4>
+          <h4 className="text-xs font-bold text-teal-dark dark:text-teal-brand font-sans">AI Assistant Suite</h4>
         </div>
 
         {[
@@ -508,7 +556,7 @@ Active Lesson Context:
                   : "bg-white border border-black/[0.04] text-secondary hover:bg-surface-0 hover:text-primary"
               }`}
             >
-              <div className={`p-2 rounded-lg ${isSelected ? "bg-teal-brand/20 text-teal-brand" : "bg-teal-light text-teal-brand"}`}>
+              <div className={`p-2 rounded-lg ${isSelected ? "bg-teal-brand/20 text-teal-brand" : "bg-teal-light dark:bg-teal-brand/20 text-teal-brand"}`}>
                 <Icon className="w-4 h-4" />
               </div>
               <div className="hidden xl:flex flex-col text-left space-y-0.5">
@@ -592,7 +640,7 @@ Active Lesson Context:
             </div>
 
             {/* Active Gemini Intelligence Feature Indicator */}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-teal-50/60 border border-teal-500/10 rounded-xl text-[10px] font-medium text-teal-dark font-sans">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-teal-50/60 border border-teal-500/10 rounded-xl text-[10px] font-medium text-teal-dark dark:text-teal-brand font-sans">
               {chatModel === "gemini-3.1-pro-preview" && (
                 <span className="flex items-center gap-1.5 text-purple-700 font-bold">
                   <Sparkles className="w-3.5 h-3.5 text-purple-600" />
@@ -664,7 +712,7 @@ Active Lesson Context:
               ))}
               {isChatLoading && (
                 <div className="flex gap-3 justify-start items-center">
-                  <div className="w-8 h-8 rounded-full bg-teal-light flex items-center justify-center text-teal-brand shrink-0 font-bold text-xs animate-pulse">
+                  <div className="w-8 h-8 rounded-full bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center text-teal-brand shrink-0 font-bold text-xs animate-pulse">
                     ...
                   </div>
                   <span className="text-[11px] text-secondary font-mono animate-pulse">Lyrah is thinking...</span>
@@ -731,6 +779,22 @@ Active Lesson Context:
                 className="flex-1 text-xs p-3.5 border border-black/[0.08] rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-brand/15 focus:border-teal-brand bg-surface-0 font-sans text-primary leading-normal"
                 disabled={isChatLoading}
               />
+              {speechSupported && (
+                <button
+                  type="button"
+                  onClick={toggleDictation}
+                  title={isDictating ? "Stop dictating" : "Dictate your message"}
+                  aria-label={isDictating ? "Stop dictating" : "Dictate your message"}
+                  className={`px-3.5 rounded-xl flex items-center justify-center cursor-pointer transition-all border ${
+                    isDictating
+                      ? "bg-red-500 border-red-400 text-white animate-pulse"
+                      : "bg-surface-0 dark:bg-slate-800 border-black/[0.08] dark:border-slate-700 text-secondary dark:text-slate-300 hover:text-teal-brand hover:border-teal-brand/40"
+                  }`}
+                >
+                  {isDictating ? <MicOff className="w-4.5 h-4.5" /> : <Mic className="w-4.5 h-4.5" />}
+                </button>
+              )}
+
               <button
                 type="submit"
                 disabled={!chatInput.trim() || isChatLoading}
@@ -750,7 +814,7 @@ Active Lesson Context:
             <div className="border-b border-black/[0.05] pb-4 flex items-center gap-2">
               <ImageIcon className="w-5 h-5 text-teal-brand" />
               <div>
-                <h4 className="text-sm font-bold text-teal-dark font-sans leading-none">Visual Asset Studio</h4>
+                <h4 className="text-sm font-bold text-teal-dark dark:text-teal-brand font-sans leading-none">Visual Asset Studio</h4>
                 <p className="text-[10px] text-secondary font-sans mt-1">Render custom STEAM board diagrams using gemini-3.1-flash-image</p>
               </div>
             </div>
@@ -797,7 +861,7 @@ Active Lesson Context:
                     onClick={() => setIsEditingImage(!isEditingImage)}
                     className={`w-full py-2 px-3 border rounded-xl text-[10px] font-bold font-sans flex items-center justify-center gap-1.5 cursor-pointer ${
                       isEditingImage 
-                        ? "bg-teal-light text-teal-brand border-teal-brand/20" 
+                        ? "bg-teal-light dark:bg-teal-brand/20 text-teal-brand border-teal-brand/20" 
                         : "bg-white border-black/[0.08] text-secondary"
                     }`}
                   >
@@ -838,7 +902,7 @@ Active Lesson Context:
                       <a
                         href={`data:image/png;base64,${generatedImage}`}
                         download={`lyra_asset_${Date.now()}.png`}
-                        className="text-[10px] font-bold text-secondary hover:text-teal-dark flex items-center gap-1"
+                        className="text-[10px] font-bold text-secondary hover:text-teal-dark dark:text-teal-brand flex items-center gap-1"
                       >
                         <Download className="w-3.5 h-3.5" />
                         <span>Download file</span>
@@ -855,7 +919,7 @@ Active Lesson Context:
                   </div>
                 ) : (
                   <div className="text-center space-y-3 max-w-sm">
-                    <div className="w-12 h-12 rounded-full bg-teal-light flex items-center justify-center text-teal-brand mx-auto">
+                    <div className="w-12 h-12 rounded-full bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center text-teal-brand mx-auto">
                       <ImageIcon className="w-5 h-5" />
                     </div>
                     <h5 className="text-xs font-bold text-primary font-sans">Awaiting Drawing Command</h5>
@@ -884,7 +948,7 @@ Active Lesson Context:
             <div className="border-b border-black/[0.05] pb-4 flex items-center gap-2">
               <Mic className="w-5 h-5 text-teal-brand" />
               <div>
-                <h4 className="text-sm font-bold text-teal-dark font-sans leading-none">Voice Classroom Line</h4>
+                <h4 className="text-sm font-bold text-teal-dark dark:text-teal-brand font-sans leading-none">Voice Classroom Line</h4>
                 <p className="text-[10px] text-secondary font-sans mt-1">Talk out loud with Lyrah in real-time over our Gemini Live API bridge</p>
               </div>
             </div>
@@ -980,7 +1044,7 @@ Active Lesson Context:
             <div className="border-b border-black/[0.05] pb-4 flex items-center gap-2">
               <VideoIcon className="w-5 h-5 text-teal-brand" />
               <div>
-                <h4 className="text-sm font-bold text-teal-dark font-sans leading-none">Video Content Analyzer</h4>
+                <h4 className="text-sm font-bold text-teal-dark dark:text-teal-brand font-sans leading-none">Video Content Analyzer</h4>
                 <p className="text-[10px] text-secondary font-sans mt-1">Upload a video clip and let Gemini Pro breakdown its scientific and coding concepts</p>
               </div>
             </div>
@@ -1065,7 +1129,7 @@ Active Lesson Context:
                       </div>
                     ) : (
                       <div className="h-full flex flex-col items-center justify-center text-center space-y-3 py-6">
-                        <div className="w-12 h-12 rounded-full bg-teal-light flex items-center justify-center text-teal-brand mx-auto">
+                        <div className="w-12 h-12 rounded-full bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center text-teal-brand mx-auto">
                           <VideoIcon className="w-5 h-5" />
                         </div>
                         <h5 className="text-xs font-bold text-primary font-sans">Awaiting Video Analysis</h5>

@@ -285,6 +285,13 @@ export default function App() {
   // Gemini with the text so the build it describes is the one in the document
   // rather than one inferred from prose.
   const [sourceFigures, setSourceFigures] = useState<{ mimeType: string; data: string }[]>([]);
+
+  // Instructors sign in on shared staffroom and classroom machines and leave
+  // themselves logged in. Firebase keeps a session alive indefinitely by
+  // default, so an unattended browser is an open account. Signing out after a
+  // long idle period bounds that without nagging someone mid-lesson.
+  const IDLE_LIMIT_MS = 2 * 60 * 60 * 1000; // two hours
+  const idleTimerRef = React.useRef<number | null>(null);
   // Payment outcome shown to the customer on return from Stripe. Without this
   // a successful purchase looks identical to no purchase at all.
   const [paymentNotice, setPaymentNotice] = useState<
@@ -391,6 +398,32 @@ export default function App() {
           detail: err?.message || "We could not confirm the payment automatically.",
         });
       });
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const signOutIdle = async () => {
+      try {
+        await logOut();
+      } finally {
+        setCurrentView("landing");
+      }
+    };
+
+    const reset = () => {
+      if (idleTimerRef.current) window.clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = window.setTimeout(signOutIdle, IDLE_LIMIT_MS);
+    };
+
+    const events = ["mousedown", "keydown", "touchstart", "scroll"];
+    events.forEach((e) => window.addEventListener(e, reset, { passive: true }));
+    reset();
+
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, reset));
+      if (idleTimerRef.current) window.clearTimeout(idleTimerRef.current);
+    };
   }, [user]);
 
   // Worksheet simulated answers
@@ -1464,7 +1497,7 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? "dark bg-[#0b0f19] text-slate-100" : "bg-surface-0 text-primary"} flex flex-col antialiased transition-colors duration-300 w-full`}>
+    <div className={`app-shell min-h-screen ${isDarkMode ? "dark text-slate-100" : "bg-surface-0 text-primary"} flex flex-col antialiased transition-colors duration-300 w-full`}>
       {/* Full Viewport Document Canvas Container */}
       <div className={`w-full ${isDarkMode ? "bg-[#0f172a] text-slate-100" : "bg-white text-primary"} min-h-screen flex flex-col pb-16 px-3 sm:px-6 lg:px-10 xl:px-12 transition-colors duration-300`}>
         
@@ -1502,7 +1535,7 @@ export default function App() {
                 className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[38px] border ${
                   isDarkMode
                     ? "bg-slate-800 text-teal-brand border-slate-700 hover:bg-slate-700 hover:border-teal-brand/40"
-                    : "bg-teal-light/60 text-teal-dark border-teal-brand/30 hover:bg-teal-light hover:border-teal-brand/50"
+                    : "bg-teal-light/60 dark:bg-teal-brand/15 text-teal-dark dark:text-teal-brand border-teal-brand/30 hover:bg-teal-light hover:border-teal-brand/50"
                 }`}
                 title="Show me how Lyrah works"
               >
@@ -1517,7 +1550,7 @@ export default function App() {
                 className={`p-2 rounded-xl border transition-all cursor-pointer flex items-center justify-center shrink-0 min-h-[38px] ${
                   isDarkMode 
                     ? "bg-slate-800 text-amber-300 border-slate-700 hover:border-amber-400 micro-glow-amber" 
-                    : "bg-surface-1 text-teal-dark border-black/[0.08] hover:border-teal-brand/40"
+                    : "bg-surface-1 text-teal-dark dark:text-teal-brand border-black/[0.08] hover:border-teal-brand/40"
                 }`}
                 title={isDarkMode ? "Switch to Studio Light Theme" : "Switch to 2026 Cyber Lab Dark Theme"}
               >
@@ -1556,7 +1589,17 @@ export default function App() {
                   <span className="font-sans font-medium text-teal-dark dark:text-teal-brand max-w-[70px] sm:max-w-[100px] truncate hidden sm:inline">{user.displayName?.split(" ")[0]}</span>
                   <button
                     type="button"
-                    onClick={logOut}
+                    onClick={async () => {
+                      await logOut();
+                      // Back to the landing page: staying in the studio after
+                      // signing out leaves a shell with no lesson and no
+                      // account behind it, which reads as a broken page.
+                      setCurrentView("landing");
+                      setLesson(INITIAL_PROCESSED_LESSON);
+                      setCustomContent("");
+                      setUploadedFileName(null);
+                      setSourceFigures([]);
+                    }}
                     className="ml-0.5 text-[10px] text-red-600 dark:text-red-400 hover:text-red-700 font-bold transition-all px-1.5 py-0.5 rounded-md hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
                     title="Sign Out"
                   >
@@ -2295,7 +2338,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={handleAutoGenerateFromChips}
-                        className="text-[9px] text-teal-brand hover:text-teal-dark dark:hover:text-teal-light font-sans font-bold flex items-center gap-0.5 cursor-pointer"
+                        className="text-[9px] text-teal-brand hover:text-teal-dark dark:text-teal-brand dark:hover:text-teal-light font-sans font-bold flex items-center gap-0.5 cursor-pointer"
                         title="Re-generate instruction text based on the selected chips above"
                       >
                         <RefreshCw className="w-2.5 h-2.5" />
@@ -2308,7 +2351,7 @@ export default function App() {
                         type="button"
                         onClick={handleSavePreferences}
                         disabled={profileSaving}
-                        className="text-[9px] text-teal-brand hover:text-teal-dark dark:hover:text-teal-light font-sans font-bold flex items-center gap-0.5 cursor-pointer disabled:opacity-50"
+                        className="text-[9px] text-teal-brand hover:text-teal-dark dark:text-teal-brand dark:hover:text-teal-light font-sans font-bold flex items-center gap-0.5 cursor-pointer disabled:opacity-50"
                         title="Save these instruction preferences to your profile permanently"
                       >
                         {profileSaveSuccess ? (
@@ -2338,7 +2381,7 @@ export default function App() {
                     placeholder="Describe specific class constraints, student behaviors, curriculum alignment, or custom styles..."
                   />
                   {isManuallyEdited && (
-                    <div className="absolute right-2 bottom-2 text-[8px] text-teal-brand font-sans font-medium px-1.5 py-0.5 rounded-md bg-teal-light/50 border border-teal-brand/10 select-none">
+                    <div className="absolute right-2 bottom-2 text-[8px] text-teal-brand font-sans font-medium px-1.5 py-0.5 rounded-md bg-teal-light/50 dark:bg-teal-brand/15 border border-teal-brand/10 select-none">
                       Edited
                     </div>
                   )}
@@ -2682,24 +2725,24 @@ export default function App() {
                     <InteractiveSlideshow slides={lesson.slides} />
 
                     {/* Scientific learning pillars */}
-                    <div className="bg-surface-0/60 border border-black/[0.06] rounded-2xl p-5 space-y-4">
-                      <div className="flex items-center gap-2.5 border-b border-black/[0.05] pb-3">
-                        <div className="w-8 h-8 rounded-lg bg-teal-light flex items-center justify-center text-teal-brand border border-teal-brand/10">
+                    <div className="bg-surface-0/60 dark:bg-slate-900/70 border border-black/[0.06] dark:border-slate-800 rounded-2xl p-5 space-y-4">
+                      <div className="flex items-center gap-2.5 border-b border-black/[0.05] dark:border-slate-800 pb-3">
+                        <div className="w-8 h-8 rounded-lg bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center text-teal-brand border border-teal-brand/10 dark:border-teal-brand/30">
                           <CheckCircle2 className="w-4.5 h-4.5" />
                         </div>
                         <div>
-                          <h4 className="text-xs font-bold text-teal-dark uppercase font-sans">Curriculum Core Pillars</h4>
-                          <p className="text-[10px] text-secondary font-sans leading-none">Key Student Knowledge Deliverables</p>
+                          <h4 className="text-xs font-bold text-teal-dark dark:text-teal-brand uppercase font-sans">Curriculum Core Pillars</h4>
+                          <p className="text-[10px] text-secondary dark:text-slate-400 font-sans leading-none">Key Student Knowledge Deliverables</p>
                         </div>
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                         {lesson.keyTakeaways.map((takeaway, idx) => (
-                          <div key={idx} className="flex gap-2.5 items-start p-3 bg-white rounded-xl border border-black/[0.04]">
-                            <span className="w-5 h-5 rounded-full bg-teal-light flex items-center justify-center shrink-0 text-teal-brand font-bold text-[10px] mt-0.5">
+                          <div key={idx} className="flex gap-2.5 items-start p-3 bg-white dark:bg-slate-800 rounded-xl border border-black/[0.04] dark:border-slate-700">
+                            <span className="w-5 h-5 rounded-full bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center shrink-0 text-teal-brand font-bold text-[10px] mt-0.5">
                               {idx + 1}
                             </span>
-                            <span className="text-xs text-secondary leading-relaxed font-sans font-medium">{takeaway}</span>
+                            <span className="text-xs text-secondary dark:text-slate-200 leading-relaxed font-sans font-medium">{takeaway}</span>
                           </div>
                         ))}
                       </div>
@@ -2805,7 +2848,7 @@ export default function App() {
                               onClick={() => toggleMaterial(material)}
                               className={`w-full flex items-start gap-3 p-3 rounded-xl border text-left transition-all cursor-pointer ${
                                 checkedMaterials[material]
-                                  ? "bg-teal-light/20 border-teal-brand/30 text-teal-dark dark:text-teal-brand font-medium"
+                                  ? "bg-teal-light/20 dark:bg-teal-brand/10 border-teal-brand/30 text-teal-dark dark:text-teal-brand font-medium"
                                   : "bg-white dark:bg-slate-800/80 border-black/[0.05] dark:border-slate-700 text-secondary dark:text-slate-300 hover:bg-surface-0 dark:hover:bg-slate-800"
                               }`}
                             >
@@ -2846,7 +2889,7 @@ export default function App() {
                           </div>
                         )}
 
-                        <div className="p-3 bg-teal-light/20 border border-teal-brand/10 rounded-xl text-[10px] text-teal-dark dark:text-slate-300 leading-relaxed font-sans flex gap-2">
+                        <div className="p-3 bg-teal-light/20 dark:bg-teal-brand/10 border border-teal-brand/10 rounded-xl text-[10px] text-teal-dark dark:text-slate-300 leading-relaxed font-sans flex gap-2">
                           <CheckCircle2 className="w-4 h-4 text-teal-brand shrink-0 mt-0.5" />
                           <div>
                             <strong>{isCodingLesson ? "Setup IDE & Devices" : "Check bins off"}</strong> to streamline pre-class preparation for {selectedGrade} grade.
@@ -3228,7 +3271,7 @@ export default function App() {
                           <button
                             onClick={handleNextQuiz}
                             disabled={selectedQuizOption === null}
-                            className="px-4.5 py-2.5 bg-white text-teal-dark text-xs font-bold rounded-xl hover:bg-teal-light transition-all flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                            className="px-4.5 py-2.5 bg-white text-teal-dark dark:text-teal-brand text-xs font-bold rounded-xl hover:bg-teal-light dark:bg-teal-brand/20 transition-all flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                           >
                             <span>{currentQuizIndex === lesson.quiz.length - 1 ? "End Module" : "Next Question"}</span>
                             <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -3326,7 +3369,7 @@ export default function App() {
                                 <span className="text-xs font-mono font-bold truncate">{rec.suggestedSearchQuery}</span>
                                 <button
                                   onClick={() => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(rec.suggestedSearchQuery)}`, "_blank")}
-                                  className="p-1.5 hover:bg-teal-light rounded-lg text-teal-brand transition-all shrink-0"
+                                  className="p-1.5 hover:bg-teal-light dark:bg-teal-brand/20 rounded-lg text-teal-brand transition-all shrink-0"
                                   title="YouTube search"
                                 >
                                   <ExternalLink className="w-4 h-4" />
@@ -3752,7 +3795,16 @@ export default function App() {
           {/* Floating Action Button */}
           <button
             type="button"
-            onClick={() => setCopilotOpen(!copilotOpen)}
+            onClick={() => {
+              // The copilot costs inference on every message, so it is a
+              // signed-in feature. Sending someone to sign-in is clearer than
+              // opening a panel whose first reply is a refusal.
+              if (!user) {
+                signInWithGoogle();
+                return;
+              }
+              setCopilotOpen(!copilotOpen);
+            }}
             className={`group relative px-4 py-3.5 rounded-full font-bold text-xs shadow-xl transition-all duration-300 flex items-center gap-2.5 cursor-pointer border ${
               copilotOpen
                 ? "bg-slate-900 text-white border-slate-700 hover:bg-slate-800"

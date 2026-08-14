@@ -1,6 +1,5 @@
 import React from "react";
 import { Sparkles, ArrowRight, Layers, Activity, Palette, HelpCircle, Link2Off, Check, Database, FileCode, BookOpen, LogIn, Clock, Users, Briefcase, Play } from "lucide-react";
-import { RobotBunnyMascot } from "../App";
 
 interface LandingPageProps {
   onLaunchStudio: () => void;
@@ -25,12 +24,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 relative z-10">
           <div className="space-y-4 max-w-xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-100/80 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800/80 text-amber-900 dark:text-amber-200 rounded-full text-[10px] font-bold uppercase tracking-wider font-sans">
-              <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-              <span>XPRIZE · Education & Human Potential</span>
-            </div>
-
-            <h2 className="font-display text-3.5xl sm:text-5xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
+            <h2 className="font-display text-5xl sm:text-7xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
               Say goodbye to <span className="text-teal-700 dark:text-teal-brand underline decoration-amber-400 dark:decoration-amber-500 underline-offset-6">long, wordy lesson plans</span>
             </h2>
 
@@ -45,7 +39,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <button
                   type="button"
                   onClick={onLaunchStudio}
-                  className="px-6 py-3.5 bg-teal-800 dark:bg-teal-600 hover:bg-slate-900 dark:hover:bg-teal-500 text-white rounded-2xl text-xs sm:text-sm font-extrabold transition-all shadow-md hover:shadow-lg flex items-center gap-2.5 cursor-pointer border border-teal-brand/30 group"
+                  className="px-6 py-3.5 bg-teal-800 dark:bg-teal-600 hover:bg-slate-900 dark:hover:bg-teal-500 text-white rounded-2xl text-base sm:text-lg font-display font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2.5 cursor-pointer border border-teal-brand/30 group"
                 >
                   <Sparkles className="w-4 h-4 text-amber-300 group-hover:rotate-12 transition-transform" />
                   <span>Enter Instructor Studio</span>
@@ -55,7 +49,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <button
                   type="button"
                   onClick={onSignIn}
-                  className="px-6 py-3.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 rounded-2xl text-xs sm:text-sm font-black transition-all shadow-md hover:shadow-lg flex items-center gap-2.5 cursor-pointer border border-amber-300/60 group"
+                  className="px-6 py-3.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 rounded-2xl text-base sm:text-lg font-display font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2.5 cursor-pointer border border-amber-300/60 group"
                 >
                   <LogIn className="w-4.5 h-4.5 text-slate-950" />
                   <span>Sign In / Create Account to Launch Studio</span>
@@ -68,16 +62,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               <button
                 type="button"
                 onClick={onWatchDemo}
-                className="px-5 py-3.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-2xl text-xs sm:text-sm font-bold transition-all border border-teal-brand/40 dark:border-teal-brand/30 shadow-3xs cursor-pointer flex items-center gap-2 group"
+                className="px-5 py-3.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-2xl text-base sm:text-lg font-display font-medium transition-all border border-teal-brand/40 dark:border-teal-brand/30 shadow-3xs cursor-pointer flex items-center gap-2 group"
               >
-                <Play className="w-4 h-4 text-teal-brand" />
+                <Play className="w-4 h-4 text-amber-500" />
                 <span>Watch a 30-second demo</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => document.getElementById("pricing-section")?.scrollIntoView({ behavior: "smooth" })}
-                className="px-5 py-3.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-2xl text-xs sm:text-sm font-bold transition-all border border-slate-200 dark:border-slate-700 shadow-3xs cursor-pointer flex items-center gap-2"
+                className="px-5 py-3.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-2xl text-base sm:text-lg font-display font-medium transition-all border border-slate-200 dark:border-slate-700 shadow-3xs cursor-pointer flex items-center gap-2"
               >
                 <span>View Pricing Plans</span>
               </button>
@@ -93,13 +87,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             )}
           </div>
 
-          {/* Mascot Illustration */}
-          <div className="self-center md:self-auto shrink-0 bg-white/80 dark:bg-slate-900/90 border border-teal-brand/20 dark:border-slate-800 rounded-3xl p-6 shadow-md animate-float relative">
-            <RobotBunnyMascot className="w-32 h-32 sm:w-36 sm:h-36" />
-            <div className="mt-3 text-center">
-              <span className="text-[10px] font-extrabold font-mono text-teal-900 dark:text-teal-brand bg-teal-light/60 dark:bg-teal-brand/20 px-2.5 py-1 rounded-full uppercase tracking-wide">
-                Lyrah AI Co-Teacher
-              </span>
+          {/* Lyra: the lyre. The constellation sailors steered by, and the
+              instrument that makes separate strings sound like one piece. */}
+          <div className="self-center md:self-auto shrink-0 relative animate-float">
+            <div className="absolute inset-0 bg-teal-brand/20 blur-3xl rounded-full scale-90 pointer-events-none" />
+            <img
+              src="/assets/images/favicon.png"
+              alt="The constellation Lyra"
+              className="relative w-28 h-36 sm:w-32 sm:h-44 object-contain drop-shadow-[0_0_28px_rgba(45,212,191,0.35)]"
+            />
+            <div className="mt-3 text-center relative">
+           
             </div>
           </div>
         </div>
@@ -108,7 +106,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* The problem, stated before the product. An instructor should recognise
           their own week in this block before being asked to care how it works. */}
       <section className="space-y-4" id="problem-section">
-        <span className="text-[10px] font-mono font-bold text-teal-brand uppercase tracking-[0.18em]">
+        <span className="text-[10px] font-mono font-bold text-amber-500 uppercase tracking-[0.18em]">
           The problem Lyrah solves
         </span>
 
@@ -156,7 +154,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* How Lyrah works — five steps in the order they actually run, so the
           numbering carries real sequence rather than decoration. */}
       <section className="space-y-4" id="pipeline-section">
-        <span className="text-[11px] font-mono font-bold text-teal-brand uppercase tracking-[0.18em]">
+        <span className="text-[11px] font-mono font-bold text-amber-500  uppercase tracking-[0.18em]">
           How Lyrah works
         </span>
 
@@ -275,7 +273,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 space-y-6" id="metrics-section">
         <div className="text-center space-y-1.5">
           <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest font-sans">PROVEN PEDAGOGICAL METRICS</span>
-          <h3 className="font-display text-2xl font-bold text-slate-900 dark:text-slate-100">Curriculum Efficiency Accomplished</h3>
+          <h3 className="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-slate-100">Curriculum Efficiency Accomplished</h3>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 text-center">
@@ -305,7 +303,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           <span className="text-[10px] font-bold text-amber-800 dark:text-amber-200 uppercase tracking-widest font-sans bg-amber-100/60 dark:bg-amber-950/60 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-800">
             INSTRUCTOR PLANS
           </span>
-          <h3 className="font-display text-3xl font-bold text-slate-900 dark:text-slate-100">Simple, Transparent Pricing</h3>
+          <h3 className="font-display text-4xl sm:text-5xl font-bold text-slate-900 dark:text-slate-100">Simple, Transparent Pricing</h3>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-lg mx-auto font-sans">
             Built for the instructor preparing tomorrow’s class tonight. Pay once, or subscribe for the term.
           </p>
@@ -382,7 +380,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <span className="text-[10px] font-mono font-bold text-teal-900 dark:text-teal-brand uppercase tracking-wider bg-teal-50 dark:bg-teal-brand/20 px-2.5 py-1 rounded-md border border-teal-200 dark:border-teal-brand/30 inline-block">
                   ONGOING ACCESS
                 </span>
-                <h4 className="font-display text-2xl font-bold text-slate-900 dark:text-slate-100">Instructor Monthly</h4>
+                <h4 className="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-slate-100">Instructor Monthly</h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">For instructors running new material every week through the school year.</p>
               </div>
 
@@ -434,7 +432,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       <div className="border-t border-slate-200 dark:border-slate-800 pt-10 space-y-6" id="stack-section">
         <div className="text-center space-y-1.5">
           <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest font-sans">SECURE, SCALABLE FOUNDATION</span>
-          <h3 className="font-display text-2xl font-bold text-slate-900 dark:text-slate-100">Modern Stack & Platform Standards</h3>
+          <h3 className="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-slate-100">Modern Stack & Platform Standards</h3>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
