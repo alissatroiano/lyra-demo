@@ -1352,6 +1352,72 @@ app.get("/api/verify-checkout-session", async (req, res) => {
 });
 
 /**
+ * Last-resort fulfilment: has this person paid, and do they have access?
+ *
+ * Three things already grant access — the browser after checkout, the Stripe
+ * webhook, and the checkout verification on return. Each can fail
+ * independently: a closed tab, a rotated webhook secret, a signed-out session.
+ * Two instructors paid and got nothing, so this exists to make that
+ * unrecoverable-by-the-user case recoverable.
+ *
+ * It asks Stripe directly whether this email has ever completed a payment, and
+ * grants access if so. Safe to call repeatedly and safe to call by someone who
+ * has not paid: Stripe is the authority, not the caller.
+ */
+app.post("/api/restore-access", async (req, res) => {
+  const { uid, email } = req.body || {};
+
+  if (!uid || !email) {
+    return res.status(400).json({ error: "Sign in first so the payment can be matched to your account." });
+  }
+
+  const stripeSecret = process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecret) {
+    return res.status(400).json({ error: "STRIPE_SECRET_KEY not configured on server." });
+  }
+
+  try {
+    const Stripe = (await import("stripe")).default;
+    const stripe = new Stripe(stripeSecret);
+
+    const customers = await stripe.customers.list({ email, limit: 5 });
+
+    for (const customer of customers.data) {
+      // A completed checkout is the strongest signal, and covers both the
+      // one-time price and the subscription.
+      const sessions = await stripe.checkout.sessions.list({ customer: customer.id, limit: 20 });
+      const paid = sessions.data.find(
+        (s: any) => s.payment_status === "paid" || s.status === "complete"
+      );
+
+      if (paid) {
+        await grantAccess(uid, (paid.metadata as any)?.plan || "restored", "restore_endpoint");
+        return res.json({
+          restored: true,
+          plan: (paid.metadata as any)?.plan || "restored",
+          message: "Your payment was found and your access has been restored.",
+        });
+      }
+
+      // A live subscription without a checkout session still counts.
+      const subs = await stripe.subscriptions.list({ customer: customer.id, status: "active", limit: 5 });
+      if (subs.data.length > 0) {
+        await grantAccess(uid, "subscription", "restore_endpoint");
+        return res.json({ restored: true, plan: "subscription", message: "Your subscription was found and restored." });
+      }
+    }
+
+    return res.json({
+      restored: false,
+      message: "No completed payment was found for this email address.",
+    });
+  } catch (error: any) {
+    console.error("Restore access error:", error);
+    res.status(500).json({ error: "Could not check your payment.", details: error?.message || String(error) });
+  }
+});
+
+/**
  * Stripe billing portal.
  *
  * Instructors on the recurring tiers need somewhere to update a card, see what
