@@ -764,14 +764,34 @@ export default function App() {
     }
   }, [user, currentView]);
 
+  // A sign-in used to land in an empty studio with no indication a plan was
+  // needed - the paywall was only discovered after uploading a lesson and
+  // hitting a 402, well after someone had already invested effort. That both
+  // undersells why the sign-in happened and reads as a bait-and-switch.
+  //
+  // The flag below marks "show the plan once we know for certain this account
+  // is not already subscribed." profile starts out null and resolves after
+  // sign-in on its own async path, so checking it immediately after
+  // signInWithGoogle() would show the paywall to a returning subscriber for a
+  // flicker before it corrected itself - alarming for exactly the person who
+  // should never see it. Waiting for authLoading to clear avoids that.
+  const pendingPlanPromptRef = React.useRef(false);
+
   const handleSignInAndRedirect = async () => {
     try {
       await signInWithGoogle();
       setCurrentView("studio");
+      pendingPlanPromptRef.current = true;
     } catch (err: any) {
       console.error("Sign in failed:", err);
     }
   };
+
+  useEffect(() => {
+    if (!pendingPlanPromptRef.current || authLoading) return;
+    pendingPlanPromptRef.current = false;
+    if (!profile?.isSubscribed) setShowSubscriptionModal(true);
+  }, [authLoading, profile]);
 
   const [codeCopied, setCodeCopied] = useState<boolean>(false);
 

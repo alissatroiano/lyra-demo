@@ -118,22 +118,25 @@ $12.99 charge still filters for genuine intent in a way "sign up free" does not.
 instructor generating weekly all year can consume more than $12.99 of inference alone. That is
 acceptable while the goal is evidence rather than margin, and it is why the offer is framed as a
 season pass rather than a lifetime one — but it is a real exposure, bounded only by how long this
-pricing stays live. It closes 31 December.
+pricing stays live. It closes 31 August 2026.
 
-### The bet: acquire now, convert during the school year
+### The bet: acquire before the bell rings, convert once the term starts
 
-The sequence is the strategy.
+The sequence is the strategy, and the one-time tier is deliberately short-lived rather than
+open-ended.
 
-The weeks either side of the school year starting are the one window where both halves of this
-market are reachable — camp and enrichment instructors are teaching, school-year staff are
-preparing. Acquire in that window at a price that removes deliberation. Convert during the term,
-when the retention argument becomes true rather than theoretical: an instructor in November has a
-semester of materials and pacing decisions inside Lyrah that they cannot rebuild elsewhere.
+Late summer is the one window where both halves of this market are reachable at once — camp and
+enrichment instructors are still teaching, school-year staff are already preparing for the fall.
+The Summer STEM Special exists to make that decision an impulse rather than a deliberation, and it
+closes **31 August 2026**, right as the school year begins: it is priced to acquire during the
+window, not to be the plan someone is still on in November.
 
-The one-time offer therefore has an end date rather than running indefinitely. Instructors who buy
-in this window keep that price if they later move to monthly — early buyers are not repriced for
-having arrived first. This is framed as founding pricing, not as a discount: a discount says the
-product is worth less, and it is not.
+Instructor Monthly is what carries a subscriber through the actual school year, and it is the
+tier the retention argument is really about — an instructor in November has a semester of
+materials and pacing decisions inside Lyrah that they cannot rebuild elsewhere. Instructors who
+buy the one-time offer keep the option to move to monthly afterward at the standard price; the
+one-time tier is not repriced or extended once it closes. This is framed as founding pricing, not
+as a discount: a discount says the product is worth less, and it is not.
 
 ### Held back for a later launch
 
