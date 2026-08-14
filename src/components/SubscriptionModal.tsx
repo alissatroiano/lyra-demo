@@ -174,6 +174,7 @@ export default function SubscriptionModal({
                       <p className="text-lg font-serif font-extrabold text-amber-900 dark:text-amber-300">$12.99<span className="text-[9px] font-sans font-normal text-slate-600 dark:text-slate-400"> one-time</span></p>
                     </div>
                     <p className="text-[9px] text-slate-600 dark:text-slate-400 mt-1 leading-tight">One-time charge (no subscription)</p>
+                    <p className="text-[9px] font-bold text-amber-700 dark:text-amber-400 mt-1 leading-tight">Ends 08/31/26</p>
                   </button>
 
                   <button

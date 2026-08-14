@@ -326,6 +326,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 </span>
                 <h4 className="font-display text-2xl font-bold text-white">Summer STEM Special</h4>
                 <p className="text-xs text-teal-100/80 font-sans">Special summer offer for educators &amp; camps. Full access for a single low charge.</p>
+                <p className="text-[10px] font-bold text-amber-300 font-sans uppercase tracking-wide">Ends 08/31/26</p>
               </div>
 
               <div className="flex items-baseline gap-1.5 pt-2">
