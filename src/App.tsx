@@ -1535,7 +1535,7 @@ export default function App() {
                 className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[38px] border ${
                   isDarkMode
                     ? "bg-slate-800 text-teal-brand border-slate-700 hover:bg-slate-700 hover:border-teal-brand/40"
-                    : "bg-teal-light/60 text-teal-dark border-teal-brand/30 hover:bg-teal-light hover:border-teal-brand/50"
+                    : "bg-teal-light/60 text-teal-dark dark:text-teal-brand border-teal-brand/30 hover:bg-teal-light hover:border-teal-brand/50"
                 }`}
                 title="Show me how Lyrah works"
               >
@@ -1550,7 +1550,7 @@ export default function App() {
                 className={`p-2 rounded-xl border transition-all cursor-pointer flex items-center justify-center shrink-0 min-h-[38px] ${
                   isDarkMode 
                     ? "bg-slate-800 text-amber-300 border-slate-700 hover:border-amber-400 micro-glow-amber" 
-                    : "bg-surface-1 text-teal-dark border-black/[0.08] hover:border-teal-brand/40"
+                    : "bg-surface-1 text-teal-dark dark:text-teal-brand border-black/[0.08] hover:border-teal-brand/40"
                 }`}
                 title={isDarkMode ? "Switch to Studio Light Theme" : "Switch to 2026 Cyber Lab Dark Theme"}
               >
@@ -2338,7 +2338,7 @@ export default function App() {
                       <button
                         type="button"
                         onClick={handleAutoGenerateFromChips}
-                        className="text-[9px] text-teal-brand hover:text-teal-dark dark:hover:text-teal-light font-sans font-bold flex items-center gap-0.5 cursor-pointer"
+                        className="text-[9px] text-teal-brand hover:text-teal-dark dark:text-teal-brand dark:hover:text-teal-light font-sans font-bold flex items-center gap-0.5 cursor-pointer"
                         title="Re-generate instruction text based on the selected chips above"
                       >
                         <RefreshCw className="w-2.5 h-2.5" />
@@ -2351,7 +2351,7 @@ export default function App() {
                         type="button"
                         onClick={handleSavePreferences}
                         disabled={profileSaving}
-                        className="text-[9px] text-teal-brand hover:text-teal-dark dark:hover:text-teal-light font-sans font-bold flex items-center gap-0.5 cursor-pointer disabled:opacity-50"
+                        className="text-[9px] text-teal-brand hover:text-teal-dark dark:text-teal-brand dark:hover:text-teal-light font-sans font-bold flex items-center gap-0.5 cursor-pointer disabled:opacity-50"
                         title="Save these instruction preferences to your profile permanently"
                       >
                         {profileSaveSuccess ? (
@@ -3271,7 +3271,7 @@ export default function App() {
                           <button
                             onClick={handleNextQuiz}
                             disabled={selectedQuizOption === null}
-                            className="px-4.5 py-2.5 bg-white text-teal-dark text-xs font-bold rounded-xl hover:bg-teal-light transition-all flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                            className="px-4.5 py-2.5 bg-white text-teal-dark dark:text-teal-brand text-xs font-bold rounded-xl hover:bg-teal-light transition-all flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                           >
                             <span>{currentQuizIndex === lesson.quiz.length - 1 ? "End Module" : "Next Question"}</span>
                             <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />

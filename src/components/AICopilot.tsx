@@ -534,7 +534,7 @@ Active Lesson Context:
       <div className="xl:col-span-3 flex flex-row xl:flex-col gap-2.5 bg-surface-0 border border-black/[0.05] rounded-2xl p-4 xl:p-4.5 overflow-x-auto shrink-0">
         <div className="hidden xl:block border-b border-black/[0.05] pb-3 mb-2.5">
           <span className="text-[10px] font-bold text-teal-brand uppercase tracking-wider font-mono">Lyrah Copilot Hub</span>
-          <h4 className="text-xs font-bold text-teal-dark font-sans">AI Assistant Suite</h4>
+          <h4 className="text-xs font-bold text-teal-dark dark:text-teal-brand font-sans">AI Assistant Suite</h4>
         </div>
 
         {[
@@ -639,7 +639,7 @@ Active Lesson Context:
             </div>
 
             {/* Active Gemini Intelligence Feature Indicator */}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-teal-50/60 border border-teal-500/10 rounded-xl text-[10px] font-medium text-teal-dark font-sans">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-teal-50/60 border border-teal-500/10 rounded-xl text-[10px] font-medium text-teal-dark dark:text-teal-brand font-sans">
               {chatModel === "gemini-3.1-pro-preview" && (
                 <span className="flex items-center gap-1.5 text-purple-700 font-bold">
                   <Sparkles className="w-3.5 h-3.5 text-purple-600" />
@@ -813,7 +813,7 @@ Active Lesson Context:
             <div className="border-b border-black/[0.05] pb-4 flex items-center gap-2">
               <ImageIcon className="w-5 h-5 text-teal-brand" />
               <div>
-                <h4 className="text-sm font-bold text-teal-dark font-sans leading-none">Visual Asset Studio</h4>
+                <h4 className="text-sm font-bold text-teal-dark dark:text-teal-brand font-sans leading-none">Visual Asset Studio</h4>
                 <p className="text-[10px] text-secondary font-sans mt-1">Render custom STEAM board diagrams using gemini-3.1-flash-image</p>
               </div>
             </div>
@@ -901,7 +901,7 @@ Active Lesson Context:
                       <a
                         href={`data:image/png;base64,${generatedImage}`}
                         download={`lyra_asset_${Date.now()}.png`}
-                        className="text-[10px] font-bold text-secondary hover:text-teal-dark flex items-center gap-1"
+                        className="text-[10px] font-bold text-secondary hover:text-teal-dark dark:text-teal-brand flex items-center gap-1"
                       >
                         <Download className="w-3.5 h-3.5" />
                         <span>Download file</span>
@@ -947,7 +947,7 @@ Active Lesson Context:
             <div className="border-b border-black/[0.05] pb-4 flex items-center gap-2">
               <Mic className="w-5 h-5 text-teal-brand" />
               <div>
-                <h4 className="text-sm font-bold text-teal-dark font-sans leading-none">Voice Classroom Line</h4>
+                <h4 className="text-sm font-bold text-teal-dark dark:text-teal-brand font-sans leading-none">Voice Classroom Line</h4>
                 <p className="text-[10px] text-secondary font-sans mt-1">Talk out loud with Lyrah in real-time over our Gemini Live API bridge</p>
               </div>
             </div>
@@ -1043,7 +1043,7 @@ Active Lesson Context:
             <div className="border-b border-black/[0.05] pb-4 flex items-center gap-2">
               <VideoIcon className="w-5 h-5 text-teal-brand" />
               <div>
-                <h4 className="text-sm font-bold text-teal-dark font-sans leading-none">Video Content Analyzer</h4>
+                <h4 className="text-sm font-bold text-teal-dark dark:text-teal-brand font-sans leading-none">Video Content Analyzer</h4>
                 <p className="text-[10px] text-secondary font-sans mt-1">Upload a video clip and let Gemini Pro breakdown its scientific and coding concepts</p>
               </div>
             </div>

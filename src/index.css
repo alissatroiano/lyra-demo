@@ -50,8 +50,12 @@
   --color-surface-1: #141b2f;
   --color-surface-2: #05070f;
 
+  /* teal-light flips (it is only ever a background). teal-dark deliberately
+   * does NOT: it is used as a background on 44 surfaces with white text over
+   * it, so lightening it turned the chat header and the sign-in button into
+   * white-on-pale. The 26 places that use it as a foreground carry their own
+   * dark: variant instead. */
   --color-teal-light: #10322f;
-  --color-teal-dark: #5eead4;
 
   --color-gold-light: #422006;
 }
