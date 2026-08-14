@@ -285,6 +285,13 @@ export default function App() {
   // Gemini with the text so the build it describes is the one in the document
   // rather than one inferred from prose.
   const [sourceFigures, setSourceFigures] = useState<{ mimeType: string; data: string }[]>([]);
+
+  // Instructors sign in on shared staffroom and classroom machines and leave
+  // themselves logged in. Firebase keeps a session alive indefinitely by
+  // default, so an unattended browser is an open account. Signing out after a
+  // long idle period bounds that without nagging someone mid-lesson.
+  const IDLE_LIMIT_MS = 2 * 60 * 60 * 1000; // two hours
+  const idleTimerRef = React.useRef<number | null>(null);
   // Payment outcome shown to the customer on return from Stripe. Without this
   // a successful purchase looks identical to no purchase at all.
   const [paymentNotice, setPaymentNotice] = useState<
@@ -391,6 +398,32 @@ export default function App() {
           detail: err?.message || "We could not confirm the payment automatically.",
         });
       });
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const signOutIdle = async () => {
+      try {
+        await logOut();
+      } finally {
+        setCurrentView("landing");
+      }
+    };
+
+    const reset = () => {
+      if (idleTimerRef.current) window.clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = window.setTimeout(signOutIdle, IDLE_LIMIT_MS);
+    };
+
+    const events = ["mousedown", "keydown", "touchstart", "scroll"];
+    events.forEach((e) => window.addEventListener(e, reset, { passive: true }));
+    reset();
+
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, reset));
+      if (idleTimerRef.current) window.clearTimeout(idleTimerRef.current);
+    };
   }, [user]);
 
   // Worksheet simulated answers
@@ -1464,7 +1497,7 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen ${isDarkMode ? "dark bg-[#0b0f19] text-slate-100" : "bg-surface-0 text-primary"} flex flex-col antialiased transition-colors duration-300 w-full`}>
+    <div className={`app-shell min-h-screen ${isDarkMode ? "dark text-slate-100" : "bg-surface-0 text-primary"} flex flex-col antialiased transition-colors duration-300 w-full`}>
       {/* Full Viewport Document Canvas Container */}
       <div className={`w-full ${isDarkMode ? "bg-[#0f172a] text-slate-100" : "bg-white text-primary"} min-h-screen flex flex-col pb-16 px-3 sm:px-6 lg:px-10 xl:px-12 transition-colors duration-300`}>
         
@@ -1556,7 +1589,17 @@ export default function App() {
                   <span className="font-sans font-medium text-teal-dark dark:text-teal-brand max-w-[70px] sm:max-w-[100px] truncate hidden sm:inline">{user.displayName?.split(" ")[0]}</span>
                   <button
                     type="button"
-                    onClick={logOut}
+                    onClick={async () => {
+                      await logOut();
+                      // Back to the landing page: staying in the studio after
+                      // signing out leaves a shell with no lesson and no
+                      // account behind it, which reads as a broken page.
+                      setCurrentView("landing");
+                      setLesson(INITIAL_PROCESSED_LESSON);
+                      setCustomContent("");
+                      setUploadedFileName(null);
+                      setSourceFigures([]);
+                    }}
                     className="ml-0.5 text-[10px] text-red-600 dark:text-red-400 hover:text-red-700 font-bold transition-all px-1.5 py-0.5 rounded-md hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
                     title="Sign Out"
                   >

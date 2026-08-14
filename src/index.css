@@ -46,14 +46,49 @@
   --color-secondary: #94a3b8;
   --color-muted: #64748b;
 
-  --color-surface-0: #0f172a;
-  --color-surface-1: #1e293b;
-  --color-surface-2: #0b0f19;
+  --color-surface-0: #0b1020;
+  --color-surface-1: #141b2f;
+  --color-surface-2: #05070f;
 
   --color-teal-light: #10322f;
   --color-teal-dark: #5eead4;
 
   --color-gold-light: #422006;
+}
+
+/* Night sky.
+ *
+ * Lyra is a constellation, so the dark theme is a sky rather than a grey. Two
+ * fixed starfields at different scales sit behind everything and do not move
+ * with the page, which reads as depth rather than as a texture stuck to the
+ * content. Both are pure CSS: no image to load, nothing to go stale in a cache.
+ */
+.dark body,
+.dark .app-shell {
+  background-color: #05070f;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, rgba(255, 255, 255, 0.55), transparent 60%),
+    radial-gradient(1px 1px at 78% 12%, rgba(255, 255, 255, 0.4), transparent 60%),
+    radial-gradient(1.4px 1.4px at 42% 62%, rgba(148, 233, 226, 0.5), transparent 60%),
+    radial-gradient(1px 1px at 88% 74%, rgba(255, 255, 255, 0.35), transparent 60%),
+    radial-gradient(1px 1px at 26% 86%, rgba(255, 255, 255, 0.3), transparent 60%),
+    radial-gradient(1.6px 1.6px at 64% 34%, rgba(45, 212, 191, 0.45), transparent 60%),
+    radial-gradient(circle at 20% 0%, rgba(26, 150, 140, 0.10), transparent 55%),
+    radial-gradient(circle at 85% 100%, rgba(45, 212, 191, 0.07), transparent 50%);
+  background-attachment: fixed;
+}
+
+/* A faint drift, slow enough to notice only if you look for it. Anyone who has
+   asked for reduced motion gets a still sky. */
+@keyframes lyrah-drift {
+  from { background-position: 0 0; }
+  to   { background-position: 0 -40px; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dark .app-shell {
+    animation: lyrah-drift 240s linear infinite alternate;
+  }
 }
 
 /* 2026 Liquid Glass & Micro Glow Utilities */

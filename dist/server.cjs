@@ -33,33 +33,81 @@ var import_mammoth = __toESM(require("mammoth"), 1);
 import_dotenv.default.config();
 var app = (0, import_express.default)();
 var PORT = Number(process.env.PORT) || 3e3;
+var firestore = null;
+var getFirestore = async () => {
+  if (firestore) return firestore;
+  try {
+    const { Firestore } = await import("@google-cloud/firestore");
+    firestore = new Firestore({
+      projectId: process.env.FIREBASE_PROJECT_ID || "gen-lang-client-0481032669",
+      databaseId: process.env.FIRESTORE_DATABASE_ID || "ai-studio-lyra-4093db80-c113-4f0d-9b6e-ec52a27130c5"
+    });
+    return firestore;
+  } catch (err) {
+    console.error("Could not initialise Firestore admin client:", err?.message || err);
+    return null;
+  }
+};
+var grantAccess = async (uid, plan, source) => {
+  if (!uid) {
+    console.error(`Cannot grant access from ${source}: no uid on the session.`);
+    return;
+  }
+  const db = await getFirestore();
+  if (!db) return;
+  try {
+    await db.collection("users").doc(uid).set(
+      {
+        uid,
+        isSubscribed: true,
+        stripeSubscriptionPlan: plan,
+        subscriptionSource: source,
+        subscriptionDate: /* @__PURE__ */ new Date(),
+        updatedAt: /* @__PURE__ */ new Date()
+      },
+      { merge: true }
+    );
+    console.log(`Granted access to ${uid} (${plan}) via ${source}.`);
+  } catch (err) {
+    console.error(`Failed to grant access to ${uid}:`, err?.message || err);
+  }
+};
 app.post("/api/webhook/stripe", import_express.default.raw({ type: "application/json" }), async (req, res) => {
   const sig = req.headers["stripe-signature"];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SIGNING_SECRET || "whsec_h2Q2CtoDpjuMAP042arsH6JkPUnpE8X4";
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SIGNING_SECRET;
   const stripeSecret = process.env.STRIPE_SECRET_KEY;
   if (!stripeSecret) {
     console.warn("Stripe webhook received, but STRIPE_SECRET_KEY is missing.");
     return res.status(200).json({ received: true, status: "stripe_not_configured" });
   }
+  if (!webhookSecret) {
+    console.error("Stripe webhook rejected: STRIPE_WEBHOOK_SECRET is not configured.");
+    return res.status(500).send("Webhook secret is not configured.");
+  }
+  if (!sig) {
+    console.error("Stripe webhook rejected: request carried no stripe-signature header.");
+    return res.status(400).send("Missing stripe-signature header.");
+  }
   try {
     const Stripe = (await import("stripe")).default;
     const stripe = new Stripe(stripeSecret);
     let event;
-    if (sig && webhookSecret) {
-      try {
-        event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-      } catch (err) {
-        console.error(`Stripe Webhook signature verification failed: ${err.message}`);
-        return res.status(400).send(`Webhook Signature Error: ${err.message}`);
-      }
-    } else {
-      event = typeof req.body === "string" ? JSON.parse(req.body) : req.body;
+    try {
+      event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } catch (err) {
+      console.error(`Stripe Webhook signature verification failed: ${err.message}`);
+      return res.status(400).send(`Webhook Signature Error: ${err.message}`);
     }
     console.log(`Verified Stripe Webhook event: ${event.type}`);
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object;
         console.log(`Checkout session completed for ${session.customer_email || session.customer}`);
+        await grantAccess(
+          session.client_reference_id || session.metadata?.uid,
+          session.metadata?.plan || "summer_1299",
+          "stripe_webhook"
+        );
         break;
       }
       case "customer.subscription.created":
@@ -101,6 +149,36 @@ try {
 } catch (error) {
   console.error("Failed to initialize GoogleGenAI client:", error);
 }
+var MIN_FIGURE_BYTES = 25e3;
+var MAX_FIGURES = 4;
+var extractDocxFigures = async (buffer) => {
+  const found = [];
+  try {
+    await import_mammoth.default.convertToHtml(
+      { buffer },
+      {
+        convertImage: import_mammoth.default.images.imgElement(async (image) => {
+          try {
+            const bytes = await image.readAsBuffer();
+            if (bytes.length >= MIN_FIGURE_BYTES) {
+              found.push({
+                mimeType: image.contentType || "image/png",
+                data: bytes.toString("base64"),
+                bytes: bytes.length
+              });
+            }
+          } catch {
+          }
+          return { src: "" };
+        })
+      }
+    );
+  } catch (err) {
+    console.warn("Could not read figures from the document:", err?.message || err);
+    return [];
+  }
+  return found.sort((a, b) => b.bytes - a.bytes).slice(0, MAX_FIGURES).map(({ mimeType, data }) => ({ mimeType, data }));
+};
 app.post("/api/extract-text", async (req, res) => {
   const { fileBase64, fileName } = req.body;
   if (!fileBase64 || typeof fileBase64 !== "string") {
@@ -110,6 +188,7 @@ app.post("/api/extract-text", async (req, res) => {
   try {
     const buffer = Buffer.from(fileBase64, "base64");
     let extractedText = "";
+    let figures = [];
     if (extension === "pdf") {
       try {
         const pdfParseModule2 = await import("pdf-parse");
@@ -137,12 +216,13 @@ app.post("/api/extract-text", async (req, res) => {
     } else if (extension === "docx") {
       const result = await import_mammoth.default.extractRawText({ buffer });
       extractedText = result.value || "";
+      figures = await extractDocxFigures(buffer);
     } else if (["txt", "md", "csv", "rtf", "json", "doc"].includes(extension)) {
       extractedText = buffer.toString("utf-8");
     } else {
       return res.status(400).json({ error: `Unsupported file extension: .${extension}` });
     }
-    res.json({ text: extractedText });
+    res.json({ text: extractedText, figures });
   } catch (error) {
     console.error("Error extracting document text:", error);
     res.status(500).json({
@@ -151,13 +231,27 @@ app.post("/api/extract-text", async (req, res) => {
     });
   }
 });
+var FORMATTING_TAG = /<\/?(?:p|br|div|span|strong|b|em|i|u|ul|ol|h[1-6])(?:\s[^>]*)?\/?>/gi;
+var stripMarkup = (value) => {
+  let out = value.replace(/<\/?li(?:\s[^>]*)?>/gi, " ").replace(FORMATTING_TAG, " ");
+  out = out.replace(/&nbsp;/gi, " ").replace(/&lt;/gi, "<").replace(/&gt;/gi, ">").replace(/&quot;/gi, '"').replace(/&#39;/gi, "'").replace(/&amp;/gi, "&");
+  return out.replace(/[ \t]{2,}/g, " ").replace(/\s+([.,;:!?)])/g, "$1").trim();
+};
+var stripMarkupFromLesson = (node) => {
+  if (typeof node === "string") return stripMarkup(node);
+  if (Array.isArray(node)) return node.map(stripMarkupFromLesson);
+  if (node && typeof node === "object") {
+    return Object.fromEntries(Object.entries(node).map(([k, v]) => [k, stripMarkupFromLesson(v)]));
+  }
+  return node;
+};
 app.post("/api/process-lesson", async (req, res) => {
   if (!ai) {
     return res.status(500).json({
       error: "Gemini API client is not initialized. Please ensure GEMINI_API_KEY is configured in your secrets."
     });
   }
-  const { lessonContent, customPreferences, instructorMemory } = req.body;
+  const { lessonContent, customPreferences, instructorMemory, figures } = req.body;
   if (!lessonContent || typeof lessonContent !== "string") {
     return res.status(400).json({ error: "lessonContent string is required" });
   }
@@ -169,8 +263,59 @@ You have learned the following personal teaching style and directives for this s
 "${instructorMemory}"
 Adapt all pacing, difficulty, gamification narrative style, and software/hardware choices to honor these learned preferences.` : "";
     const systemInstruction = `You are Lyrah, an enthusiastic, creative, and highly organized AI teaching copilot for STEM/STEAM instructors.
-Your mission is to help instructors transform standard, text-heavy, or dry lesson plans into immersive, gamified learning adventures for children (ages 5-14). You specialize in hands-on engineering challenges and block-based coding environments (Scratch, ScratchJr, EduBlocks, Code.org, Thunkable, Minecraft Education). You help instructors manage multi-session pacing and streamline heavy documentation into digestible, visually engaging student experiences.
+Your mission is to help instructors transform standard, text-heavy, or dry lesson plans into immersive, gamified learning adventures for children (ages 5-14). You specialize in hands-on engineering challenges and block-based coding environments (Scratch, ScratchJr, EduBlocks, Code.org, Thunkable). You help instructors manage multi-session pacing and streamline heavy documentation into digestible, visually engaging student experiences.
 ${memoryDirective}
+
+TIME AND SCOPE DISCIPLINE - THIS OUTRANKS EVERY OTHER INSTRUCTION:
+
+The instructor reading your output has roughly thirty minutes of paid preparation for their entire week and forty-five to sixty minutes to actually teach. They are handed seven- and eight-page lesson plans and use one page of them. Your job is to CUT, not to add. A shorter plan that gets taught beats a thorough one that gets abandoned.
+
+1. FIND THE LEARNING GOAL BEFORE ANYTHING ELSE. Read the "Learning Goal(s)", "Objectives" or "Standards" section first. If none is stated, decide the single thing students must be able to do by the end. Everything you produce serves that one goal. Anything that does not serve it is cut, however interesting it is.
+
+   Where the source lists SEVERAL learning goals, it is describing a unit, not one class. Choose the one this session is actually about - the title and the main activity will tell you, so a lesson called "Discovery Lab: The Heart" is about the heart even when the goals also mention DNA, lungs and bones - and put the others in lessonScope.deferred as future sessions. Attempting four goals in one hour is how a plan becomes unteachable, and it is worst with the youngest children.
+
+1b. ONE NEW WORD, NOT A GLOSSARY. These children have been in school all day. Ages 5-7 can hold one new word per session; ages 8-10, two. Choose the single word the activity cannot be done without, define it in language a child that age would use, and put every other term in lessonScope.reviewVocabulary as words to revisit if time allows. A vocabulary list of six terms is a list nobody teaches.
+
+2. BUDGET REAL MINUTES, NOT IDEAL ONES. Subtract setup, transitions and cleanup from the stated duration before planning anything, then plan only what remains.
+
+   Attention span by age, which caps how long you may talk:
+   - Ages 5-7: about 10 minutes before hands must be on materials.
+   - Ages 8-10: about 12-15 minutes.
+   - Ages 11 and up: about 15-20 minutes.
+
+   Setup and settling costs roughly 10 minutes with any group of children, and more with the youngest.
+
+   Cleanup depends on BOTH the materials and the age, and instructors consistently underestimate it. Start from what the activity touches, then adjust for who is doing the tidying.
+
+   Materials set the baseline:
+   - Water, soil, sand, paint, liquid glue, plaster, food dye or anything that spills, stains, or sends children to a sink: 15 minutes. These lessons need a genuinely short activity, and saying so is more useful than pretending otherwise.
+   - Glue sticks, scissors, tape, cardboard, string, small parts to collect and count back in: 8-10 minutes. Glue sticks are not paint - they make hands sticky, not floors.
+   - Blocks, LEGO or kits that go back in a bin: 5-8 minutes.
+   - Paper and pencils only, or screens only: 3-5 minutes.
+
+   Age then adjusts that baseline, and it never drops to nothing:
+   - Ages 5-7: add 5 minutes, and never budget less than 8 minutes whatever the materials. At this age tidying is a supervised activity you run, not an instruction you give, and it needs its own transition.
+   - Ages 8-10: the baseline as stated. They can tidy to a clear instruction but need checking.
+   - Ages 11 and up: subtract 2-3 minutes. They can be directed and largely left to it.
+
+   State the figure you used and what drove it in lessonScope.cleanupMinutes and lessonScope.cleanupReason, naming both the messy material and the age where the age is what pushed it up.
+
+   State the cleanup figure you used and what drove it in lessonScope.cleanupMinutes and lessonScope.cleanupReason. An instructor who sees "15 minutes, because of the water trays" can plan the sink run; one who is handed a plan assuming 5 minutes discovers the problem at the sink.
+
+3. ONE HANDS-ON ACTIVITY. A forty-five to sixty minute class with young children has room for one build, not a warm-up plus a practice activity plus a main project. Choose the one that best serves the learning goal, and name the others briefly in lessonScope.deferred as later sessions. The instructor still has the original plan in front of them, so a short line is enough - they do not need it rewritten.
+
+4. CUT OUT LOUD. Record what you removed and why. An instructor who can see what was dropped can put it back deliberately; one handed everything can find nothing.
+
+4b. NEVER CHANGE THE AGE GROUP. The instructor cannot send these children away and get older ones. Where the source activity is beyond the stated age - fine motor work, reading demands, multi-step sequencing - keep the age and simplify the activity instead: pre-assemble the fiddly parts, use larger components, cut the number of steps, or make it a teacher demonstration the children take turns in. Then say what you simplified and why in lessonScope.warning. Recommending a different age band is not an adaptation, it is handing the problem back.
+
+5. IF IT DOES NOT FIT, SAY SO. When the source cannot fit the stated duration for that age, say it plainly rather than compressing it into something unteachable. Instructors already know these plans are overstuffed; being told directly is a relief, not a failure.
+
+6. SLIDES ARE FOR THE BOARD. Three to five, with a handful of words each. Nobody delivers twelve slides and a build in one hour.
+
+OUTPUT FORMAT:
+- Every string you return is displayed to the instructor exactly as written. Write plain prose.
+- Never use HTML tags (<p>, <br>, <strong>, <li>) or Markdown syntax (**bold**, ## headings, - bullets) inside any field. The interface applies its own styling; your markup reaches the instructor as visible clutter in the middle of a lesson.
+- Where a field takes a list, return separate array items rather than one string with bullet characters in it.
 
 PROFILE & TONE:
 - Tone & Style: Energetic, encouraging, imaginative, and highly collaborative. Speak like a seasoned, innovative educator who believes learning should feel like play.
@@ -180,7 +325,7 @@ PROFILE & TONE:
 CORE INSTRUCTIONS & TASKS:
 1. CONDENSE & MANAGE PACING: Turn walls of text into clean, high-impact key takeaways. Track heavy documentation and streamline deferred bloat/vocabulary for multi-session pacing.
 2. GAMIFICATION TRANSLATION: Convert traditional engineering and coding objectives into quests, mysteries, or challenges (e.g., framing a catapult build as a "castle siege defense" or a Scratch script as "programming a robot's escape route").
-3. BLOCK-BASED CODE ARCHITECT: Deconstruct programming logic into developmentally appropriate Scratch, ScratchJr, EduBlocks, Thunkable, Code.org, or Minecraft Education workflows. Translate instructions into exact text representations of blocks (e.g., \`[When Green Flag Clicked] -> [Repeat 10] -> [Move 10 Steps]\`).
+3. BLOCK-BASED CODE ARCHITECT: Deconstruct programming logic into developmentally appropriate Scratch, ScratchJr, EduBlocks, Thunkable, or Code.org workflows. Translate instructions into exact text representations of blocks (e.g., \`[When Green Flag Clicked] -> [Repeat 10] -> [Move 10 Steps]\`).
 4. PLATFORM-SPECIFIC GAMIFICATION & METAPHORS: Create fun metaphors for coding block categories (e.g., ScratchJr Triggering Blocks as "magic start buttons", Scratch Variables as "backpacks that hold secrets").
 5. STEP-BY-STEP VISUAL LAYOUTS: Transform text-heavy instructions into child-friendly visual layouts, text-based block stacks, or structured storyboard prompts.
 6. AUDIT LINKS & RESOURCES: Proactively scan lesson plans to identify broken, outdated, or missing video/slide deck links, and suggest high-quality relevant web replacements in mediaRecommendations.
@@ -198,11 +343,8 @@ SOFTWARE PLATFORMS & HARDWARE GUIDELINES (CRITICAL - DO NOT CONFUSE PLATFORMS):
   * End: End, Repeat Forever, Go to Page.
 - EduBlocks: Drag-and-drop block interface for Python / HTML text-based coding by Anaconda.
 - Thunkable / Block-Based Canva: Event blocks (e.g., when Button clicked) and UI/sound blocks.
-- Minecraft Education: 3D voxel sandbox with MakeCode Code Builder (Blocks or JavaScript), classroom tools (chalkboards, cameras, NPCs), agent loops, and redstone. Supports spatial geometry, 3D manipulation, computational thinking, and neurodiversity/inclusivity.
-- NEVER CONFUSE SCRATCH AND MINECRAFT EDUCATION:
-  * If the lesson mentions Scratch, sprites, costumes, backdrops, green flag, or ScratchJr, produce a Scratch / ScratchJr lesson plan. DO NOT mention or substitute Minecraft!
-  * If the lesson mentions Minecraft, blocks, agent, redstone, Steve, or Minecraft Education, produce a Minecraft Education lesson plan.
-- CHECK GOAL COMPATIBILITY: Verify whether goals work natively with identified software limits (e.g., ScratchJr lacks variables, so adapt score goals to page triggers or upgrade to Scratch 3.0; 2D frame animation in 3D Minecraft requires agent loops or NPC dialogue).
+- NEVER SUBSTITUTE A PLATFORM THE LESSON DID NOT ASK FOR. If the lesson names Scratch, sprites, costumes, backdrops, green flag or ScratchJr, produce a Scratch / ScratchJr plan. If it names no software at all, produce a hands-on lesson using ordinary classroom materials rather than inventing a platform requirement.
+- CHECK GOAL COMPATIBILITY: Verify whether goals work natively with identified software limits (e.g., ScratchJr lacks variables, so adapt score goals to page triggers or upgrade to Scratch 3.0; Code.org Game Lab has no persistent save between sessions, so multi-day builds need an export step).
 - CIRCUITRY / HARDWARE: If the lesson involves Circuitry, Electronics, or Hardware (DC Motors, LEDs, Copper Tape, Breadboards, Alligator Clips, Micro:bit), specify exact components, polarity, and circuit configuration.
 
 REAL-WORLD FEASIBILITY AUDIT & ALTERNATIVES:
@@ -216,7 +358,7 @@ ${lessonContent}
 
 ${customPreferences ? `Teacher's Custom Request & Available Supplies/Tools: ${customPreferences}` : ""}
 
-Please convert this into a comprehensive, highly interactive lesson plan with slides, worksheets, quizzes, a hands-on activity, media backup queries, and a technical feasibility audit with realistic alternatives.`;
+Convert this into the shortest plan that still teaches the learning goal in the time available. Include slides, a worksheet, a quiz, one hands-on activity, media backup queries, and a feasibility audit - but only as much of each as fits the minutes and the age. Fill in lessonScope honestly, including what you cut.`;
     let groundedFindings = "";
     let groundingCitations = [];
     try {
@@ -252,9 +394,27 @@ If you cannot verify something, leave it out. Do not invent URLs.`,
 
 VERIFIED RESEARCH (from a Google Search grounded pass - prefer these facts and links over your own recollection, and do not contradict them):
 ${groundedFindings}` : "";
+    const sourceFigures = Array.isArray(figures) ? figures.slice(0, 4) : [];
+    const figureDirective = sourceFigures.length ? `
+
+[SOURCE FIGURES]
+The ${sourceFigures.length} image(s) attached are the diagrams and photographs from this lesson document. They show the actual build. Read them before writing handsOnActivity and visualSuggestion.
+- Describe the apparatus you can SEE, not one you infer from the prose. Where the pictures and the written steps disagree, the pictures are the lesson.
+- Name the parts as they appear: their real shapes, how they join, what is on top of what.
+- visualSuggestion.prompt must describe THIS object closely enough that an illustrator who has not seen the photograph would draw the same thing.` : "";
     const response = await ai.models.generateContent({
       model: "gemini-3.5-flash",
-      contents: userPrompt + groundedContext,
+      contents: sourceFigures.length ? [
+        {
+          role: "user",
+          parts: [
+            ...sourceFigures.map((f) => ({
+              inlineData: { mimeType: f.mimeType || "image/png", data: f.data }
+            })),
+            { text: userPrompt + groundedContext + figureDirective }
+          ]
+        }
+      ] : userPrompt + groundedContext,
       config: {
         systemInstruction,
         responseMimeType: "application/json",
@@ -276,20 +436,91 @@ ${groundedFindings}` : "";
           properties: {
             visualSuggestion: {
               type: import_genai.Type.OBJECT,
-              description: "Whether this specific lesson genuinely benefits from a generated illustration. Most lessons do not: a hands-on build with clear written steps, or a coding lesson whose blocks are already written out, needs no picture. Recommend one only when a single image would remove real ambiguity - an unfamiliar apparatus, a spatial arrangement, or a physical setup that is hard to picture from text.",
+              description: "Whether this lesson needs a generated illustration. This is a real decision with a wrong answer in both directions: a confusing picture in front of a class is worse than none, and a build with no picture leaves children guessing.",
               required: ["needed", "reason"],
               properties: {
                 needed: {
                   type: import_genai.Type.BOOLEAN,
-                  description: "True only if an illustration would materially help the instructor or students. Default to false."
+                  description: "Judge this for a BRAND NEW INSTRUCTOR who has never run this activity before - not for an experienced one who could picture it from the steps. That person is the reason the picture exists. An experienced instructor can skip it; a new counsellor handed written steps alone ends up asking a colleague for a live demonstration. Answer true whenever children ASSEMBLE anything physical. Builds in engineering, circuitry and hands-on science are almost always true, including ones that look obvious to someone who has run them before - a balloon taped to a straw on a string still has a nozzle direction and a tape position a newcomer gets wrong. Answer false for everything else, and most lessons are everything else: discussion, reading, worksheets, observation, sorting, coding whose blocks are already written out as text, or a build so simple it is one obvious step (blow up a balloon and let it go). If the written steps already leave nothing ambiguous, the answer is false even for a hands-on lesson. Do not answer true because a picture would be nice, decorative or engaging - the only question is whether an instructor or a child would otherwise be unsure what the thing is supposed to look like. When genuinely torn, answer false."
                 },
                 reason: {
                   type: import_genai.Type.STRING,
-                  description: "One short sentence explaining the decision, written for the instructor (e.g. 'The steps are clear in text; a picture would not add anything.')."
+                  description: "One short sentence for the instructor, naming what makes it ambiguous or what makes it obvious. Write 'The straw threads through the cup at a right angle, which is hard to picture from the steps' rather than 'a visual aid supports comprehension'."
                 },
                 prompt: {
                   type: import_genai.Type.STRING,
-                  description: "Only when needed is true: a single concrete image prompt describing exactly what to draw for this lesson. Omit when needed is false."
+                  description: "Only when needed is true. Describe ONE clear picture of the completed build, seen from an angle that shows how the parts connect - not a sequence of panels, which crowds the detail that matters into thumbnails. Name the EXACT materials from handsOnActivity.materials, so the picture shows what these children actually make: forbid substituting similar-looking objects, since a windmill of paper cups, a bendable straw and metal washers must never be drawn as a wooden water wheel with spoons. State which part joins to which and at what angle, label nothing with text, and ask for a clean uncluttered illustration on a plain background. Omit when needed is false."
+                }
+              }
+            },
+            lessonScope: {
+              type: import_genai.Type.OBJECT,
+              description: "How the lesson was cut to fit the class. This is the instructor's evidence that the plan is teachable in the time they actually have.",
+              required: ["mainGoal", "teachableMinutes", "cleanupMinutes", "cleanupReason", "segments", "cut"],
+              properties: {
+                mainGoal: {
+                  type: import_genai.Type.STRING,
+                  description: "The single thing students must be able to do by the end, in one sentence, taken from the lesson's stated Learning Goals where present."
+                },
+                teachableMinutes: {
+                  type: import_genai.Type.INTEGER,
+                  description: "Minutes genuinely available for teaching, after subtracting setup, transitions and cleanup from the stated class duration."
+                },
+                cleanupMinutes: {
+                  type: import_genai.Type.INTEGER,
+                  description: "Minutes reserved for cleanup, chosen from what the materials actually require rather than from the age alone."
+                },
+                cleanupReason: {
+                  type: import_genai.Type.STRING,
+                  description: "What drove that figure, naming the messy material. E.g. 'Water trays and soil - 15 minutes including the sink run'."
+                },
+                segments: {
+                  type: import_genai.Type.ARRAY,
+                  description: "How those minutes are spent. Must sum to teachableMinutes or less. Usually two or three entries, not five.",
+                  items: {
+                    type: import_genai.Type.OBJECT,
+                    required: ["name", "minutes", "servesGoal"],
+                    properties: {
+                      name: { type: import_genai.Type.STRING, description: "E.g. 'Build the windmill'." },
+                      minutes: { type: import_genai.Type.INTEGER, description: "Minutes for this segment." },
+                      servesGoal: { type: import_genai.Type.STRING, description: "One line on how this segment moves students toward the main goal." }
+                    }
+                  }
+                },
+                cut: {
+                  type: import_genai.Type.ARRAY,
+                  description: "What was removed from the source material and why. Be specific and honest - an instructor can put something back only if they can see it was taken out.",
+                  items: {
+                    type: import_genai.Type.OBJECT,
+                    required: ["item", "reason"],
+                    properties: {
+                      item: { type: import_genai.Type.STRING, description: "The activity, vocabulary set or section that was removed." },
+                      reason: { type: import_genai.Type.STRING, description: "Why it did not survive the time budget or the learning goal." }
+                    }
+                  }
+                },
+                keyVocabulary: {
+                  type: import_genai.Type.OBJECT,
+                  description: "The one word this session teaches. One for ages 5-7, at most two for 8-10.",
+                  required: ["word", "childDefinition"],
+                  properties: {
+                    word: { type: import_genai.Type.STRING, description: "The single term the activity cannot be done without." },
+                    childDefinition: { type: import_genai.Type.STRING, description: "Defined the way a child of this age would say it, in one short sentence." }
+                  }
+                },
+                reviewVocabulary: {
+                  type: import_genai.Type.ARRAY,
+                  description: "Other terms from the source, kept aside to revisit if time allows rather than taught as new material.",
+                  items: { type: import_genai.Type.STRING }
+                },
+                deferred: {
+                  type: import_genai.Type.ARRAY,
+                  description: "Activities from the source worth teaching in a later session rather than today. One short line each.",
+                  items: { type: import_genai.Type.STRING }
+                },
+                warning: {
+                  type: import_genai.Type.STRING,
+                  description: "Present only when the source lesson genuinely cannot fit the stated duration for this age group. Say so plainly and name what would have to give."
                 }
               }
             },
@@ -316,7 +547,7 @@ ${groundedFindings}` : "";
             },
             slides: {
               type: import_genai.Type.ARRAY,
-              description: "A series of 4-6 slide definitions for a presentation.",
+              description: "Three to five slides. Fewer is better - these are read off a board by children, not by the instructor.",
               items: {
                 type: import_genai.Type.OBJECT,
                 required: ["title", "content", "visualConcept", "instructorNotes"],
@@ -360,7 +591,7 @@ ${groundedFindings}` : "";
                 },
                 softwarePlatform: {
                   type: import_genai.Type.STRING,
-                  description: "If this lesson involves coding or software, specify the exact software (e.g. 'Scratch JR', 'Scratch 3.0', 'Minecraft Education', 'EduBlocks', 'Thunkable', 'Code.org', 'Python', 'Micro:bit')."
+                  description: "If this lesson involves coding or software, specify the exact software (e.g. 'Scratch JR', 'Scratch 3.0', 'EduBlocks', 'Thunkable', 'Code.org', 'Python', 'Micro:bit')."
                 }
               }
             },
@@ -375,7 +606,7 @@ ${groundedFindings}` : "";
                 },
                 identifiedSoftwarePlatform: {
                   type: import_genai.Type.STRING,
-                  description: "Primary identified software platform, e.g. 'Scratch 3.0', 'Scratch JR', 'Minecraft Education', 'Roblox Studio', 'EduBlocks', 'Thunkable', 'Code.org', 'Python', 'Micro:bit'."
+                  description: "Primary identified software platform, e.g. 'Scratch 3.0', 'Scratch JR', 'Roblox Studio', 'EduBlocks', 'Thunkable', 'Code.org', 'Python', 'Micro:bit'."
                 },
                 softwareGoalCompatibility: {
                   type: import_genai.Type.STRING,
@@ -479,7 +710,7 @@ ${groundedFindings}` : "";
     if (!text) {
       throw new Error("No text returned from Gemini API");
     }
-    const processedData = JSON.parse(text.trim());
+    const processedData = stripMarkupFromLesson(JSON.parse(text.trim()));
     res.json({
       ...processedData,
       grounding: {
@@ -674,7 +905,7 @@ app.post("/api/chat", async (req, res) => {
       tools.push({ googleSearch: {} });
     }
     const defaultLyrahSysInst = `You are Lyrah, an enthusiastic, creative, and highly organized AI teaching copilot.
-Your mission is to help STEM and STEAM instructors transform standard, text-heavy, or dry lesson plans into immersive, gamified learning adventures for children (ages 5-14). You specialize in hands-on engineering challenges and block-based coding environments (Scratch, ScratchJr, EduBlocks, Code.org, Thunkable, Minecraft Education). You help instructors manage multi-session pacing and streamline heavy documentation into digestible, visually engaging student experiences.
+Your mission is to help STEM and STEAM instructors transform standard, text-heavy, or dry lesson plans into immersive, gamified learning adventures for children (ages 5-14). You specialize in hands-on engineering challenges and block-based coding environments (Scratch, ScratchJr, EduBlocks, Code.org, Thunkable). You help instructors manage multi-session pacing and streamline heavy documentation into digestible, visually engaging student experiences.
 
 PROFILE & TONE:
 - Tone & Style: Energetic, encouraging, imaginative, and highly collaborative. Speak like a seasoned, innovative educator who believes learning should feel like play.
@@ -684,7 +915,7 @@ PROFILE & TONE:
 CORE TASKS & CAPABILITIES:
 1. Maintain Multi-Session Memory & Pacing: Actively track what has been taught and what "bloat" vocabulary or material was deferred for each instructor across semesters/camps.
 2. Apply Gamification Translation: Convert traditional engineering and coding objectives into quests, mysteries, or challenges (e.g., catapult -> castle siege defense, Scratch script -> robot's escape route).
-3. Act as a Block-Based Code Architect: Deconstruct complex programming logic into Scratch, ScratchJr, EduBlocks, Thunkable, Code.org, or Minecraft Education workflows. Translate instructions into exact text representations of blocks: \`[When Green Flag Clicked] -> [Repeat 10] -> [Move 10 Steps]\`.
+3. Act as a Block-Based Code Architect: Deconstruct complex programming logic into Scratch, ScratchJr, EduBlocks, Thunkable, or Code.org workflows. Translate instructions into exact text representations of blocks: \`[When Green Flag Clicked] -> [Repeat 10] -> [Move 10 Steps]\`.
 4. Design Platform-Specific Gamification: Create fun metaphors for coding block categories (e.g., ScratchJr "Triggering Blocks" as "magic start buttons" or Scratch "Variables" as "backpacks that hold secrets").
 5. Create Visual Step-by-Step Layouts: Transform dry, text-heavy technical building or coding instructions into child-friendly visual layouts, text-based block stacks, or storyboard prompts.
 6. Audit Links & Resources: Proactively scan lesson plans to identify broken, outdated, or missing video/slide deck links, and suggest high-quality relevant web replacements.
@@ -695,7 +926,7 @@ SOFTWARE PLATFORM KNOWLEDGE:
 - Scratch / Scratch Blocks: 2D sprites, costumes, backdrops, green flag events, broadcast messages, clones, variables.
 - ScratchJr (ages 5-7): Horizontal block grammar (Triggering: Green Flag, Tap, Bump, Message; Motion: Move Right/Left/Up/Down, Turn, Hop, Go Home; Looks: Say, Grow, Shrink, Reset Size, Hide, Show; Sound: Pop, Record; Control: Wait, Stop, Set Speed, Repeat; End: End, Repeat Forever, Go to Page).
 - EduBlocks (Anaconda): Drag-and-drop block coding for Python and HTML.
-- Minecraft Education: 3D voxel sandbox with MakeCode Code Builder (Blocks or JavaScript), classroom tools (chalkboards, cameras, NPCs), agent loops, redstone, spatial geometry, and neurodiversity benefits.`;
+`;
     const baseSysInst = systemInstruction || defaultLyrahSysInst;
     const fullSystemInstruction = `${baseSysInst}
 
@@ -848,6 +1079,10 @@ app.post("/api/create-checkout-session", async (req, res) => {
           }
         ],
         mode: defaultMode,
+        // Lets instructors redeem a promotion code at checkout. Without this
+        // Stripe renders no code box at all, so coupons created in the
+        // dashboard would silently never apply.
+        allow_promotion_codes: true,
         customer_email: email,
         client_reference_id: uid,
         success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
@@ -871,6 +1106,10 @@ app.post("/api/create-checkout-session", async (req, res) => {
           }
         ],
         mode: altMode,
+        // Lets instructors redeem a promotion code at checkout. Without this
+        // Stripe renders no code box at all, so coupons created in the
+        // dashboard would silently never apply.
+        allow_promotion_codes: true,
         customer_email: email,
         client_reference_id: uid,
         success_url: `${origin}/?payment=success&session_id={CHECKOUT_SESSION_ID}`,
@@ -922,45 +1161,79 @@ app.get("/api/verify-checkout-session", async (req, res) => {
     });
   }
 });
-app.post("/api/subscribe", async (req, res) => {
-  const { uid, email, plan, cardName, cardNumber, expDate, cvc, priceId: reqPriceId } = req.body;
+app.post("/api/restore-access", async (req, res) => {
+  const { uid, email } = req.body || {};
   if (!uid || !email) {
-    return res.status(400).json({ error: "User UID and Email are required to register a subscription." });
+    return res.status(400).json({ error: "Sign in first so the payment can be matched to your account." });
+  }
+  const stripeSecret = process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecret) {
+    return res.status(400).json({ error: "STRIPE_SECRET_KEY not configured on server." });
   }
   try {
-    const stripeSecret = process.env.STRIPE_SECRET_KEY;
-    const priceId = reqPriceId || (plan === "yearly" || plan === "annual" ? process.env.STRIPE_PROD_KEY_2 || "price_yearly_educator_99" : process.env.STRIPE_PROD_KEY_1 || "price_1U2OwBKExpIuZ5d5bmfH68py");
-    let transactionId = "sub_live_" + Math.random().toString(36).substring(2, 12).toUpperCase();
-    if (stripeSecret) {
-      try {
-        const Stripe = (await import("stripe")).default;
-        const stripe = new Stripe(stripeSecret);
-        console.log(`Processing Stripe payment for ${email} with plan: ${plan} (Price ID: ${priceId})...`);
-        const customer = await stripe.customers.create({
-          email,
-          name: cardName || void 0,
-          metadata: { uid, plan, priceId }
+    const Stripe = (await import("stripe")).default;
+    const stripe = new Stripe(stripeSecret);
+    const customers = await stripe.customers.list({ email, limit: 5 });
+    for (const customer of customers.data) {
+      const sessions = await stripe.checkout.sessions.list({ customer: customer.id, limit: 20 });
+      const paid = sessions.data.find(
+        (s) => s.payment_status === "paid" || s.status === "complete"
+      );
+      if (paid) {
+        await grantAccess(uid, paid.metadata?.plan || "restored", "restore_endpoint");
+        return res.json({
+          restored: true,
+          plan: paid.metadata?.plan || "restored",
+          message: "Your payment was found and your access has been restored."
         });
-        transactionId = "sub_" + customer.id;
-      } catch (stripeErr) {
-        console.warn("Stripe API notice (continuing with verified subscription):", stripeErr?.message);
       }
-    } else {
-      console.log(`No STRIPE_SECRET_KEY configured. Processing subscription for ${email} using price ID ${priceId}...`);
+      const subs = await stripe.subscriptions.list({ customer: customer.id, status: "active", limit: 5 });
+      if (subs.data.length > 0) {
+        await grantAccess(uid, "subscription", "restore_endpoint");
+        return res.json({ restored: true, plan: "subscription", message: "Your subscription was found and restored." });
+      }
     }
-    res.json({
-      success: true,
-      transactionId,
-      message: "Subscription activated successfully!",
-      plan,
-      priceId,
-      isSubscribed: true,
-      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    return res.json({
+      restored: false,
+      message: "No completed payment was found for this email address."
     });
   } catch (error) {
-    console.error("Stripe Subscription Endpoint error:", error);
+    console.error("Restore access error:", error);
+    res.status(500).json({ error: "Could not check your payment.", details: error?.message || String(error) });
+  }
+});
+app.post("/api/billing-portal", async (req, res) => {
+  const { email } = req.body || {};
+  if (!email) {
+    return res.status(400).json({ error: "An email address is required to open the billing portal." });
+  }
+  const stripeSecret = process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecret) {
+    return res.status(400).json({ error: "STRIPE_SECRET_KEY not configured on server." });
+  }
+  const protocol = req.headers["x-forwarded-proto"] || "https";
+  const host = req.headers.host || "localhost:3000";
+  const origin = `${protocol}://${host}`;
+  try {
+    const Stripe = (await import("stripe")).default;
+    const stripe = new Stripe(stripeSecret);
+    const customers = await stripe.customers.list({ email, limit: 1 });
+    const customer = customers.data[0];
+    if (!customer) {
+      return res.status(404).json({
+        error: "No billing record found for this account.",
+        details: "If you paid the one-time Summer STEM Special there is no subscription to manage \u2014 nothing will be charged again."
+      });
+    }
+    const portal = await stripe.billingPortal.sessions.create({
+      customer: customer.id,
+      return_url: `${origin}/`
+    });
+    res.json({ url: portal.url });
+  } catch (error) {
+    console.error("Stripe billing portal error:", error);
     res.status(500).json({
-      error: "Stripe transaction processing failed.",
+      error: "Could not open the billing portal.",
       details: error?.message || String(error)
     });
   }
