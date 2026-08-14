@@ -140,9 +140,6 @@ const COMPILE_SCRIPTS: { header: string; steps: [string, string, string] }[] = [
   },
 ];
 
-/** Lessons an unsubscribed instructor can generate before checkout is required. */
-const FREE_LESSON_LIMIT = 3;
-
 const GRADE_CHOICES = [
   { value: "K-2", toolbarLabel: "K-2nd", modalLabel: "K-2 (Ages 5-7)" },
   { value: "3-5", toolbarLabel: "Elementary (3-5)", modalLabel: "3-5 (Ages 8-10)" },
@@ -308,13 +305,6 @@ export default function App() {
   const [showPlanConfirmationModal, setShowPlanConfirmationModal] = useState<boolean>(false);
   const [billingPortalLoading, setBillingPortalLoading] = useState<boolean>(false);
   const [billingPortalError, setBillingPortalError] = useState<string | null>(null);
-  const [generatedCount, setGeneratedCount] = useState<number>(() => {
-    try {
-      return Number(localStorage.getItem('lyra_free_lessons_count') || '0');
-    } catch {
-      return 0;
-    }
-  });
 
   // 2026 Cyber STEM Lab Dark Mode state
   // Dark is the default. Anyone who has already picked a theme keeps their
@@ -1133,11 +1123,11 @@ export default function App() {
       return;
     }
 
-    // Free lesson enforcement. Three rather than one: a single generation is
-    // not enough to judge a five-module bundle, and someone evaluating Lyrah
-    // should not have to reach checkout to see what it does.
-    if (!profile?.isSubscribed && generatedCount >= FREE_LESSON_LIMIT) {
-      setShowSubscriptionModal(true);
+    // Generating requires an account. The allowance itself is enforced on the
+    // server against the user's record, because a count kept in this browser
+    // reset every time someone opened a private window.
+    if (!user) {
+      signInWithGoogle();
       return;
     }
 
@@ -1185,9 +1175,18 @@ export default function App() {
             ? `${customPreferences}. ${goalDirective}` 
             : goalDirective,
           instructorMemory: combinedMemory,
-          figures: sourceFigures
+          figures: sourceFigures,
+          uid: user?.uid
         }),
       });
+
+      // The server owns the allowance, so a refusal here is the paywall.
+      if (response.status === 402) {
+        setIsLoading(false);
+        setCompilationStep(0);
+        setShowSubscriptionModal(true);
+        return;
+      }
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
@@ -1196,15 +1195,6 @@ export default function App() {
 
       const data = await response.json();
       setLesson(data);
-
-      // Increment 1 free lesson count
-      const newCount = generatedCount + 1;
-      setGeneratedCount(newCount);
-      try {
-        localStorage.setItem('lyra_free_lessons_count', newCount.toString());
-      } catch (e) {
-        console.error("Failed to store free lesson count:", e);
-      }
 
       // Save lesson plan to cloud Firestore if user is authenticated
       if (user) {

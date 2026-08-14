@@ -327,6 +327,55 @@ const stripMarkupFromLesson = (node: any): any => {
   return node;
 };
 
+/**
+ * How many lessons an account may generate before paying.
+ *
+ * Zero. Generation is the expensive call in this product and the thing being
+ * sold; giving it away by default meant paying for strangers' inference with
+ * no way to reach them afterwards.
+ *
+ * The previous allowance lived in localStorage, so a private window or a
+ * cleared cache reset it — not a gate at all, while every generation still
+ * cost real money. Evaluation access is granted per account instead, by
+ * marking that account subscribed, which is deliberate and revocable.
+ */
+const FREE_LESSONS_PER_ACCOUNT = 0;
+
+type LessonQuota = { allowed: boolean; used: number; subscribed: boolean };
+
+const checkLessonQuota = async (uid: string): Promise<LessonQuota> => {
+  const db = await getFirestore();
+
+  // Fails closed. Zero free lessons is the actual policy, so a Firestore
+  // outage defaulting to "let them through" would mean free generation for
+  // anyone rather than a blocked instructor - the opposite of the intent.
+  // A real subscriber failing this check would find isSubscribed unreadable
+  // too, so this is the same failure mode as every other Firestore-dependent
+  // path in the app, not a new one.
+  if (!db) return { allowed: false, used: 0, subscribed: false };
+
+  try {
+    const ref = db.collection("users").doc(uid);
+    const snap = await ref.get();
+    const data = snap.exists ? snap.data() : {};
+
+    if (data?.isSubscribed === true) {
+      return { allowed: true, used: data?.freeLessonsUsed || 0, subscribed: true };
+    }
+
+    const used = data?.freeLessonsUsed || 0;
+    if (used >= FREE_LESSONS_PER_ACCOUNT) {
+      return { allowed: false, used, subscribed: false };
+    }
+
+    await ref.set({ uid, freeLessonsUsed: used + 1, updatedAt: new Date() }, { merge: true });
+    return { allowed: true, used: used + 1, subscribed: false };
+  } catch (err: any) {
+    console.error("Lesson quota check failed, blocking:", err?.message || err);
+    return { allowed: false, used: 0, subscribed: false };
+  }
+};
+
 // API endpoint to process lesson plan using Gemini
 app.post("/api/process-lesson", async (req, res) => {
   if (!ai) {
@@ -335,10 +384,29 @@ app.post("/api/process-lesson", async (req, res) => {
     });
   }
 
-  const { lessonContent, customPreferences, instructorMemory, figures } = req.body;
+  const { lessonContent, customPreferences, instructorMemory, figures, uid } = req.body;
 
   if (!lessonContent || typeof lessonContent !== "string") {
     return res.status(400).json({ error: "lessonContent string is required" });
+  }
+
+  // Generation is the expensive call in this product, so it requires an
+  // account. Anonymous access meant anyone could spend the inference budget
+  // without ever being reachable.
+  if (!uid || typeof uid !== "string") {
+    return res.status(401).json({ error: "Sign in to generate a lesson." });
+  }
+
+  const quota = await checkLessonQuota(uid);
+  if (!quota.allowed) {
+    return res.status(402).json({
+      error:
+        FREE_LESSONS_PER_ACCOUNT === 0
+          ? "A subscription is required to generate lessons."
+          : "You have used your free lessons.",
+      details: "Your account is signed in — adding a plan unlocks generation straight away.",
+      quotaExhausted: true,
+    });
   }
 
   try {

@@ -71,13 +71,9 @@ export default class ErrorBoundary extends React.Component<Props, State> {
   };
 
   private startOver = () => {
-    // Only view state is cleared. Nothing here touches the signed-in session or
-    // anything saved to the cloud.
-    try {
-      localStorage.removeItem("lyra_free_lessons_count");
-    } catch {
-      /* ignore */
-    }
+    // Nothing is cleared here. The lesson allowance lives on the user's record
+    // now, so there is no local state worth resetting — and clearing anything
+    // would only risk taking something the instructor wanted with it.
     window.location.replace("/");
   };
 
