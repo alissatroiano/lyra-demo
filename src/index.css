@@ -50,12 +50,16 @@
   --color-surface-1: #141b2f;
   --color-surface-2: #05070f;
 
-  /* teal-light flips (it is only ever a background). teal-dark deliberately
-   * does NOT: it is used as a background on 44 surfaces with white text over
-   * it, so lightening it turned the chat header and the sign-in button into
-   * white-on-pale. The 26 places that use it as a foreground carry their own
-   * dark: variant instead. */
-  --color-teal-light: #10322f;
+  /* Neither teal-light nor teal-dark is flipped here.
+   *
+   * Both are used as backgrounds AND as text: teal-light is a pale panel in 40
+   * places and pale type in 19, teal-dark is a deep panel in 44 places and deep
+   * type in 26. Re-pointing either one fixes half its usages and breaks the
+   * other half — flipping teal-dark turned the sign-in button white-on-pale,
+   * and flipping teal-light turned the quiz answers dark-on-dark.
+   *
+   * A token used for both roles cannot carry the theme. The usages carry it
+   * instead, via explicit dark: variants at each site. */
 
   --color-gold-light: #422006;
 }

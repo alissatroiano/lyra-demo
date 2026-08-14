@@ -1535,7 +1535,7 @@ export default function App() {
                 className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[38px] border ${
                   isDarkMode
                     ? "bg-slate-800 text-teal-brand border-slate-700 hover:bg-slate-700 hover:border-teal-brand/40"
-                    : "bg-teal-light/60 text-teal-dark dark:text-teal-brand border-teal-brand/30 hover:bg-teal-light hover:border-teal-brand/50"
+                    : "bg-teal-light/60 dark:bg-teal-brand/15 text-teal-dark dark:text-teal-brand border-teal-brand/30 hover:bg-teal-light hover:border-teal-brand/50"
                 }`}
                 title="Show me how Lyrah works"
               >
@@ -2381,7 +2381,7 @@ export default function App() {
                     placeholder="Describe specific class constraints, student behaviors, curriculum alignment, or custom styles..."
                   />
                   {isManuallyEdited && (
-                    <div className="absolute right-2 bottom-2 text-[8px] text-teal-brand font-sans font-medium px-1.5 py-0.5 rounded-md bg-teal-light/50 border border-teal-brand/10 select-none">
+                    <div className="absolute right-2 bottom-2 text-[8px] text-teal-brand font-sans font-medium px-1.5 py-0.5 rounded-md bg-teal-light/50 dark:bg-teal-brand/15 border border-teal-brand/10 select-none">
                       Edited
                     </div>
                   )}
@@ -2848,7 +2848,7 @@ export default function App() {
                               onClick={() => toggleMaterial(material)}
                               className={`w-full flex items-start gap-3 p-3 rounded-xl border text-left transition-all cursor-pointer ${
                                 checkedMaterials[material]
-                                  ? "bg-teal-light/20 border-teal-brand/30 text-teal-dark dark:text-teal-brand font-medium"
+                                  ? "bg-teal-light/20 dark:bg-teal-brand/10 border-teal-brand/30 text-teal-dark dark:text-teal-brand font-medium"
                                   : "bg-white dark:bg-slate-800/80 border-black/[0.05] dark:border-slate-700 text-secondary dark:text-slate-300 hover:bg-surface-0 dark:hover:bg-slate-800"
                               }`}
                             >
@@ -2889,7 +2889,7 @@ export default function App() {
                           </div>
                         )}
 
-                        <div className="p-3 bg-teal-light/20 border border-teal-brand/10 rounded-xl text-[10px] text-teal-dark dark:text-slate-300 leading-relaxed font-sans flex gap-2">
+                        <div className="p-3 bg-teal-light/20 dark:bg-teal-brand/10 border border-teal-brand/10 rounded-xl text-[10px] text-teal-dark dark:text-slate-300 leading-relaxed font-sans flex gap-2">
                           <CheckCircle2 className="w-4 h-4 text-teal-brand shrink-0 mt-0.5" />
                           <div>
                             <strong>{isCodingLesson ? "Setup IDE & Devices" : "Check bins off"}</strong> to streamline pre-class preparation for {selectedGrade} grade.
@@ -3271,7 +3271,7 @@ export default function App() {
                           <button
                             onClick={handleNextQuiz}
                             disabled={selectedQuizOption === null}
-                            className="px-4.5 py-2.5 bg-white text-teal-dark dark:text-teal-brand text-xs font-bold rounded-xl hover:bg-teal-light transition-all flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                            className="px-4.5 py-2.5 bg-white text-teal-dark dark:text-teal-brand text-xs font-bold rounded-xl hover:bg-teal-light dark:bg-teal-brand/20 transition-all flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                           >
                             <span>{currentQuizIndex === lesson.quiz.length - 1 ? "End Module" : "Next Question"}</span>
                             <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -3369,7 +3369,7 @@ export default function App() {
                                 <span className="text-xs font-mono font-bold truncate">{rec.suggestedSearchQuery}</span>
                                 <button
                                   onClick={() => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(rec.suggestedSearchQuery)}`, "_blank")}
-                                  className="p-1.5 hover:bg-teal-light rounded-lg text-teal-brand transition-all shrink-0"
+                                  className="p-1.5 hover:bg-teal-light dark:bg-teal-brand/20 rounded-lg text-teal-brand transition-all shrink-0"
                                   title="YouTube search"
                                 >
                                   <ExternalLink className="w-4 h-4" />

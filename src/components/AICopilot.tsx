@@ -555,7 +555,7 @@ Active Lesson Context:
                   : "bg-white border border-black/[0.04] text-secondary hover:bg-surface-0 hover:text-primary"
               }`}
             >
-              <div className={`p-2 rounded-lg ${isSelected ? "bg-teal-brand/20 text-teal-brand" : "bg-teal-light text-teal-brand"}`}>
+              <div className={`p-2 rounded-lg ${isSelected ? "bg-teal-brand/20 text-teal-brand" : "bg-teal-light dark:bg-teal-brand/20 text-teal-brand"}`}>
                 <Icon className="w-4 h-4" />
               </div>
               <div className="hidden xl:flex flex-col text-left space-y-0.5">
@@ -711,7 +711,7 @@ Active Lesson Context:
               ))}
               {isChatLoading && (
                 <div className="flex gap-3 justify-start items-center">
-                  <div className="w-8 h-8 rounded-full bg-teal-light flex items-center justify-center text-teal-brand shrink-0 font-bold text-xs animate-pulse">
+                  <div className="w-8 h-8 rounded-full bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center text-teal-brand shrink-0 font-bold text-xs animate-pulse">
                     ...
                   </div>
                   <span className="text-[11px] text-secondary font-mono animate-pulse">Lyrah is thinking...</span>
@@ -860,7 +860,7 @@ Active Lesson Context:
                     onClick={() => setIsEditingImage(!isEditingImage)}
                     className={`w-full py-2 px-3 border rounded-xl text-[10px] font-bold font-sans flex items-center justify-center gap-1.5 cursor-pointer ${
                       isEditingImage 
-                        ? "bg-teal-light text-teal-brand border-teal-brand/20" 
+                        ? "bg-teal-light dark:bg-teal-brand/20 text-teal-brand border-teal-brand/20" 
                         : "bg-white border-black/[0.08] text-secondary"
                     }`}
                   >
@@ -918,7 +918,7 @@ Active Lesson Context:
                   </div>
                 ) : (
                   <div className="text-center space-y-3 max-w-sm">
-                    <div className="w-12 h-12 rounded-full bg-teal-light flex items-center justify-center text-teal-brand mx-auto">
+                    <div className="w-12 h-12 rounded-full bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center text-teal-brand mx-auto">
                       <ImageIcon className="w-5 h-5" />
                     </div>
                     <h5 className="text-xs font-bold text-primary font-sans">Awaiting Drawing Command</h5>
@@ -1128,7 +1128,7 @@ Active Lesson Context:
                       </div>
                     ) : (
                       <div className="h-full flex flex-col items-center justify-center text-center space-y-3 py-6">
-                        <div className="w-12 h-12 rounded-full bg-teal-light flex items-center justify-center text-teal-brand mx-auto">
+                        <div className="w-12 h-12 rounded-full bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center text-teal-brand mx-auto">
                           <VideoIcon className="w-5 h-5" />
                         </div>
                         <h5 className="text-xs font-bold text-primary font-sans">Awaiting Video Analysis</h5>
