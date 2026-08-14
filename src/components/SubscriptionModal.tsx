@@ -65,8 +65,13 @@ export default function SubscriptionModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-md p-4 overflow-y-auto">
-      <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-3xl shadow-2xl max-w-xl w-full border border-teal-brand/30 dark:border-slate-800 overflow-hidden my-8 animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-slate-900/80 backdrop-blur-md p-4 overflow-y-auto">
+      {/* Anchored to the top of the viewport rather than centered: a centered
+          modal taller than the screen opens with its header already scrolled
+          above the fold, which is what was cutting off "Unlock Full Access"
+          and the pay button. Capped to the viewport height with its own
+          scrollbar so both ends stay reachable regardless of content length. */}
+      <div className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-3xl shadow-2xl max-w-xl w-full border border-teal-brand/30 dark:border-slate-800 overflow-y-auto max-h-[calc(100vh-2rem)] sm:max-h-[85vh] my-4 sm:my-8 animate-fade-in">
         {/* Header */}
         <div className="bg-gradient-to-r from-teal-dark via-teal-800 to-teal-dark p-6 sm:p-8 text-white relative">
           {onClose && (
