@@ -155,14 +155,15 @@ const GRADE_CHOICES = [
  * lesson ended up tagged Gaming.
  */
 const PLATFORM_SIGNALS: { supply: string; category: string; terms: string[] }[] = [
-  { supply: "Scratch JR", category: "Gaming", terms: ["scratch jr", "scratchjr", "junior scratch"] },
-  { supply: "Scratch 3.0", category: "Gaming", terms: ["scratch 3", "scratch 3.0", "mit scratch", "scratch project", "sprite", "costume"] },
-  { supply: "Roblox Studio", category: "Gaming", terms: ["roblox", "lua"] },
+  { supply: "Scratch JR", category: "Software", terms: ["scratch jr", "scratchjr", "junior scratch"] },
+  { supply: "Scratch 3.0", category: "Software", terms: ["scratch 3", "scratch 3.0", "mit scratch", "scratch project", "sprite", "costume"] },
+  { supply: "Scratch", category: "Software", terms: ["scratch 3", "scratch 3.0", "mit scratch", "scratch project", "sprite", "costume"] },
+  { supply: "Roblox Studio", category: "Software", terms: ["roblox", "lua"] },
   { supply: "EduBlocks", category: "Software", terms: ["edublocks", "edu blocks"] },
   { supply: "Thunkable", category: "Software", terms: ["thunkable", "app inventor"] },
-  { supply: "Code.org Game Lab", category: "Gaming", terms: ["code.org", "game lab", "sprite lab"] },
+  { supply: "Code.org", category: "Software", terms: ["code.org", "game lab", "sprite lab"] },
   { supply: "Micro:bit / MakeCode", category: "Circuitry", terms: ["micro:bit", "microbit", "makecode"] },
-  { supply: "Python / IDE", category: "Software", terms: ["python", "repl.it", "replit"] },
+  { supply: "Python", category: "Software", terms: ["python", "repl.it", "replit"] },
   { supply: "LEGO Robotics", category: "Engineering", terms: ["lego", "spike prime", "wedo", "mindstorms"] },
   { supply: "Snap Circuits", category: "Circuitry", terms: ["snap circuit", "breadboard", "resistor"] },
   { supply: "Canva", category: "Art", terms: ["canva"] },

@@ -231,6 +231,10 @@ export default function SubscriptionModal({
                   "really have an account" is being asked for money — showing whose
                   purchase this is answers that at the moment it matters. */}
               <p className="text-center text-[11px] text-slate-600 dark:text-slate-400">
+                Not what you needed? Email within 14 days for a full refund, no questions asked.
+              </p>
+
+              <p className="text-center text-[11px] text-slate-600 dark:text-slate-400">
                 Purchasing as <span className="font-bold text-slate-800 dark:text-slate-200">{user.email}</span>
               </p>
 

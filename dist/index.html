@@ -23,10 +23,68 @@
     <meta property="og:url" content="https://lyrah.io" />
     <meta property="og:image" content="https://lyrah.io/assets/images/favicon.png" />
     <meta name="twitter:card" content="summary" />
-    <script type="module" crossorigin src="/assets/index-Bdx1hJKD.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-CXf3kyg5.css">
+    <script type="module" crossorigin src="/assets/index-AJfwmyW2.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CTx4hJES.css">
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Shown until React mounts and replaces it.
+         The React error boundary cannot help when the failure happens before
+         React boots at all - a stale cached index.html pointing at chunk
+         filenames that no longer exist after a deploy fails at import time,
+         so nothing mounts and the page simply stays blank. This markup is
+         already in the document, so it survives that. -->
+    <div id="root">
+      <div id="boot-fallback" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:#05070f;color:#e2e8f0;font-family:system-ui,-apple-system,sans-serif">
+        <div style="max-width:26rem;text-align:center">
+          <p id="boot-msg" style="font-size:.9rem;color:#94a3b8;margin:0">Loading Lyrah&hellip;</p>
+          <div id="boot-recover" style="display:none;margin-top:1rem">
+            <p style="font-size:1.05rem;font-weight:700;color:#2dd4bf;margin:0 0 .5rem">Lyrah didn't finish loading</p>
+            <p style="font-size:.85rem;color:#94a3b8;margin:0 0 1rem;line-height:1.5">
+              This usually means the tab is holding an older version. Your saved lessons are safe.
+            </p>
+            <button id="boot-reload" type="button" style="padding:.65rem 1.25rem;border-radius:.75rem;border:0;background:#2dd4bf;color:#020617;font-weight:700;font-size:.9rem;cursor:pointer">
+              Reload Lyrah
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+      (function () {
+        // If React has not replaced the fallback within eight seconds, the
+        // bundle did not run. Offer a cache-busting reload rather than
+        // leaving a blank page with nothing to click.
+        var timer = setTimeout(function () {
+          var el = document.getElementById("boot-recover");
+          var msg = document.getElementById("boot-msg");
+          if (el && document.getElementById("boot-fallback")) {
+            if (msg) msg.style.display = "none";
+            el.style.display = "block";
+          }
+        }, 8000);
+
+        document.getElementById("boot-reload").addEventListener("click", function () {
+          if (window.caches && caches.keys) {
+            caches.keys().then(function (keys) {
+              return Promise.all(keys.map(function (k) { return caches.delete(k); }));
+            }).catch(function () {}).then(go);
+          } else { go(); }
+          function go() { location.replace(location.pathname + "?fresh=" + Date.now()); }
+        });
+
+        // A module that fails to load never reaches React.
+        window.addEventListener("error", function (e) {
+          if (e && e.target && e.target.tagName === "SCRIPT") {
+            clearTimeout(timer);
+            var el = document.getElementById("boot-recover");
+            var msg = document.getElementById("boot-msg");
+            if (el && document.getElementById("boot-fallback")) {
+              if (msg) msg.style.display = "none";
+              el.style.display = "block";
+            }
+          }
+        }, true);
+      })();
+    </script>
   </body>
 </html>
