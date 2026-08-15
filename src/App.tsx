@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Sparkles, 
@@ -278,6 +278,17 @@ export default function App() {
   const [currentView, setCurrentView] = useState<"landing" | "studio">("landing");
   // Cursor-led walkthrough for first-time visitors and judges.
   const [isDemoRunning, setIsDemoRunning] = useState<boolean>(false);
+
+  // The nav used to be `sticky`, which several ad-block/reader extensions
+  // silently break by wrapping the page in a container with its own
+  // overflow or transform - the browser honours it, but the element stops
+  // sticking. `fixed` does not depend on any ancestor and survives that.
+  // Taking it out of flow means the content below needs a spacer matching
+  // its real height, which varies with the vault bar and subscription
+  // state, so it is measured rather than guessed.
+  const navRef = React.useRef<HTMLElement | null>(null);
+  const [navHeight, setNavHeight] = useState<number>(64);
+
   // Diagrams and photographs lifted out of the uploaded lesson. They go to
   // Gemini with the text so the build it describes is the one in the document
   // rather than one inferred from prose.
@@ -1506,13 +1517,41 @@ export default function App() {
     setShowExplanation(false);
   };
 
+  // Measured synchronously after every paint that could change the nav's
+  // height (before the browser shows the frame, so there is no visible jump),
+  // plus a window resize listener and a ResizeObserver as belt-and-braces for
+  // anything neither of those catches - a nav wrapping to an extra row from a
+  // window resize alone, for instance.
+  useLayoutEffect(() => {
+    const measure = () => {
+      const height = navRef.current?.getBoundingClientRect().height;
+      if (height) setNavHeight(Math.ceil(height));
+    };
+
+    measure();
+    window.addEventListener("resize", measure);
+
+    let observer: ResizeObserver | undefined;
+    if (navRef.current && typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(measure);
+      observer.observe(navRef.current);
+    }
+
+    return () => {
+      window.removeEventListener("resize", measure);
+      observer?.disconnect();
+    };
+  }, [user, profile?.isSubscribed, isVaultExpanded, currentView, isDarkMode]);
+
   return (
     <div className={`app-shell min-h-screen ${isDarkMode ? "dark text-slate-100" : "bg-surface-0 text-primary"} flex flex-col antialiased transition-colors duration-300 w-full`}>
       {/* Full Viewport Document Canvas Container */}
       <div className={`w-full ${isDarkMode ? "bg-[#0f172a] text-slate-100" : "bg-white text-primary"} min-h-screen flex flex-col pb-16 px-3 sm:px-6 lg:px-10 xl:px-12 transition-colors duration-300`}>
         
-        {/* Navigation Bar (ly-nav) */}
-        <nav className={`px-3 sm:px-6 py-3 border-b flex flex-col gap-2 backdrop-blur-md sticky top-0 z-30 transition-all -mx-3 sm:-mx-6 lg:-mx-10 xl:-mx-12 px-3 sm:px-6 lg:px-10 xl:px-12 ${
+        {/* Navigation Bar (ly-nav). Fixed rather than sticky - see navRef above. */}
+        <nav
+          ref={navRef}
+          className={`px-3 sm:px-6 py-3 border-b flex flex-col gap-2 backdrop-blur-md fixed top-0 left-0 right-0 z-30 transition-all px-3 sm:px-6 lg:px-10 xl:px-12 ${
           isDarkMode ? "border-slate-800/80 bg-slate-900/90 liquid-glass-dark" : "border-black/[0.09] bg-white/90 liquid-glass-light"
         }`}>
           {/* Top Row: Logo & Primary Actions */}
@@ -1542,14 +1581,10 @@ export default function App() {
                   setCustomContent("");
                   setIsDemoRunning(true);
                 }}
-                className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[38px] border ${
-                  isDarkMode
-                    ? "bg-slate-800 text-teal-brand border-slate-700 hover:bg-slate-700 hover:border-teal-brand/40"
-                    : "bg-teal-light/60 dark:bg-teal-brand/15 text-teal-dark dark:text-teal-brand border-teal-brand/30 hover:bg-teal-light hover:border-teal-brand/50"
-                }`}
+                className="px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-extrabold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[38px] border bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 border-amber-300/60 shadow-3xs hover:shadow-xs micro-glow-amber"
                 title="Show me how Lyrah works"
               >
-                <HelpCircle className="w-3.5 h-3.5" />
+                <HelpCircle className="w-3.5 h-3.5 text-slate-950" />
                 <span>How to Use</span>
               </button>
 
@@ -1788,6 +1823,10 @@ export default function App() {
             </div>
           </div>
         </nav>
+
+        {/* Holds the nav's real, measured height out of the flow it vacated by
+            going fixed - otherwise the page content starts underneath it. */}
+        <div style={{ height: navHeight }} aria-hidden="true" />
 
         {currentView === "landing" ? (
           <LandingPage 
@@ -3563,7 +3602,25 @@ export default function App() {
             sampleText={PRELOADED_LESSONS[0]?.rawContent || ""}
             onType={(text) => setCustomContent(text)}
             onGenerate={() => handleProcessLesson(true)}
-            onFinish={() => setIsDemoRunning(false)}
+            onFinish={() => {
+              setIsDemoRunning(false);
+
+              // "How to Use" is the one path into the studio that needs no
+              // account, and lesson state starts pre-populated with a sample
+              // lesson - so once the scripted walkthrough ends, an
+              // unauthenticated visitor was left standing in a fully
+              // interactive studio with every tab, including Visual Studio,
+              // already showing content. Nothing there could generate
+              // anything real (the API requires an account), but it read as
+              // free access to the product rather than a demo of it. Signed
+              // out, the walkthrough now returns to the landing page instead
+              // of parking them in the studio.
+              if (!user) {
+                setCurrentView("landing");
+                setLesson(INITIAL_PROCESSED_LESSON);
+                setCustomContent("");
+              }
+            }}
           />
         )}
 
