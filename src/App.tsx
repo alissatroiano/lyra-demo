@@ -1574,7 +1574,7 @@ export default function App() {
   return (
     <div className={`app-shell min-h-screen ${isDarkMode ? "dark text-slate-100" : "bg-surface-0 text-primary"} flex flex-col antialiased transition-colors duration-300 w-full`}>
       {/* Full Viewport Document Canvas Container */}
-      <div className={`w-full ${isDarkMode ? "bg-[#0f172a] text-slate-100" : "bg-white text-primary"} min-h-screen flex flex-col pb-16 px-3 sm:px-6 lg:px-10 xl:px-12 transition-colors duration-300`}>
+      <div className={`w-full transition-colors duration-300`}>
         
         {/* Navigation Bar (ly-nav). Fixed rather than sticky - see navRef above. */}
         <nav

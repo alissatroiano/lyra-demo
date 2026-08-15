@@ -1,14 +1,14 @@
-@import url('https://fonts.googleapis.com/css2?family=Amatic+SC:wght@400;700&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Oswald:wght@200..700&family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&family=Xanh+Mono:ital@0;1&family=Zen+Loop:ital@0;1&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Antonio:wght@100..700&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Instrument+Serif:ital@0;1&family=Noto+Serif+Display:ital,wdth,wght@0,81.2,100..900;1,81.2,100..900&family=Oswald:wght@200..700&family=Syne:wght@400..800&display=swap');
 
 @import "tailwindcss";
 
 @variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: "Montserrat", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-serif: "PT Serif", Georgia, Cambria, serif;
-  --font-display:  "Zen Loop", cursive;
-  --font-mono: "JetBrains Mono", monospace;
+  --font-sans: "DM Sans", sans-serif;
+  --font-serif:  "Noto Serif Display", serif;
+  --font-display:  "Instrument Serif", serif;
+  --font-mono: "Antonio", sans-serif;
 
   --color-primary: #0f1117;
   --color-secondary: #5a6478;
@@ -30,17 +30,6 @@
   --color-cyber-card: #131929;
 }
 
-/* Dark theme surfaces.
- *
- * These are the same semantic tokens the light theme uses, re-pointed rather
- * than overridden per component. Panels were written as bg-surface-0 or
- * bg-teal-light and stayed pale in dark mode — the Media Fixer and the
- * Curriculum Core Pillars were both unreadable — and patching each one in the
- * markup means the next panel someone writes has the same bug.
- *
- * Only the surfaces and text colours move. The brand teals and golds are
- * deliberately unchanged: they carry the identity in both themes.
- */
 .dark {
   --color-primary: #f1f5f9;
   --color-secondary: #94a3b8;
@@ -64,27 +53,44 @@
   --color-gold-light: #422006;
 }
 
-/* Night sky.
- *
- * Lyra is a constellation, so the dark theme is a sky rather than a grey. Two
- * fixed starfields at different scales sit behind everything and do not move
- * with the page, which reads as depth rather than as a texture stuck to the
- * content. Both are pure CSS: no image to load, nothing to go stale in a cache.
- */
-.dark body,
-.dark .app-shell {
-  background-color: #05070f;
-  background-image:
-    radial-gradient(1px 1px at 12% 18%, rgba(255, 255, 255, 0.55), transparent 60%),
-    radial-gradient(1px 1px at 78% 12%, rgba(255, 255, 255, 0.4), transparent 60%),
-    radial-gradient(1.4px 1.4px at 42% 62%, rgba(148, 233, 226, 0.5), transparent 60%),
-    radial-gradient(1px 1px at 88% 74%, rgba(255, 255, 255, 0.35), transparent 60%),
-    radial-gradient(1px 1px at 26% 86%, rgba(255, 255, 255, 0.3), transparent 60%),
-    radial-gradient(1.6px 1.6px at 64% 34%, rgba(45, 212, 191, 0.45), transparent 60%),
-    radial-gradient(circle at 20% 0%, rgba(26, 150, 140, 0.10), transparent 55%),
-    radial-gradient(circle at 85% 100%, rgba(45, 212, 191, 0.07), transparent 50%);
-  background-attachment: fixed;
+.logo {
+  max-width: 100%;
+  height: 40px;
 }
+
+.font-italic {
+  font-style: italic;
+}
+
+.text-normal {
+  font-style: normal;
+}
+
+
+.app-shell.min-h-screen {
+  background: linear-gradient(rgba(0, 0, 0, 0.741), rgba(0, 0, 0, 0.747)),  url('assets/images/stars.jpg');
+  max-width: 100%;
+  height: auto;
+  padding: 20px;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed; /* Locks the background image in place */
+  background-repeat: no-repeat;
+}
+
+.glass-overlay {
+  background: rgba(255, 255, 255, 0.15); /* Semi-transparent white */
+  padding: 3rem;
+  border-radius: 16px;
+  backdrop-filter: blur(12px); /* Frosted glass blur */
+  -webkit-backdrop-filter: blur(12px); /* Safari support */
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  text-align: center;
+  color: #fafafa;
+  max-width: 100%;
+}
+
 
 /* A faint drift, slow enough to notice only if you look for it. Anyone who has
    asked for reduced motion gets a still sky. */
@@ -107,7 +113,7 @@
 
 .font-mono {
   font-weight: 800;
-  font-size: 10px;
+  font-size: 13px;
 }
 
 .landing-snug {
@@ -151,9 +157,8 @@ h4.font-display.font-bold {
 h2.dark\:text-slate-100:where(.dark,.dark *) {
     color: var(--color-slate-100);
     max-height: 90vh;
-    overflow: auto;
-    font-size: 40px;
     letter-spacing: .25px;
+    overflow: hidden;
 }
 
 span.text-teal-brand.font-sans {
