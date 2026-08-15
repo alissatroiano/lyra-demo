@@ -245,15 +245,56 @@ var stripMarkupFromLesson = (node) => {
   }
   return node;
 };
+var FREE_LESSONS_PER_ACCOUNT = 0;
+var readQuotaDoc = async (db, uid) => {
+  const ref = db.collection("users").doc(uid);
+  const snap = await ref.get();
+  return { ref, data: snap.exists ? snap.data() : {} };
+};
+var checkLessonQuota = async (uid) => {
+  const db = await getFirestore();
+  if (!db) return { allowed: false, used: 0, subscribed: false };
+  let lastErr = null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const { ref, data } = await readQuotaDoc(db, uid);
+      if (data?.isSubscribed === true) {
+        return { allowed: true, used: data?.freeLessonsUsed || 0, subscribed: true };
+      }
+      const used = data?.freeLessonsUsed || 0;
+      if (used >= FREE_LESSONS_PER_ACCOUNT) {
+        return { allowed: false, used, subscribed: false };
+      }
+      await ref.set({ uid, freeLessonsUsed: used + 1, updatedAt: /* @__PURE__ */ new Date() }, { merge: true });
+      return { allowed: true, used: used + 1, subscribed: false };
+    } catch (err) {
+      lastErr = err;
+      if (attempt === 0) await new Promise((r) => setTimeout(r, 250));
+    }
+  }
+  console.error("Lesson quota check failed twice, blocking:", lastErr?.message || lastErr);
+  return { allowed: false, used: 0, subscribed: false };
+};
 app.post("/api/process-lesson", async (req, res) => {
   if (!ai) {
     return res.status(500).json({
       error: "Gemini API client is not initialized. Please ensure GEMINI_API_KEY is configured in your secrets."
     });
   }
-  const { lessonContent, customPreferences, instructorMemory, figures } = req.body;
+  const { lessonContent, customPreferences, instructorMemory, figures, uid } = req.body;
   if (!lessonContent || typeof lessonContent !== "string") {
     return res.status(400).json({ error: "lessonContent string is required" });
+  }
+  if (!uid || typeof uid !== "string") {
+    return res.status(401).json({ error: "Sign in to generate a lesson." });
+  }
+  const quota = await checkLessonQuota(uid);
+  if (!quota.allowed) {
+    return res.status(402).json({
+      error: FREE_LESSONS_PER_ACCOUNT === 0 ? "A subscription is required to generate lessons." : "You have used your free lessons.",
+      details: "Your account is signed in \u2014 adding a plan unlocks generation straight away.",
+      quotaExhausted: true
+    });
   }
   try {
     const memoryDirective = instructorMemory ? `
@@ -886,11 +927,31 @@ app.post("/api/generate-music", async (req, res) => {
     });
   }
 });
+var CHAT_DAILY_LIMIT = 40;
+var chatUsage = /* @__PURE__ */ new Map();
+var chatQuotaExceeded = (uid) => {
+  const today = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+  const seen = chatUsage.get(uid);
+  if (!seen || seen.day !== today) {
+    chatUsage.set(uid, { day: today, count: 1 });
+    return false;
+  }
+  seen.count += 1;
+  return seen.count > CHAT_DAILY_LIMIT;
+};
 app.post("/api/chat", async (req, res) => {
   if (!ai) {
     return res.status(500).json({ error: "Gemini client not initialized." });
   }
-  const { messages, model, systemInstruction, useSearch, thinkingLevel } = req.body;
+  const { messages, model, systemInstruction, useSearch, thinkingLevel, uid } = req.body;
+  if (!uid || typeof uid !== "string") {
+    return res.status(401).json({ error: "Sign in to chat with Lyrah." });
+  }
+  if (chatQuotaExceeded(uid)) {
+    return res.status(429).json({
+      error: `You have reached today's limit of ${CHAT_DAILY_LIMIT} copilot messages. It resets tomorrow.`
+    });
+  }
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: "messages array is required" });
   }

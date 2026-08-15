@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Sparkles, 
@@ -278,6 +278,17 @@ export default function App() {
   const [currentView, setCurrentView] = useState<"landing" | "studio">("landing");
   // Cursor-led walkthrough for first-time visitors and judges.
   const [isDemoRunning, setIsDemoRunning] = useState<boolean>(false);
+
+  // The nav used to be `sticky`, which several ad-block/reader extensions
+  // silently break by wrapping the page in a container with its own
+  // overflow or transform - the browser honours it, but the element stops
+  // sticking. `fixed` does not depend on any ancestor and survives that.
+  // Taking it out of flow means the content below needs a spacer matching
+  // its real height, which varies with the vault bar and subscription
+  // state, so it is measured rather than guessed.
+  const navRef = React.useRef<HTMLElement | null>(null);
+  const [navHeight, setNavHeight] = useState<number>(64);
+
   // Diagrams and photographs lifted out of the uploaded lesson. They go to
   // Gemini with the text so the build it describes is the one in the document
   // rather than one inferred from prose.
@@ -757,12 +768,18 @@ export default function App() {
     ];
   }, [selectedCategory]);
 
-  // Redirect to studio whenever user logs in or creates account from landing
+  // Send a SUBSCRIBER straight to the studio on sign-in - but only a
+  // subscriber. This used to redirect any signed-in account, and because it
+  // watches currentView it re-fired the instant anything sent someone back to
+  // the landing page: dismissing the plan modal put them right back into the
+  // studio, which is the whole paid product sitting open behind a paywall
+  // they had just closed.
   useEffect(() => {
-    if (user && currentView === "landing") {
+    if (authLoading) return;
+    if (user && profile?.isSubscribed && currentView === "landing") {
       setCurrentView("studio");
     }
-  }, [user, currentView]);
+  }, [user, profile?.isSubscribed, authLoading, currentView]);
 
   // A sign-in used to land in an empty studio with no indication a plan was
   // needed - the paywall was only discovered after uploading a lesson and
@@ -780,11 +797,33 @@ export default function App() {
   const handleSignInAndRedirect = async () => {
     try {
       await signInWithGoogle();
-      setCurrentView("studio");
+      // Where they land is decided by the effect above once the profile
+      // resolves: a subscriber goes to the studio, everyone else stays on the
+      // landing page with the plan in front of them.
       pendingPlanPromptRef.current = true;
     } catch (err: any) {
       console.error("Sign in failed:", err);
     }
+  };
+
+  /**
+   * The only way into the studio.
+   *
+   * Everything inside it is the paid product - the lesson tabs, Visual
+   * Studio, the copilot - and the API refuses to generate or chat without a
+   * subscription regardless, so letting an unpaid account browse it only ever
+   * ends in a 402 after they have invested effort.
+   */
+  const enterStudio = () => {
+    if (!user) {
+      handleSignInAndRedirect();
+      return;
+    }
+    if (!profile?.isSubscribed) {
+      setShowSubscriptionModal(true);
+      return;
+    }
+    setCurrentView("studio");
   };
 
   useEffect(() => {
@@ -1506,13 +1545,41 @@ export default function App() {
     setShowExplanation(false);
   };
 
+  // Measured synchronously after every paint that could change the nav's
+  // height (before the browser shows the frame, so there is no visible jump),
+  // plus a window resize listener and a ResizeObserver as belt-and-braces for
+  // anything neither of those catches - a nav wrapping to an extra row from a
+  // window resize alone, for instance.
+  useLayoutEffect(() => {
+    const measure = () => {
+      const height = navRef.current?.getBoundingClientRect().height;
+      if (height) setNavHeight(Math.ceil(height));
+    };
+
+    measure();
+    window.addEventListener("resize", measure);
+
+    let observer: ResizeObserver | undefined;
+    if (navRef.current && typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(measure);
+      observer.observe(navRef.current);
+    }
+
+    return () => {
+      window.removeEventListener("resize", measure);
+      observer?.disconnect();
+    };
+  }, [user, profile?.isSubscribed, isVaultExpanded, currentView, isDarkMode]);
+
   return (
     <div className={`app-shell min-h-screen ${isDarkMode ? "dark text-slate-100" : "bg-surface-0 text-primary"} flex flex-col antialiased transition-colors duration-300 w-full`}>
       {/* Full Viewport Document Canvas Container */}
       <div className={`w-full ${isDarkMode ? "bg-[#0f172a] text-slate-100" : "bg-white text-primary"} min-h-screen flex flex-col pb-16 px-3 sm:px-6 lg:px-10 xl:px-12 transition-colors duration-300`}>
         
-        {/* Navigation Bar (ly-nav) */}
-        <nav className={`px-3 sm:px-6 py-3 border-b flex flex-col gap-2 backdrop-blur-md sticky top-0 z-30 transition-all -mx-3 sm:-mx-6 lg:-mx-10 xl:-mx-12 px-3 sm:px-6 lg:px-10 xl:px-12 ${
+        {/* Navigation Bar (ly-nav). Fixed rather than sticky - see navRef above. */}
+        <nav
+          ref={navRef}
+          className={`px-3 sm:px-6 py-3 border-b flex flex-col gap-2 backdrop-blur-md fixed top-0 left-0 right-0 z-30 transition-all px-3 sm:px-6 lg:px-10 xl:px-12 ${
           isDarkMode ? "border-slate-800/80 bg-slate-900/90 liquid-glass-dark" : "border-black/[0.09] bg-white/90 liquid-glass-light"
         }`}>
           {/* Top Row: Logo & Primary Actions */}
@@ -1534,24 +1601,25 @@ export default function App() {
               {/* "How to Use" replaces a second My Lessons control: the vault bar
                   below already opens the same drawer, and what instructors asked
                   for was a way to be shown around, not a duplicate button. */}
-              <button
-                type="button"
-                onClick={() => {
-                  setCurrentView("studio");
-                  setIsTextMaterialOpen(true);
-                  setCustomContent("");
-                  setIsDemoRunning(true);
-                }}
-                className={`px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[38px] border ${
-                  isDarkMode
-                    ? "bg-slate-800 text-teal-brand border-slate-700 hover:bg-slate-700 hover:border-teal-brand/40"
-                    : "bg-teal-light/60 dark:bg-teal-brand/15 text-teal-dark dark:text-teal-brand border-teal-brand/30 hover:bg-teal-light hover:border-teal-brand/50"
-                }`}
-                title="Show me how Lyrah works"
-              >
-                <HelpCircle className="w-3.5 h-3.5" />
-                <span>How to Use</span>
-              </button>
+              {/* The walkthrough drives the real studio controls, so it is only
+                  offered to an account that is entitled to be in there. Shown
+                  to anyone else it is just another way into the paid product. */}
+              {profile?.isSubscribed && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCurrentView("studio");
+                    setIsTextMaterialOpen(true);
+                    setCustomContent("");
+                    setIsDemoRunning(true);
+                  }}
+                  className="px-3 sm:px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0 min-h-[38px] border bg-teal-light/60 dark:bg-teal-brand/15 text-teal-dark dark:text-teal-brand border-teal-brand/30 hover:bg-teal-light dark:hover:bg-teal-brand/25 hover:border-teal-brand/50"
+                  title="Show me how Lyrah works"
+                >
+                  <HelpCircle className="w-3.5 h-3.5" />
+                  <span>How to Use</span>
+                </button>
+              )}
 
               {/* 2026 Cyber STEM Lab Theme Switcher */}
               <button
@@ -1567,19 +1635,26 @@ export default function App() {
                 {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
 
-              {profile?.isSubscribed ? (
-                <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-600/50 text-emerald-800 dark:text-emerald-300 font-bold text-xs rounded-full shadow-3xs micro-glow-emerald">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Pro Member</span>
+              {/* One call to action, whatever state the visitor is in.
+                  Signing in now leads straight to the plan, so a separate
+                  "Sign In" and "Upgrade" pair was two buttons for one journey
+                  - and both the Upgrade button and the Pro Member badge were
+                  hidden below the sm breakpoint, so on a phone the primary
+                  action simply was not there. */}
+              {authLoading ? null : profile?.isSubscribed ? (
+                <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-600/50 text-emerald-800 dark:text-emerald-300 font-bold text-xs rounded-full shadow-3xs micro-glow-emerald min-h-[38px]">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span className="hidden xs:inline sm:inline">Pro Member</span>
+                  <span className="xs:hidden sm:hidden">Pro</span>
                 </div>
               ) : (
                 <button
                   type="button"
-                  onClick={() => setShowSubscriptionModal(true)}
-                  className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 font-extrabold text-xs rounded-full shadow-3xs hover:shadow-xs transition-all cursor-pointer border border-amber-300/60 micro-glow-amber min-h-[38px]"
+                  onClick={user ? () => setShowSubscriptionModal(true) : handleSignInAndRedirect}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 font-extrabold text-xs rounded-full shadow-3xs hover:shadow-xs transition-all cursor-pointer border border-amber-300/60 micro-glow-amber min-h-[38px] shrink-0"
                 >
                   <Crown className="w-3.5 h-3.5 text-slate-950 shrink-0" />
-                  <span>Upgrade</span>
+                  <span>{user ? "Upgrade" : "Get Started"}</span>
                 </button>
               )}
 
@@ -1616,16 +1691,7 @@ export default function App() {
                     Exit
                   </button>
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={handleSignInAndRedirect}
-                  className="px-3 sm:px-3.5 py-1.5 bg-teal-dark hover:bg-opacity-95 text-white rounded-full text-xs font-bold transition-all shadow-3xs flex items-center gap-1.5 cursor-pointer micro-glow-teal min-h-[38px]"
-                >
-                  <LogIn className="w-3.5 h-3.5 text-teal-brand" />
-                  <span>Sign In</span>
-                </button>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -1789,17 +1855,14 @@ export default function App() {
           </div>
         </nav>
 
+        {/* Holds the nav's real, measured height out of the flow it vacated by
+            going fixed - otherwise the page content starts underneath it. */}
+        <div style={{ height: navHeight }} aria-hidden="true" />
+
         {currentView === "landing" ? (
           <LandingPage 
-            onLaunchStudio={() => setCurrentView("studio")}
-            onWatchDemo={() => {
-              setCurrentView("studio");
-              // The lesson input lives inside a panel that is folded by default,
-              // so the demo cannot point at it until the panel is open.
-              setIsTextMaterialOpen(true);
-              setCustomContent("");
-              setIsDemoRunning(true);
-            }} 
+            onLaunchStudio={enterStudio}
+
             onSelectPlan={() => setShowSubscriptionModal(true)}
             user={user}
             onSignIn={handleSignInAndRedirect}
@@ -3563,7 +3626,25 @@ export default function App() {
             sampleText={PRELOADED_LESSONS[0]?.rawContent || ""}
             onType={(text) => setCustomContent(text)}
             onGenerate={() => handleProcessLesson(true)}
-            onFinish={() => setIsDemoRunning(false)}
+            onFinish={() => {
+              setIsDemoRunning(false);
+
+              // "How to Use" is the one path into the studio that needs no
+              // account, and lesson state starts pre-populated with a sample
+              // lesson - so once the scripted walkthrough ends, an
+              // unauthenticated visitor was left standing in a fully
+              // interactive studio with every tab, including Visual Studio,
+              // already showing content. Nothing there could generate
+              // anything real (the API requires an account), but it read as
+              // free access to the product rather than a demo of it. Signed
+              // out, the walkthrough now returns to the landing page instead
+              // of parking them in the studio.
+              if (!user) {
+                setCurrentView("landing");
+                setLesson(INITIAL_PROCESSED_LESSON);
+                setCustomContent("");
+              }
+            }}
           />
         )}
 
