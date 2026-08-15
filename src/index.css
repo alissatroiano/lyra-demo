@@ -10,34 +10,58 @@
   --font-display:  "Instrument Serif", serif;
   --font-mono: "DM Sans", sans-serif;
 
-  --color-primary: #0f1117;
-  --color-secondary: #5a6478;
-  --color-muted: #9ca3af;
+  /* Pyxias palette, light theme: chart paper.
+   *
+   * Not an inverted night sky - a second real design. Neutrals are pulled
+   * toward indigo rather than sitting at true grey, so they read as chosen.
+   * The accent is the deeper orange here: the bright one that glows against
+   * indigo glares against white.
+   *
+   * The token NAMES are unchanged deliberately. Renaming teal-brand to star
+   * across every component is a large, collision-prone edit, and the design
+   * system's own closing note says to sequence that after in-flight work
+   * rather than alongside it. Re-pointing the values gets the whole look with
+   * no markup churn.
+   */
+  --color-primary: #14162B;        /* ink */
+  --color-secondary: #4A4E6B;      /* ink-soft */
+  --color-muted: #6E7290;          /* ink-mute */
 
-  --color-surface-0: #f4f6fb;
-  --color-surface-1: #eef1f8;
-  --color-surface-2: #ffffff;
+  --color-surface-0: #E9ECF4;      /* ground */
+  --color-surface-1: #F4F6FA;      /* paper  */
+  --color-surface-2: #FFFFFF;      /* surface */
 
-  --color-teal-brand: #1a968c;
-  --color-teal-dark: #1a4a45;
-  --color-teal-light: #e0faf8;
-  --color-teal-mid: #2ec4b8;
+  --color-teal-brand: #E1500F;     /* star: accent, links, primary action */
+  --color-teal-mid: #F98A4E;       /* star-soft */
+  --color-teal-dark: #14162B;      /* deep panel ground + deep type */
+  --color-teal-light: #DDE1EC;     /* pale panel + pale type (line-faint) */
 
-  --color-gold-brand: #c97d10;
-  --color-gold-light: #fef3c7;
+  --color-gold-brand: #D99000;     /* ray: secondary marks, highlights */
+  --color-gold-light: #F4F6FA;
 
-  --color-cyber-bg: #0b0f19;
-  --color-cyber-card: #131929;
+  --color-meridian: #6A5DBF;       /* data, code, cool counterweight */
+  --color-line: #C6CBDD;
+
+  --color-cyber-bg: #0E1024;
+  --color-cyber-card: #1A1D38;
 }
 
 .dark {
-  --color-primary: #f1f5f9;
-  --color-secondary: #94a3b8;
-  --color-muted: #64748b;
+  /* Night sky. Orange sits opposite indigo on the wheel, which is the one
+   * pairing where both get louder. */
+  --color-primary: #ECEAF2;        /* ink */
+  --color-secondary: #B9B6D0;      /* ink-soft */
+  --color-muted: #8D8AAB;          /* ink-mute */
 
-  --color-surface-0: #0b1020;
-  --color-surface-1: #141b2f;
-  --color-surface-2: #05070f;
+  --color-surface-0: #0E1024;      /* ground */
+  --color-surface-1: #12142A;      /* paper  */
+  --color-surface-2: #1A1D38;      /* surface */
+
+  --color-teal-brand: #FF6A2B;     /* star, brighter against indigo */
+  --color-teal-mid: #FF9257;       /* star-soft */
+  --color-gold-brand: #FFC24A;     /* ray */
+  --color-meridian: #9184D9;
+  --color-line: #333862;
 
   /* Neither teal-light nor teal-dark is flipped here.
    *
