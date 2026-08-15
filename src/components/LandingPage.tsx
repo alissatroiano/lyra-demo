@@ -27,11 +27,35 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               Say goodbye to <span className="text-teal-700 dark:text-teal-brand underline decoration-yellow-400 dark:decoration-yellow-500 underline-offset-6 text-normal">long, wordy lesson plans</span>
             </h2>
 
-            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans font-normal">
-              Paste in the curriculum you already have. Get slides, a hands-on lab checklist, a printable
-              worksheet with the answer key, and a review game — with the dead video links already flagged.
-              Ready to teach, not ready to edit for two more hours.
+            {/* The whole product in one sentence, given the weight of a
+                subheading rather than buried in body copy. A visitor who reads
+                only this should know what Lyrah does and what to do next. */}
+            <p className="text-base sm:text-xl text-slate-700 dark:text-slate-200 leading-relaxed font-sans">
+              Add wordy curriculum and get <strong className="font-bold text-slate-900 dark:text-white">slides</strong>,
+              a <strong className="font-bold text-slate-900 dark:text-white">lab checklist</strong>,
+              a <strong className="font-bold text-slate-900 dark:text-white">worksheet with an answer key</strong>, and
+              a <strong className="font-bold text-slate-900 dark:text-white">review quiz</strong> — with the dead media
+              links already flagged.
             </p>
+
+            {/* Three steps, so nobody has to guess what happens after sign-in. */}
+            <ol className="flex flex-col sm:flex-row gap-3 sm:gap-2 pt-1">
+              {[
+                { n: "1", t: "Sign in", d: "Google account, no new password" },
+                { n: "2", t: "Add your lesson", d: "Upload a file or paste the text" },
+                { n: "3", t: "Teach it", d: "Everything above, cut to fit your class" },
+              ].map((step) => (
+                <li key={step.n} className="flex items-start gap-2.5 flex-1">
+                  <span className="w-6 h-6 rounded-full bg-teal-brand text-slate-950 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    {step.n}
+                  </span>
+                  <span className="space-y-0.5">
+                    <span className="block text-sm font-bold text-slate-900 dark:text-slate-100 font-sans leading-tight">{step.t}</span>
+                    <span className="block text-xs text-slate-600 dark:text-slate-400 font-sans leading-snug">{step.d}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
 
             <div className="pt-2 flex flex-wrap items-center gap-3">
               {user ? (
