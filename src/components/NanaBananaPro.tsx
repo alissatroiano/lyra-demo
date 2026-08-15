@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { ImageIcon, Download, RefreshCw, Sparkles, Check } from "lucide-react";
 import { ProcessedLesson, SavedVisual } from "../types";
 
@@ -46,7 +46,7 @@ export default function NanaBananaPro({ lesson, onUpdateVisuals }: NanaBananaPro
   const [image, setImage] = useState<string | null>(lesson?.generatedVisuals?.[0]?.url || null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [overrideOpen, setOverrideOpen] = useState(false);
+  const autoRan = useRef(false);
 
   const generate = async () => {
     if (!prompt.trim() || isLoading) return;
@@ -88,9 +88,20 @@ export default function NanaBananaPro({ lesson, onUpdateVisuals }: NanaBananaPro
     }
   };
 
+  // Auto-draw when Lyrah has decided this lesson needs a picture. An instructor
+  // opening the tab wants to see the diagram, not be handed a prompt box and
+  // asked to operate an image model.
+  useEffect(() => {
+    if (recommended && !image && !isLoading && !error && !autoRan.current) {
+      autoRan.current = true;
+      generate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recommended]);
+
   return (
-    <div className="max-w-2xl space-y-4">
-      {/* Lyrah's call on whether this lesson needs a picture at all */}
+    <div className="max-w-3xl space-y-4">
+      {/* Why this picture exists, in the instructor's terms. */}
       {suggestion && (
         <div
           className={`flex items-start gap-3 p-4 rounded-2xl border ${
@@ -105,8 +116,8 @@ export default function NanaBananaPro({ lesson, onUpdateVisuals }: NanaBananaPro
             <Check className="w-4 h-4 text-secondary dark:text-slate-400 shrink-0 mt-0.5" />
           )}
           <div className="space-y-0.5">
-            <p className="text-xs font-bold text-slate-900 dark:text-slate-100 font-sans">
-              {recommended ? "An illustration would help here" : "No illustration needed"}
+            <p className="text-sm font-bold text-slate-900 dark:text-slate-100 font-sans">
+              {recommended ? "Here's what the build looks like" : "This lesson doesn't need a picture"}
             </p>
             <p className="text-xs text-secondary dark:text-slate-400 font-sans leading-relaxed">
               {suggestion.reason}
@@ -115,81 +126,53 @@ export default function NanaBananaPro({ lesson, onUpdateVisuals }: NanaBananaPro
         </div>
       )}
 
-      {/* When Lyrah has decided a picture would not help, the generator is put
-          away rather than merely labelled. It stays reachable — the instructor
-          knows their class — but it takes a deliberate click, because an
-          unnecessary illustration in front of children is worse than none. */}
-      {suggestion && !recommended && !overrideOpen && (
-        <button
-          type="button"
-          onClick={() => setOverrideOpen(true)}
-          className="text-xs font-bold text-teal-dark dark:text-teal-brand underline decoration-teal-brand/40 underline-offset-4 hover:decoration-teal-brand cursor-pointer font-sans"
-        >
-          Make one anyway
-        </button>
+      {/* The picture itself, or the fact that it is being drawn. */}
+      {isLoading && (
+        <div className="w-full aspect-video rounded-2xl border border-black/[0.08] dark:border-slate-700 bg-surface-1 dark:bg-slate-900 flex flex-col items-center justify-center gap-3">
+          <RefreshCw className="w-6 h-6 text-teal-brand animate-spin" />
+          <p className="text-xs text-secondary dark:text-slate-400 font-sans">Drawing the build…</p>
+        </div>
       )}
 
-      {(recommended || overrideOpen || !suggestion) && (
-        <>
-      <div className="space-y-2">
-        <label
-          htmlFor="visual-prompt"
-          className="text-[10px] font-bold text-secondary dark:text-slate-300 uppercase tracking-wider font-sans block"
-        >
-          What should the picture show?
-        </label>
-        <textarea
-          id="visual-prompt"
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          rows={3}
-          className="w-full text-xs font-sans p-3 rounded-xl bg-white dark:bg-slate-900 border border-black/[0.08] dark:border-slate-700 text-slate-900 dark:text-slate-100 resize-y focus-visible:outline-2 focus-visible:outline-teal-brand"
-        />
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={generate}
-          disabled={isLoading || !prompt.trim()}
-          className="px-4 py-2.5 bg-teal-dark hover:bg-teal-900 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
-        >
-          {isLoading ? (
-            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-          ) : (
-            <ImageIcon className="w-3.5 h-3.5 text-teal-brand" />
-          )}
-          <span>{isLoading ? "Generating…" : image ? "Generate again" : "Generate illustration"}</span>
-        </button>
-
-        {image && (
-          <a
-            href={image}
-            download={`lyrah_${(lesson?.lessonTitle || "lesson").replace(/[^a-z0-9]+/gi, "_").toLowerCase()}.png`}
-            className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-black/[0.08] dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl text-xs font-bold transition-all flex items-center gap-2"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span>Download</span>
-          </a>
-        )}
-      </div>
-
-      {error && (
-        <p className="text-xs text-red-600 dark:text-red-400 font-sans" role="alert">
-          {error}
-        </p>
-      )}
-
-      </>
-      )}
-
-      {image && (
+      {image && !isLoading && (
         <img
           src={image}
           alt={`Illustration for ${lesson?.lessonTitle || "this lesson"}`}
           className="w-full rounded-2xl border border-black/[0.08] dark:border-slate-700"
         />
       )}
+
+      {error && !isLoading && (
+        <p className="text-xs text-red-600 dark:text-red-400 font-sans" role="alert">
+          {error}
+        </p>
+      )}
+
+      {/* Two plain actions. No prompt box: the wording that drives the image is
+          written from the lesson's own materials and is not something an
+          instructor should have to read, let alone edit, mid-preparation. */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={generate}
+          disabled={isLoading}
+          className="px-4 py-2.5 bg-teal-dark hover:bg-teal-900 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-xl text-sm font-bold transition-all flex items-center gap-2 cursor-pointer font-sans"
+        >
+          <ImageIcon className="w-4 h-4 text-teal-brand" />
+          <span>{image ? "Draw it differently" : "Draw the build"}</span>
+        </button>
+
+        {image && (
+          <a
+            href={image}
+            download={`lyrah_${(lesson?.lessonTitle || "lesson").replace(/[^a-z0-9]+/gi, "_").toLowerCase()}.png`}
+            className="px-4 py-2.5 bg-white dark:bg-slate-800 border border-black/[0.08] dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl text-sm font-bold transition-all flex items-center gap-2 font-sans"
+          >
+            <Download className="w-4 h-4" />
+            <span>Print / save</span>
+          </a>
+        )}
+      </div>
     </div>
   );
 }

@@ -54,7 +54,7 @@ interface ChatMessage {
 }
 
 export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps) {
-  const { profile, updateLyrahMemory, clearLyrahMemory } = useFirebase();
+  const { profile, updateLyrahMemory, clearLyrahMemory, saveChatHistory } = useFirebase();
 
   // Main Tab within AI Workspace
   const [activeSubTab, setActiveSubTab] = useState<"chat" | "images" | "video" | "voice">("chat");
@@ -73,16 +73,32 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
   // anything per use. Support is not universal, so the button only appears
   // where the API exists rather than offering something that silently fails.
   const [isDictating, setIsDictating] = useState<boolean>(false);
+  const [dictationError, setDictationError] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
   const speechSupported =
     typeof window !== "undefined" &&
     !!((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition);
 
-  const toggleDictation = () => {
+  const toggleDictation = async () => {
     if (!speechSupported) return;
 
     if (isDictating) {
       recognitionRef.current?.stop();
+      return;
+    }
+
+    setDictationError(null);
+
+    // Ask for the microphone explicitly first. Chrome's speech recognition
+    // fails silently when permission has never been granted, which made the
+    // button look broken rather than blocked.
+    try {
+      if (navigator.mediaDevices?.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((t) => t.stop());
+      }
+    } catch {
+      setDictationError("Lyrah needs microphone access. Allow it in your browser's address bar, then try again.");
       return;
     }
 
@@ -103,12 +119,34 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
       }
       setChatInput(existing ? `${existing} ${transcript}` : transcript);
     };
-    recognition.onerror = () => setIsDictating(false);
+
+    // Every failure used to land here and vanish, so a blocked microphone and
+    // a working one looked the same from the outside.
+    recognition.onerror = (event: any) => {
+      setIsDictating(false);
+      const reason =
+        event?.error === "not-allowed" || event?.error === "service-not-allowed"
+          ? "Microphone access is blocked. Allow it in your browser's address bar."
+          : event?.error === "no-speech"
+          ? "Didn't catch that — try again a little closer to the mic."
+          : event?.error === "network"
+          ? "Dictation needs an internet connection."
+          : "Dictation stopped unexpectedly. Try again.";
+      setDictationError(reason);
+    };
+
     recognition.onend = () => setIsDictating(false);
 
     recognitionRef.current = recognition;
-    setIsDictating(true);
-    recognition.start();
+
+    // start() throws if a previous session is still winding down.
+    try {
+      recognition.start();
+      setIsDictating(true);
+    } catch {
+      setIsDictating(false);
+      setDictationError("Dictation is still stopping — give it a second and try again.");
+    }
   };
 
   // Stop the microphone if the panel closes mid-sentence.
@@ -125,19 +163,42 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
     "Gamification Designer": "You are Lyrah, a Gamification Designer. Suggest narrative quests, rewards, and gameplay elements to turn engineering and coding activities into interactive team missions. SVG Diagram Rule: Only create SVG diagrams if the demo path visibly depends on generated text."
   };
 
-  // Initial greeting
+  // Conversations are restored rather than restarted. Chat lived in component
+  // state only, so closing the panel threw the whole exchange away - an
+  // instructor came back to a copilot that had never met them. The transcript
+  // is kept on their own record so it survives a reload and a new tab.
+  const CHAT_HISTORY_LIMIT = 40;
+  const restoredRef = useRef(false);
+
   useEffect(() => {
-    if (messages.length === 0 && lesson) {
-      setMessages([
-        {
-          id: "welcome",
-          role: "assistant",
-          content: `Hi! I'm **Lyrah**, your AI teaching copilot! 🌟\n\nI'm fully grounded in your lesson: **${lesson.lessonTitle}** (${lesson.duration}).\n\nHow can I help you co-teach today? Choose a preset helper prompt below or type your own question!`,
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-        }
-      ]);
+    if (restoredRef.current || !lesson) return;
+    restoredRef.current = true;
+
+    const saved: ChatMessage[] = Array.isArray(profile?.chatHistory) ? profile.chatHistory : [];
+    if (saved.length > 0) {
+      setMessages(saved);
+      return;
     }
-  }, [lesson, messages]);
+
+    setMessages([
+      {
+        id: "welcome",
+        role: "assistant",
+        content: "Hi! I'm Lyrah, your AI teaching copilot.\n\nI'm grounded in your lesson: " +
+          lesson.lessonTitle + " (" + lesson.duration + ").\n\nHow can I help you co-teach today? Pick a prompt below, or just ask.",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      }
+    ]);
+  }, [lesson, profile]);
+
+  // Persist the transcript whenever it grows, capped so a long-running
+  // instructor cannot outgrow a Firestore document.
+  useEffect(() => {
+    if (!restoredRef.current || messages.length === 0) return;
+    saveChatHistory(messages.slice(-CHAT_HISTORY_LIMIT)).catch(() => {
+      /* a failed save must never interrupt the conversation */
+    });
+  }, [messages]);
 
   // Scroll to bottom of chat
   useEffect(() => {
@@ -225,6 +286,25 @@ Active Lesson Context:
       };
 
       setMessages(prev => [...prev, assistantMsg]);
+
+      // Learn from what the instructor tells us about themselves.
+      //
+      // The transcript alone is recall, not learning - it is remembered but
+      // never consulted when Lyrah writes a lesson. Statements about how this
+      // instructor works are the part worth carrying forward, and they go into
+      // the same learningHistory that already feeds the system instruction on
+      // every future session.
+      const said = promptText.toLowerCase();
+      const worthRemembering =
+        /(i (always|never|usually|prefer|like|hate|can't|cannot|don't))/.test(said) ||
+        /my (class|students|kids|room|school|group|budget|prep)/.test(said) ||
+        /we (always|never|usually|only|don't|do not)/.test(said);
+
+      if (worthRemembering && promptText.trim().length <= 300) {
+        updateLyrahMemory(promptText.trim()).catch(() => {
+          /* memory is an enhancement; never let it break the chat */
+        });
+      }
 
     } catch (err: any) {
       console.error(err);
@@ -803,6 +883,12 @@ Active Lesson Context:
                 <Send className="w-4.5 h-4.5 text-teal-brand" />
               </button>
             </form>
+
+            {dictationError && (
+              <p className="mt-2 text-[11px] text-amber-700 dark:text-amber-400 font-sans" role="alert">
+                {dictationError}
+              </p>
+            )}
           </div>
         )}
 

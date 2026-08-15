@@ -1641,13 +1641,10 @@ export default function App() {
                   - and both the Upgrade button and the Pro Member badge were
                   hidden below the sm breakpoint, so on a phone the primary
                   action simply was not there. */}
-              {authLoading ? null : profile?.isSubscribed ? (
-                <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-600/50 text-emerald-800 dark:text-emerald-300 font-bold text-xs rounded-full shadow-3xs micro-glow-emerald min-h-[38px]">
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span className="hidden xs:inline sm:inline">Pro Member</span>
-                  <span className="xs:hidden sm:hidden">Pro</span>
-                </div>
-              ) : (
+              {/* No "Pro Member" pill: it was the widest thing in the header and
+                  said nothing the account chip cannot. Paid status is now the
+                  emerald ring around the instructor's own name instead. */}
+              {authLoading || profile?.isSubscribed ? null : (
                 <button
                   type="button"
                   onClick={user ? () => setShowSubscriptionModal(true) : handleSignInAndRedirect}
@@ -1661,9 +1658,16 @@ export default function App() {
               {authLoading ? (
                 <div className="w-5 h-5 border-2 border-teal-brand border-t-transparent rounded-full animate-spin" />
               ) : user ? (
-                <div className={`flex items-center gap-1.5 sm:gap-2 p-1 pr-2.5 sm:pr-3 rounded-full border shadow-3xs text-xs ${
-                  isDarkMode ? "bg-slate-800 border-slate-700 text-slate-200" : "bg-surface-1 border-black/[0.05]"
-                }`}>
+                <div
+                  title={profile?.isSubscribed ? "Pro member" : undefined}
+                  className={`flex items-center gap-1.5 sm:gap-2 p-1 pr-2.5 sm:pr-3 rounded-full shadow-3xs text-xs ${
+                    profile?.isSubscribed
+                      ? "border-2 border-emerald-500 dark:border-emerald-400 micro-glow-emerald"
+                      : "border"
+                  } ${
+                    isDarkMode ? "bg-slate-800 border-slate-700 text-slate-200" : "bg-surface-1 border-black/[0.05]"
+                  }`}
+                >
                   {user.photoURL ? (
                     <img referrerPolicy="no-referrer" src={user.photoURL} alt={user.displayName || 'Educator'} className="w-6 h-6 sm:w-6.5 sm:h-6.5 rounded-full object-cover border border-teal-brand/20" />
                   ) : (
@@ -1695,20 +1699,24 @@ export default function App() {
             </div>
           </div>
 
-          {/* Row 2: Secondary Header Row directly below user's logged in name for Firebase Cloud Storage Vault */}
-          <div className="w-full flex justify-end pt-1 border-t border-black/[0.05] dark:border-slate-800/80">
+          {/* Saved lessons. Studio only - on the landing page a visitor has no
+              lessons to look at, and the row pushed the hero down for nothing.
+              Kept in the header rather than floated bottom-right, where it
+              would sit on top of the Ask Lyrah launcher. */}
+          {user && currentView === "studio" && (
+            <div className="w-full flex justify-end pt-1 border-t border-black/[0.05] dark:border-slate-800/80">
             <div className="w-full max-w-sm sm:max-w-md relative" id="my-lessons-vault">
               {/* Sticky-pad Bar Header */}
               <div
                 onClick={() => setIsVaultExpanded(!isVaultExpanded)}
-                className="flex items-center justify-between p-2 sm:p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 cursor-pointer select-none hover:bg-slate-850 hover:border-teal-brand/40 transition-all shadow-xs group"
+                className="flex items-center justify-between p-2 sm:p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-black/[0.08] dark:border-slate-800 text-slate-800 dark:text-slate-100 cursor-pointer select-none hover:border-teal-brand/40 transition-all shadow-xs group"
               >
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="text-[10px] font-bold font-mono tracking-wider text-teal-brand uppercase bg-teal-brand/20 border border-teal-brand/30 px-2 py-0.5 rounded-md flex items-center gap-1.5">
                     <Cloud className="w-3.5 h-3.5 text-teal-brand" />
                     Vault
                   </span>
-                  <span className="text-xs font-bold font-sans text-slate-200 group-hover:text-teal-brand transition-colors">
+                  <span className="text-xs font-bold font-sans text-slate-700 dark:text-slate-200 group-hover:text-teal-brand transition-colors">
                     Firebase Cloud Storage
                   </span>
                   <span className="px-2 py-0.2 bg-teal-brand/10 text-teal-brand text-[10px] font-mono font-extrabold rounded-full border border-teal-brand/20">
@@ -1852,12 +1860,14 @@ export default function App() {
                 )}
               </AnimatePresence>
             </div>
-          </div>
+            </div>
+          )}
         </nav>
 
         {/* Holds the nav's real, measured height out of the flow it vacated by
             going fixed - otherwise the page content starts underneath it. */}
         <div style={{ height: navHeight }} aria-hidden="true" />
+
 
         {currentView === "landing" ? (
           <LandingPage 

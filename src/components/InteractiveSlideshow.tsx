@@ -51,6 +51,10 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
     setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
+  // The play control auto-advances the deck; there is no audio in the
+  // slideshow and never was. On a seven second timer with no immediate
+  // feedback, clicking it looked like nothing happened - so it now advances
+  // once straight away, and the button is labelled for what it actually does.
   const togglePlay = () => {
     if (isPlaying) {
       if (slideTimer) {
@@ -60,6 +64,7 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
       setIsPlaying(false);
     } else {
       setIsPlaying(true);
+      handleNext();
       const timer = setInterval(() => {
         handleNext();
       }, 7000);
@@ -140,7 +145,7 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
                 ? "bg-teal-light dark:bg-teal-brand/20 text-teal-brand border-teal-brand/30 micro-glow-teal" 
                 : "bg-white dark:bg-slate-800 border-black/[0.08] dark:border-slate-700 text-secondary dark:text-slate-300 hover:bg-surface-0"
             }`}
-            title={isPlaying ? "Pause Slideshow" : "Auto-Play Slides (7s)"}
+            title={isPlaying ? "Stop advancing slides" : "Advance slides automatically every 7 seconds"}
           >
             {isPlaying ? <Pause className="w-4 h-4 text-teal-brand animate-pulse" /> : <Play className="w-4 h-4 text-secondary dark:text-slate-300" />}
           </button>
@@ -150,9 +155,9 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
       {/* Main Slideshow Stage */}
       <div 
         ref={stageRef}
-        className={`relative overflow-hidden bg-gradient-to-br from-slate-950 via-teal-950 to-slate-950 border border-teal-brand/25 rounded-3xl shadow-xl flex flex-col justify-between text-white transition-all ${
+        className={`relative overflow-hidden bg-gradient-to-br from-teal-50 via-white to-teal-100 dark:from-slate-950 dark:via-teal-950 dark:to-slate-950 border border-teal-brand/30 dark:border-teal-brand/25 rounded-3xl shadow-xl flex flex-col justify-between text-slate-900 dark:text-white transition-all ${
           isFullscreen 
-            ? "fixed inset-0 z-50 rounded-none border-none p-8 sm:p-14 bg-slate-950" 
+            ? "fixed inset-0 z-50 rounded-none border-none p-8 sm:p-14 bg-white dark:bg-slate-950" 
             : "min-h-[400px] p-6 sm:p-8"
         }`}
       >
@@ -213,7 +218,7 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
               transition={{ duration: 0.3 }}
               className="space-y-6 max-w-4xl mx-auto w-full"
             >
-              <h3 className={`font-black font-display text-white tracking-tight leading-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)] ${
+              <h3 className={`font-bold font-display text-slate-900 dark:text-white tracking-normal leading-[1.25] pb-1 drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)] ${
                 isFullscreen ? "text-3xl sm:text-5xl" : "text-xl sm:text-3xl"
               }`}>
                 {currentSlide.title}
@@ -229,12 +234,12 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
                     transition={{ delay: index * 0.1 }}
                     className="flex items-start gap-3.5"
                   >
-                    <span className={`rounded-full bg-slate-950/70 text-teal-brand flex items-center justify-center font-bold shrink-0 mt-0.5 border border-teal-brand/60 ${
+                    <span className={`rounded-full bg-teal-brand/15 dark:bg-slate-950/70 text-teal-dark dark:text-teal-brand flex items-center justify-center font-bold shrink-0 mt-0.5 border border-teal-brand/60 ${
                       isFullscreen ? "w-8 h-8 text-sm" : "w-6 h-6 text-xs"
                     }`}>
                       {index + 1}
                     </span>
-                    <p className={`text-slate-50 font-sans leading-relaxed drop-shadow-[0_1px_6px_rgba(0,0,0,0.45)] ${
+                    <p className={`text-slate-700 dark:text-slate-50 font-sans leading-relaxed dark:drop-shadow-[0_1px_6px_rgba(0,0,0,0.45)] ${
                       isFullscreen ? "text-xl sm:text-2xl" : "text-sm sm:text-base"
                     }`}>
                       {point}
