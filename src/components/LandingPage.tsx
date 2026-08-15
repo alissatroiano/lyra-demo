@@ -117,7 +117,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 </section>
       {/* The problem, stated before the product. An instructor should recognise
           their own week in this block before being asked to care how it works. */}
-      <section className="space-y-4" id="problem-section">
+      <section className="space-y-4 band-void rounded-3xl p-6 sm:p-8 -mx-2" id="problem-section">
         <span className="text-[10px] font-mono font-bold text-yellow-500 uppercase tracking-[0.18em]">
           The problem Lyrah solves
         </span>
@@ -310,7 +310,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </div>
 
       {/* Pricing Section */}
-      <div className="pt-4 space-y-8" id="pricing-section">
+      <div className="pt-4 space-y-8 band-paper rounded-3xl p-6 sm:p-8 -mx-2" id="pricing-section">
         <div className="text-center space-y-2">
           <span className="text-[10px] font-bold text-yellow-800 dark:text-yellow-200 uppercase tracking-widest font-sans bg-yellow-100/60 dark:bg-yellow-950/60 px-3 py-1 rounded-full border border-yellow-200 dark:border-yellow-800">
             INSTRUCTOR PLANS
@@ -324,9 +324,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         {/* Two plans only. Educator Pro and Educator Yearly are held back for a
             later launch and documented in docs/BUSINESS-MODEL.md; showing them
             now would bury the $12.99 offer instructors are actually being given. */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto items-stretch">
           {/* Plan 1: Summer STEM Special - $12.99 ONE TIME (leads) */}
-          <div className="bg-gradient-to-b from-teal-dark via-teal-900 to-slate-900 text-white rounded-3xl p-6 space-y-6 flex flex-col justify-between shadow-lg relative border-2 border-teal-brand/40 overflow-hidden">
+          <div className="bg-gradient-to-b from-teal-dark via-teal-900 to-slate-900 text-white rounded-3xl p-6 space-y-6 flex flex-col justify-between h-full shadow-lg relative border-2 border-teal-brand/40 overflow-hidden">
             <div className="absolute top-0 right-0 bg-yellow-400 text-slate-950 text-[10px] font-extrabold px-3.5 py-1 rounded-bl-xl uppercase tracking-wider font-mono shadow-xs">
               SUMMER SPECIAL
             </div>
@@ -387,7 +387,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           {/* Plan 2: Instructor Monthly - $9.99/mo */}
-          <div className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-6 flex flex-col justify-between shadow-sm hover:border-teal-brand transition-all relative">
+          <div className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-6 flex flex-col justify-between h-full shadow-sm hover:border-teal-brand transition-all relative">
             <div className="space-y-4">
               <div className="space-y-1">
                 <span className="text-[10px] font-mono font-bold text-teal-900 dark:text-teal-brand uppercase tracking-wider bg-teal-50 dark:bg-teal-brand/20 px-2.5 py-1 rounded-md border border-teal-200 dark:border-teal-brand/30 inline-block">

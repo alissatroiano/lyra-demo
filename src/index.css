@@ -90,15 +90,60 @@
   font-style: normal;
 }
 
+/* The shell is the ground layer only.
+ *
+ * It previously painted a 10MB photograph under a 74% black wash, which cost
+ * the page ten megabytes to arrive at a flat field - and because every panel
+ * on top of it was also near-black, the whole app read as one dark void with
+ * no separation between sections. The starfield below is drawn in CSS at no
+ * transfer cost, and depth now comes from the surface tokens instead: ground
+ * behind, paper for bands, surface for anything raised.
+ */
 .app-shell.min-h-screen {
-  background: linear-gradient(rgba(0, 0, 0, 0.741), rgba(0, 0, 0, 0.747)),  url('assets/images/stars.jpg');
   max-width: 100%;
   height: auto;
-  padding: 20px;
-  background-size: cover;
-  background-position: center;
-  background-attachment: fixed; /* Locks the background image in place */
-  background-repeat: no-repeat;
+  background-color: var(--color-surface-0);
+}
+
+/* Alternating bands, so sections separate instead of running together.
+ *
+ * Three depths, not two: an opaque band, a raised band, and a band that is
+ * deliberately see-through. The starfield behind the page is fixed, so
+ * scrolling past a see-through band moves the content while the stars stay
+ * put - parallax without a scroll listener or a photograph.
+ */
+.band-paper {
+  background-color: var(--color-surface-1);
+  border-top: 1px solid color-mix(in oklab, var(--color-line) 60%, transparent);
+  border-bottom: 1px solid color-mix(in oklab, var(--color-line) 60%, transparent);
+}
+
+.band-surface {
+  background-color: var(--color-surface-2);
+}
+
+/* Light mode is chart paper, so the sky is not the metaphor there: this band
+   stays solid and steps down the surface scale instead. */
+.band-void {
+  background-color: var(--color-surface-2);
+  border-top: 1px solid color-mix(in oklab, var(--color-line) 45%, transparent);
+  border-bottom: 1px solid color-mix(in oklab, var(--color-line) 45%, transparent);
+}
+
+/* In dark mode the sky shows through. Scoped to .dark rather than
+   :root:not(.dark) because the theme class is set on a wrapper div, not on
+   <html> - a :root-based guard is therefore always true and silently
+   collapsed both bands to the same colour. */
+.dark .band-void {
+  background-color: color-mix(in oklab, var(--color-surface-0) 72%, transparent);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* Raised things sit one clear step above whatever is behind them. */
+.panel {
+  background-color: var(--color-surface-2);
+  border: 1px solid color-mix(in oklab, var(--color-line) 70%, transparent);
 }
 
 .glass-overlay {
