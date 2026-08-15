@@ -1,12 +1,11 @@
 import React from "react";
-import { Sparkles, ArrowRight, Layers, Activity, Palette, HelpCircle, Link2Off, Check, Database, FileCode, BookOpen, LogIn, Clock, Users, Briefcase, Play } from "lucide-react";
+import { Sparkles, ArrowRight, Layers, Activity, Palette, HelpCircle, Link2Off, Check, Database, FileCode, BookOpen, LogIn, Clock, Users, Briefcase } from "lucide-react";
 
 interface LandingPageProps {
   onLaunchStudio: () => void;
   onSelectPlan: () => void;
   user: any;
   onSignIn: () => void;
-  onWatchDemo: () => void;
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({
@@ -14,7 +13,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onSelectPlan,
   user,
   onSignIn,
-  onWatchDemo,
 }) => {
   return (
     <main className="px-6 sm:px-8 py-8 space-y-12 animate-fade-in flex-1 max-w-7xl mx-auto w-full">
@@ -56,17 +54,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   <ArrowRight className="w-4 h-4 text-slate-950 group-hover:translate-x-1 transition-transform" />
                 </button>
               )}
-
-              {/* Watching Lyrah run once is a faster explanation than any amount
-                  of landing copy, and it needs no sign-in. */}
-              <button
-                type="button"
-                onClick={onWatchDemo}
-                className="px-5 py-3.5 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-2xl text-base sm:text-lg font-display font-medium transition-all border border-teal-brand/40 dark:border-teal-brand/30 shadow-3xs cursor-pointer flex items-center gap-2 group"
-              >
-                <Play className="w-4 h-4 text-amber-500" />
-                <span>Watch a 30-second demo</span>
-              </button>
 
               <button
                 type="button"
