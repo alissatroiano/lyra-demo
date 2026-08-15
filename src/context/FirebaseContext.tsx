@@ -48,6 +48,7 @@ interface FirebaseContextType {
     instructorNotes?: string
   ) => Promise<void>;
   updateLyrahMemory: (memoryNote: string) => Promise<void>;
+  saveChatHistory: (messages: any[]) => Promise<void>;
   clearLyrahMemory: () => Promise<void>;
   subscribeUser: (plan: string) => Promise<void>;
 }
@@ -379,6 +380,34 @@ async function prepareLessonForFirestore(lessonData: ProcessedLesson, uid: strin
     }
   };
 
+  /**
+   * Keep the copilot transcript on the instructor's record.
+   *
+   * Chat previously existed only in component state, so every exchange was
+   * lost the moment the panel closed - which also meant the accumulated
+   * picture of how an instructor works, the thing that is supposed to make
+   * Lyrah adapt to them, was never being built from the conversations.
+   *
+   * Written without setProfile: this fires on every message, and re-rendering
+   * the whole app mid-conversation to store a transcript nothing reads
+   * synchronously would cost more than it returns.
+   */
+  const saveChatHistory = async (messages: any[]): Promise<void> => {
+    if (!auth.currentUser || !Array.isArray(messages)) return;
+    try {
+      const userDocRef = doc(db, 'users', auth.currentUser.uid);
+      await setDoc(
+        userDocRef,
+        { chatHistory: messages, updatedAt: serverTimestamp() },
+        { merge: true }
+      );
+    } catch (err: any) {
+      // Deliberately quiet: a transcript that fails to save must not
+      // interrupt the conversation the instructor is having.
+      console.error("Could not save chat history:", err?.message || err);
+    }
+  };
+
   const updateLyrahMemory = async (memoryNote: string): Promise<void> => {
     if (!auth.currentUser || !memoryNote.trim()) return;
     setDbLoading(true);
@@ -489,6 +518,7 @@ async function prepareLessonForFirestore(lessonData: ProcessedLesson, uid: strin
         loadLessons,
         saveInstructorPreferences,
         updateLyrahMemory,
+        saveChatHistory,
         clearLyrahMemory,
         subscribeUser
       }}

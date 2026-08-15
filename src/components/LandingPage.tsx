@@ -15,22 +15,47 @@ export const LandingPage: React.FC<LandingPageProps> = ({
   onSignIn,
 }) => {
   return (
-    <main className="px-6 sm:px-8 py-8 space-y-12 animate-fade-in flex-1 max-w-7xl mx-auto w-full">
+    <main className="px-6 sm:px-8 py-8 space-y-12 animate-fade-in flex-1 max-w-7xl mx-auto w-full main">
       {/* Landing Hero Section */}
-      <header className="py-10 px-6 sm:px-10 relative overflow-hidden bg-gradient-to-b from-teal-light/30 via-teal-light/10 to-transparent dark:from-slate-900/90 dark:via-slate-900/40 dark:to-transparent rounded-3xl border border-teal-brand/15 dark:border-slate-800 shadow-3xs">
+    <section className="hero-container">
+      <header className="glass-overlay py-10 px-6 sm:px-10 relative overflow-hidden bg-gradient-to-b from-teal-light/30 via-teal-light/10 to-transparent dark:from-slate-900/90 dark:via-slate-900/40 dark:to-transparent rounded-3xl border border-teal-brand/15 dark:border-slate-800 shadow-3xs">
         <div className="absolute top-0 right-0 w-64 h-64 bg-teal-brand/10 rounded-full blur-3xl pointer-events-none" />
         
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 relative z-10">
           <div className="space-y-4 max-w-xl">
-            <h2 className="font-display text-5xl sm:text-7xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
-              Say goodbye to <span className="text-teal-700 dark:text-teal-brand underline decoration-amber-400 dark:decoration-amber-500 underline-offset-6">long, wordy lesson plans</span>
+            <h2 className="font-display text-5xl font-italic tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
+              Say goodbye to <span className="text-teal-700 dark:text-teal-brand underline decoration-yellow-400 dark:decoration-yellow-500 underline-offset-6 text-normal">long, wordy lesson plans</span>
             </h2>
 
-            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans font-normal">
-              Paste in the curriculum you already have. Get slides, a hands-on lab checklist, a printable
-              worksheet with the answer key, and a review game — with the dead video links already flagged.
-              Ready to teach, not ready to edit for two more hours.
+            {/* The whole product in one sentence, given the weight of a
+                subheading rather than buried in body copy. A visitor who reads
+                only this should know what Lyrah does and what to do next. */}
+            <p className="text-base sm:text-xl text-slate-700 dark:text-slate-200 leading-relaxed font-sans">
+              Add wordy curriculum and get <strong className="font-bold text-slate-900 dark:text-white">slides</strong>,
+              a <strong className="font-bold text-slate-900 dark:text-white">lab checklist</strong>,
+              a <strong className="font-bold text-slate-900 dark:text-white">worksheet with an answer key</strong>, and
+              a <strong className="font-bold text-slate-900 dark:text-white">review quiz</strong> — with the dead media
+              links already flagged.
             </p>
+
+            {/* Three steps, so nobody has to guess what happens after sign-in. */}
+            <ol className="flex flex-col sm:flex-row gap-3 sm:gap-2 pt-1">
+              {[
+                { n: "1", t: "Sign in", d: "Google account, no new password" },
+                { n: "2", t: "Add your lesson", d: "Upload a file or paste the text" },
+                { n: "3", t: "Teach it", d: "Everything above, cut to fit your class" },
+              ].map((step) => (
+                <li key={step.n} className="flex items-start gap-2.5 flex-1">
+                  <span className="w-6 h-6 rounded-full bg-teal-brand text-slate-950 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
+                    {step.n}
+                  </span>
+                  <span className="space-y-0.5">
+                    <span className="block text-sm font-bold text-slate-900 dark:text-slate-100 font-sans leading-tight">{step.t}</span>
+                    <span className="block text-xs text-slate-600 dark:text-slate-400 font-sans leading-snug">{step.d}</span>
+                  </span>
+                </li>
+              ))}
+            </ol>
 
             <div className="pt-2 flex flex-wrap items-center gap-3">
               {user ? (
@@ -39,7 +64,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   onClick={onLaunchStudio}
                   className="px-6 py-3.5 bg-teal-800 dark:bg-teal-600 hover:bg-slate-900 dark:hover:bg-teal-500 text-white rounded-2xl text-base sm:text-lg font-display font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2.5 cursor-pointer border border-teal-brand/30 group"
                 >
-                  <Sparkles className="w-4 h-4 text-amber-300 group-hover:rotate-12 transition-transform" />
+                  <Sparkles className="w-4 h-4 text-yellow-300 group-hover:rotate-12 transition-transform" />
                   <span>Enter Instructor Studio</span>
                   <ArrowRight className="w-4 h-4 text-teal-light group-hover:translate-x-1 transition-transform" />
                 </button>
@@ -47,7 +72,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <button
                   type="button"
                   onClick={onSignIn}
-                  className="px-6 py-3.5 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-700 text-slate-950 rounded-2xl text-base sm:text-lg font-display font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2.5 cursor-pointer border border-amber-300/60 group"
+                  className="px-6 py-3.5 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 hover:from-yellow-500 hover:to-yellow-700 text-slate-950 rounded-2xl text-base sm:text-lg font-display font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2.5 cursor-pointer border border-yellow-300/60 group"
                 >
                   <LogIn className="w-4.5 h-4.5 text-slate-950" />
                   <span>Sign In / Create Account to Launch Studio</span>
@@ -89,11 +114,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
         </div>
       </header>
-
+</section>
       {/* The problem, stated before the product. An instructor should recognise
           their own week in this block before being asked to care how it works. */}
       <section className="space-y-4" id="problem-section">
-        <span className="text-[10px] font-mono font-bold text-amber-500 uppercase tracking-[0.18em]">
+        <span className="text-[10px] font-mono font-bold text-yellow-500 uppercase tracking-[0.18em]">
           The problem Lyrah solves
         </span>
 
@@ -141,7 +166,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* How Lyrah works — five steps in the order they actually run, so the
           numbering carries real sequence rather than decoration. */}
       <section className="space-y-4" id="pipeline-section">
-        <span className="text-[11px] font-mono font-bold text-amber-500  uppercase tracking-[0.18em]">
+        <span className="text-[11px] font-mono font-bold text-yellow-500  uppercase tracking-[0.18em]">
           How Lyrah works
         </span>
 
@@ -215,7 +240,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
           </div>
 
           <div className="bg-white dark:bg-slate-900 border border-black/[0.08] dark:border-slate-800 rounded-2xl p-6 space-y-3 shadow-3xs hover:border-teal-brand/40 transition-all">
-            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 flex items-center justify-center font-bold">
+            <div className="w-10 h-10 rounded-xl bg-yellow-100 dark:bg-yellow-500/20 text-yellow-800 dark:text-yellow-300 flex items-center justify-center font-bold">
               <Activity className="w-5 h-5" />
             </div>
             <h4 className="font-display font-bold text-slate-800 dark:text-slate-100 text-base">Hands-On Engineering Labs</h4>
@@ -259,7 +284,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* Proven Pedagogical Metrics */}
       <div className="bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-3xl p-8 space-y-6" id="metrics-section">
         <div className="text-center space-y-1.5">
-          <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest font-sans">PROVEN PEDAGOGICAL METRICS</span>
+          <span className="text-[10px] font-bold text-yellow-700 dark:text-yellow-400 uppercase tracking-widest font-sans">PROVEN PEDAGOGICAL METRICS</span>
           <h3 className="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-slate-100">Curriculum Efficiency Accomplished</h3>
         </div>
 
@@ -287,7 +312,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* Pricing Section */}
       <div className="pt-4 space-y-8" id="pricing-section">
         <div className="text-center space-y-2">
-          <span className="text-[10px] font-bold text-amber-800 dark:text-amber-200 uppercase tracking-widest font-sans bg-amber-100/60 dark:bg-amber-950/60 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-800">
+          <span className="text-[10px] font-bold text-yellow-800 dark:text-yellow-200 uppercase tracking-widest font-sans bg-yellow-100/60 dark:bg-yellow-950/60 px-3 py-1 rounded-full border border-yellow-200 dark:border-yellow-800">
             INSTRUCTOR PLANS
           </span>
           <h3 className="font-display text-4xl sm:text-5xl font-bold text-slate-900 dark:text-slate-100">Simple, Transparent Pricing</h3>
@@ -302,44 +327,44 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
           {/* Plan 1: Summer STEM Special - $12.99 ONE TIME (leads) */}
           <div className="bg-gradient-to-b from-teal-dark via-teal-900 to-slate-900 text-white rounded-3xl p-6 space-y-6 flex flex-col justify-between shadow-lg relative border-2 border-teal-brand/40 overflow-hidden">
-            <div className="absolute top-0 right-0 bg-amber-400 text-slate-950 text-[10px] font-extrabold px-3.5 py-1 rounded-bl-xl uppercase tracking-wider font-mono shadow-xs">
+            <div className="absolute top-0 right-0 bg-yellow-400 text-slate-950 text-[10px] font-extrabold px-3.5 py-1 rounded-bl-xl uppercase tracking-wider font-mono shadow-xs">
               SUMMER SPECIAL
             </div>
 
             <div className="space-y-4">
               <div className="space-y-1">
-                <span className="text-[10px] font-mono font-bold text-amber-300 uppercase tracking-wider bg-black/30 px-2.5 py-1 rounded-md border border-amber-400/30 inline-block">
+                <span className="text-[10px] font-mono font-bold text-yellow-300 uppercase tracking-wider bg-black/30 px-2.5 py-1 rounded-md border border-yellow-400/30 inline-block">
                   ONE TIME CHARGE
                 </span>
                 <h4 className="font-display text-2xl font-bold text-white">Summer STEM Special</h4>
                 <p className="text-xs text-teal-100/80 font-sans">Special summer offer for educators &amp; camps. Full access for a single low charge.</p>
-                <p className="text-[10px] font-bold text-amber-300 font-sans uppercase tracking-wide">Ends 08/31/26</p>
+                <p className="text-[10px] font-bold text-yellow-300 font-sans uppercase tracking-wide">Ends 08/31/26</p>
               </div>
 
               <div className="flex items-baseline gap-1.5 pt-2">
-                <span className="font-display text-4xl font-bold text-amber-300">$12.99</span>
+                <span className="font-display text-4xl font-bold text-yellow-300">$12.99</span>
                 <span className="text-xs text-teal-200 font-sans font-medium">one-time charge</span>
               </div>
 
               <div className="border-t border-white/10 pt-4 space-y-2.5 text-xs text-teal-100 font-sans">
                 <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-amber-300 shrink-0" />
+                  <Check className="w-4 h-4 text-yellow-300 shrink-0" />
                   <span><strong>Full access for one instructor</strong></span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-amber-300 shrink-0" />
+                  <Check className="w-4 h-4 text-yellow-300 shrink-0" />
                   <span>Single $12.99 one-time payment (No subscription)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-amber-300 shrink-0" />
+                  <Check className="w-4 h-4 text-yellow-300 shrink-0" />
                   <span>Unlimited AI lesson transformations</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-amber-300 shrink-0" />
+                  <Check className="w-4 h-4 text-yellow-300 shrink-0" />
                   <span>Summer curriculum &amp; camp templates</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-amber-300 shrink-0" />
+                  <Check className="w-4 h-4 text-yellow-300 shrink-0" />
                   <span>Instant activation &amp; Stripe checkout</span>
                 </div>
               </div>
@@ -354,7 +379,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   onSelectPlan();
                 }
               }}
-              className="w-full py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 rounded-xl text-xs font-black transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-3 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-slate-950 rounded-xl text-xs font-black transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>Get Summer STEM Special ($12.99 One-Time)</span>
               <ArrowRight className="w-4 h-4 text-slate-950" />
@@ -410,7 +435,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               className="w-full py-3 bg-teal-800 dark:bg-teal-600 hover:bg-slate-900 dark:hover:bg-teal-500 text-white rounded-xl text-xs font-extrabold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>Get Instructor Monthly ($9.99/mo)</span>
-              <ArrowRight className="w-4 h-4 text-amber-300" />
+              <ArrowRight className="w-4 h-4 text-yellow-300" />
             </button>
           </div>
         </div>
@@ -419,7 +444,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* Infrastructure & Stack - MOVED ALL THE WAY TO THE BOTTOM */}
       <div className="border-t border-slate-200 dark:border-slate-800 pt-10 space-y-6" id="stack-section">
         <div className="text-center space-y-1.5">
-          <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-widest font-sans">SECURE, SCALABLE FOUNDATION</span>
+          <span className="text-[10px] font-bold text-yellow-700 dark:text-yellow-400 uppercase tracking-widest font-sans">SECURE, SCALABLE FOUNDATION</span>
           <h3 className="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-slate-100">Modern Stack & Platform Standards</h3>
         </div>
 
