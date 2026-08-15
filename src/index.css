@@ -8,7 +8,7 @@
   --font-sans: "DM Sans", sans-serif;
   --font-serif:  "Noto Serif Display", serif;
   --font-display:  "Instrument Serif", serif;
-  --font-mono: "Antonio", sans-serif;
+  --font-mono: "DM Sans", sans-serif;
 
   --color-primary: #0f1117;
   --color-secondary: #5a6478;
@@ -66,7 +66,6 @@
   font-style: normal;
 }
 
-
 .app-shell.min-h-screen {
   background: linear-gradient(rgba(0, 0, 0, 0.741), rgba(0, 0, 0, 0.747)),  url('assets/images/stars.jpg');
   max-width: 100%;
@@ -112,8 +111,8 @@
 }
 
 .font-mono {
-  font-weight: 800;
-  font-size: 13px;
+  font-weight: 600;
+  font-size: 12px;
 }
 
 .landing-snug {

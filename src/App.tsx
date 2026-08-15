@@ -1574,7 +1574,7 @@ export default function App() {
   return (
     <div className={`app-shell min-h-screen ${isDarkMode ? "dark text-slate-100" : "bg-surface-0 text-primary"} flex flex-col antialiased transition-colors duration-300 w-full`}>
       {/* Full Viewport Document Canvas Container */}
-      <div className={`w-full transition-colors duration-300`}>
+      <div className={`w-full ${isDarkMode ? "bg-[#0f172a] text-slate-100" : "bg-white text-primary"} min-h-screen flex flex-col pb-16 px-3 sm:px-6 lg:px-10 xl:px-12 transition-colors duration-300`}>
         
         {/* Navigation Bar (ly-nav). Fixed rather than sticky - see navRef above. */}
         <nav
@@ -1590,7 +1590,7 @@ export default function App() {
             >
               <div>
                 <span className="font-display logo text-2xl sm:text-3xl font-extrabold tracking-tight text-teal-dark dark:text-teal-brand">
-                  LYRAH<span className="text-teal-brand font-sans">.</span>
+        <img src="/logo.png" alt="Lyrah Logo" className="inline-block logo" />
                 </span>
                 <p className="text-[9px] sm:text-[10px] text-secondary dark:text-slate-400 font-sans font-medium tracking-wide leading-none hidden xs:block">Afterschool STEM Copilot</p>
               </div>
