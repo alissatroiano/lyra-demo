@@ -1873,9 +1873,6 @@ export default function App() {
           
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="space-y-2.5 sm:space-y-3 max-w-2xl">
-              <span className="inline-block text-[10px] font-extrabold tracking-widest text-amber-700 dark:text-amber-400 uppercase font-sans">
-                XPRIZE · Education & Human Potential
-              </span>
               <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
                 Your AI copilot for <span className="text-teal-800 dark:text-teal-brand underline decoration-teal-brand/40 underline-offset-4">STEM lesson prep</span>
               </h1>

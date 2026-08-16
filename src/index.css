@@ -119,8 +119,43 @@
 }
 
 
+/* Display headings, sitewide.
+ *
+ * The display face is a light, looping script that reads as decoration at
+ * small sizes - the titles were set at body-copy scale and lost against the
+ * text around them. Sizing them up and opening the letter-spacing is what
+ * makes this face legible rather than just larger, so the two move together.
+ *
+ * These are element+class selectors, so they outrank the single-class
+ * Tailwind text-* and tracking-* utilities already on the markup and take
+ * effect without editing every heading. Sizes are clamped, so the same rule
+ * holds from a phone to a projector without a breakpoint for each one. */
+h1.font-display {
+  font-size: clamp(2.25rem, 5vw, 4rem);
+  letter-spacing: 1.5px;
+  line-height: 1.1;
+}
+
+h2.font-display {
+  font-size: clamp(1.875rem, 3.8vw, 3rem);
+  letter-spacing: 1.4px;
+  line-height: 1.14;
+}
+
+h3.font-display {
+  font-size: clamp(1.5rem, 2.8vw, 2.25rem);
+  letter-spacing: 1.25px;
+  line-height: 1.2;
+}
+
+h4.font-display {
+  font-size: clamp(1.25rem, 2vw, 1.75rem);
+  letter-spacing: 1.15px;
+  line-height: 1.25;
+}
+
 h4.font-display.font-bold {
-  letter-spacing: .8px;
+  letter-spacing: 1.65px;
   text-transform: uppercase;
 }
 
