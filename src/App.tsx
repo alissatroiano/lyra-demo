@@ -69,10 +69,17 @@ import InteractiveSlideshow from "./components/InteractiveSlideshow";
 import NanaBananaPro from "./components/NanaBananaPro";
 import { LandingPage } from "./components/LandingPage";
 
-// Official Lyrah Robot Bunny Mascot Logo
+// Official Lyrah mascot mark: the Lyra constellation the product is named
+// after. This slot held a generic sparkle icon, which said nothing about the
+// brand. The artwork is portrait (roughly 1:2), so it is fitted by height with
+// object-contain - sizing it to the square box would crop the outer stars off.
 export const RobotBunnyMascot = ({ className = "w-28 h-28" }: { className?: string }) => (
-  <div className={`flex items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500/20 via-teal-400/10 to-amber-500/20 border border-teal-brand/30 shadow-3xs ${className}`}>
-    <Sparkles className="w-1/2 h-1/2 text-teal-brand animate-pulse" />
+  <div className={`flex items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500/20 via-teal-400/10 to-amber-500/20 border border-teal-brand/30 shadow-3xs p-2 ${className}`}>
+    <img
+      src="/orange-const.png"
+      alt="The Lyra constellation, Lyrah's mark"
+      className="h-full w-auto max-w-full object-contain"
+    />
   </div>
 );
 
