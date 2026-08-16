@@ -99,7 +99,7 @@ export default function SubscriptionModal({
             Unlock Full Access to Lyrah
           </h2>
           <p className="text-xs sm:text-sm text-teal-100/90 mt-2 font-sans leading-relaxed">
-            Please sign in and activate your educator subscription to build interactive STEM lesson decks, worksheets, interactive display quizzes, and AI co-teacher tools.
+            Please sign in and activate your educator subscription to build interactive STEM lesson decks, worksheets, and interactive display quizzes.
           </p>
         </div>
 

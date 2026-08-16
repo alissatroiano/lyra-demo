@@ -66,7 +66,6 @@ import { ProcessedLesson, PreloadedLesson } from "./types";
 import { useFirebase } from "./context/FirebaseContext";
 import SubscriptionModal from "./components/SubscriptionModal";
 import InteractiveSlideshow from "./components/InteractiveSlideshow";
-import AICopilot from "./components/AICopilot";
 import NanaBananaPro from "./components/NanaBananaPro";
 import { LandingPage } from "./components/LandingPage";
 
@@ -310,7 +309,6 @@ export default function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"slides" | "lab" | "nana-banana" | "quiz" | "media">("slides");
-  const [copilotOpen, setCopilotOpen] = useState<boolean>(false);
   const [mediaSearchQuery, setMediaSearchQuery] = useState<string>("");
   const [showSubscriptionModal, setShowSubscriptionModal] = useState<boolean>(false);
   const [showPlanConfirmationModal, setShowPlanConfirmationModal] = useState<boolean>(false);
@@ -3840,83 +3838,6 @@ export default function App() {
           </div>
         )}
 
-        {/* Floating Sparkle Icon for Lyrah AI Co-Teacher Popup */}
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
-          {copilotOpen && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ duration: 0.2 }}
-              className="w-[92vw] sm:w-[520px] max-h-[85vh] bg-white dark:bg-slate-900 rounded-3xl border border-teal-brand/30 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col mb-2"
-            >
-              {/* Modal Header */}
-              <div className="bg-teal-dark px-5 py-4 text-white flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-teal-brand/20 border border-teal-brand/40 overflow-hidden flex items-center justify-center shrink-0">
-                    <Sparkles className="w-4 h-4 text-teal-brand" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold font-sans uppercase tracking-wide">Lyrah AI Co-Teacher</h3>
-                    <p className="text-[10px] text-teal-light/80 font-sans">Active Lesson Partner & Adaptations Assistant</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setCopilotOpen(false)}
-                  className="w-8 h-8 rounded-xl hover:bg-white/10 flex items-center justify-center text-teal-light hover:text-white transition-all cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Modal Body */}
-              <div className="p-4 overflow-y-auto flex-1 bg-surface-0/30 dark:bg-slate-950/40">
-                <AICopilot 
-                  lesson={lesson} 
-                  onTriggerPaidFlow={() => {
-                    console.log("Triggering Paid Model flow via AI Studio build...");
-                    alert("Paid API Key selection dialog opened in your AI Studio build console. Please verify the active model settings.");
-                  }}
-                />
-              </div>
-            </motion.div>
-          )}
-
-          {/* Floating Action Button */}
-          <button
-            type="button"
-            onClick={() => {
-              // The copilot costs inference on every message, so it is a
-              // signed-in feature. Sending someone to sign-in is clearer than
-              // opening a panel whose first reply is a refusal.
-              if (!user) {
-                signInWithGoogle();
-                return;
-              }
-              setCopilotOpen(!copilotOpen);
-            }}
-            className={`group relative px-4 py-3.5 rounded-full font-bold text-xs shadow-xl transition-all duration-300 flex items-center gap-2.5 cursor-pointer border ${
-              copilotOpen
-                ? "bg-slate-900 text-white border-slate-700 hover:bg-slate-800"
-                : "bg-teal-dark text-white border-teal-brand/40 hover:bg-teal-brand hover:scale-105"
-            }`}
-            id="lyra-copilot-sparkle-trigger"
-          >
-            <div className="w-6 h-6 rounded-full overflow-hidden bg-teal-brand/20 border border-amber-300/60 shrink-0 flex items-center justify-center">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            </div>
-            <span className="font-sans font-bold text-xs pr-0.5">
-              {copilotOpen ? "Close Lyrah AI" : "Ask Lyrah AI"}
-            </span>
-            {!copilotOpen && (
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
-              </span>
-            )}
-          </button>
-        </div>
 
 
       </div>
