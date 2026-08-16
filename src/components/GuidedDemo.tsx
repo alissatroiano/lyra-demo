@@ -92,6 +92,16 @@ export default function GuidedDemo({ onType, onGenerate, onFinish, sampleText }:
     // otherwise stop the second run before it started.
     cancelled.current = false;
 
+    const waitForTarget = async (selector: string) => {
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        const found = document.querySelector(selector) as HTMLElement | null;
+        if (found) return found;
+        if (cancelled.current) return null;
+        await wait(100);
+      }
+      return null;
+    };
+
     const run = async () => {
       // Let the studio paint before measuring anything.
       await wait(700);
@@ -101,7 +111,12 @@ export default function GuidedDemo({ onType, onGenerate, onFinish, sampleText }:
         const step = STEPS[i];
         setStepIndex(i);
 
-        const el = document.querySelector(step.target) as HTMLElement | null;
+        // The panels holding these controls animate open, so a target can be
+        // a few frames behind the demo starting. Skipping a missing element
+        // outright meant one collapsed panel silently collapsed the whole
+        // run, so wait for it before giving up on the step.
+        const el = await waitForTarget(step.target);
+        if (cancelled.current) return;
         if (!el) continue;
 
         el.scrollIntoView({ behavior: "smooth", block: "center" });

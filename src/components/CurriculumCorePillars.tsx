@@ -37,16 +37,16 @@ export const PILLARS: PillarDefinition[] = [
   {
     id: "pillar-1",
     pillarNumber: "PILLAR 01",
-    shortWord: "Smartboard Visuals & Slides",
-    title: "Interactive Smartboard Visuals & Slides",
+    shortWord: "Interactive Slides",
+    title: "Interactive Display Visuals & Slides",
     subtitle: "Visual Learning & Conceptual Scaffolding",
     icon: Layers,
     tabColor: "bg-teal-700 text-white border-teal-800",
     borderColor: "border-teal-500/30",
     accentBadge: "Visual Scaffolding",
-    definition: "Restructures dense science articles, textbooks, and raw outlines into high-yield 16:9 smartboard slide decks with step-by-step teaching analogies, core takeaways, and instructor speaking notes.",
+    definition: "Restructures dense science articles, textbooks, and raw outlines into high-yield 16:9 interactive display slide decks with step-by-step teaching analogies, core takeaways, and instructor speaking notes.",
     deliverables: [
-      "5-10 Full-Screen Smartboard Slides",
+      "5-10 Full-Screen Interactive Display Slides",
       "Teacher Speaking Notes & Analogies",
       "Kid-Friendly Key Takeaway Summaries"
     ],
@@ -92,7 +92,7 @@ export const PILLARS: PillarDefinition[] = [
     id: "pillar-4",
     pillarNumber: "PILLAR 04",
     shortWord: "Gamified Quizzes",
-    title: "Gamified Smartboard Trivia & Quizzes",
+    title: "Gamified Interactive Display Trivia & Quizzes",
     subtitle: "Active Recall, Gamification & Teamwork",
     icon: HelpCircle,
     tabColor: "bg-indigo-600 text-white border-indigo-700",
@@ -100,7 +100,7 @@ export const PILLARS: PillarDefinition[] = [
     accentBadge: "Gamified Assessment",
     definition: "Constructs energetic classroom trivia games with team scoring modes, instant answer feedback, and step-by-step rationales for every question.",
     deliverables: [
-      "Smartboard Team Competition Mode",
+      "Interactive Display Team Competition Mode",
       "Instant Answer Explanations",
       "Formative Assessment Analytics"
     ],

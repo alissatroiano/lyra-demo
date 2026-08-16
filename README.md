@@ -1,6 +1,6 @@
 # Lyrah - AI STEM Lesson Engine
 
-Lyrah is a professional, high-performance web application designed for K-12 educators, afterschool instructors, and STEM coordinators. It translates dense, wordy curricula or textbooks into fully interactive visual slideshows, active classroom science labs, printable homework/worksheets with automatic teacher answer keys, and smart board trivia games—all while dynamically rectifying broken external media links using Google Gemini models.
+Lyrah is a professional, high-performance web application designed for K-12 educators, afterschool instructors, and STEM coordinators. It translates dense, wordy curricula or textbooks into fully interactive visual slideshows, active classroom science labs, printable homework/worksheets with automatic teacher answer keys, and interactive display trivia games—all while dynamically rectifying broken external media links using Google Gemini models.
 
 ---
 
@@ -19,9 +19,9 @@ This project is submitted to the **XPRIZE Challenge: Education & Human Potential
 
 ### 💰 Scalable SaaS Revenue Model
 - **Educator Pro ($9.99/month):** For independent educators and homeschool pods. Unlimited AI curriculum transformations, interactive game configurations, and classroom sharing links.
-- **Camp Director Pro ($49.99):** For multi-site afterschool franchises, summer camps, and community organizations running several instructors. Team collaboration, custom school-branded printables, and bulk licensing of smart board games.
+- **Camp Director Pro ($49.99):** For multi-site afterschool franchises, summer camps, and community organizations running several instructors. Team collaboration, custom school-branded printables, and bulk licensing of interactive display games.
 - **Summer Special:** A seasonal offer for camp season. Promo codes are managed in Stripe, so offers can change mid-term without a redeploy.
-- **B2B Integration Partners:** Direct API licensing for educational publishers to dynamically turn static textbooks into interactive, student-ready smart board activities.
+- **B2B Integration Partners:** Direct API licensing for educational publishers to dynamically turn static textbooks into interactive, student-ready interactive display activities.
 
 ---
 
@@ -30,14 +30,14 @@ This project is submitted to the **XPRIZE Challenge: Education & Human Potential
 1. **Smart Slideshow:** Elegant, high-contrast, conceptual slides for classroom presentations, equipped with detailed instructor scripts and teaching guidelines.
 2. **Hands-On Science Lab:** Staggered checklists of kid-safe classroom science experiments complete with physical material tracking and direct instructions.
 3. **Printable Worksheets:** Beautifully typeset worksheets with an optional **Teacher Answer Key Toggle** and full layout preservation for printing.
-4. **Smart Board Game Quiz:** A beautiful, responsive "Jeopardy-style" team-play board for group reviews, containing direct explanations to make active classroom discussion engaging.
+4. **Interactive Display Game Quiz:** A beautiful, responsive "Jeopardy-style" team-play board for group reviews, containing direct explanations to make active classroom discussion engaging.
 5. **Media Link Fixer:** Safely replaces deprecated, dead, or private intranet links common in older curricula by analyzing what the resource is and outputting high-yield substitute search terms for Google/YouTube.
 
 ---
 
 ## 🚀 Technical Architecture
 
-Lyrah is built as a highly performant full-stack Node.js application running on **Cloud Run** and powered by **Google Gemini 3.5 Flash** via the `@google/genai` SDK:
+Lyrah is built as a highly performant full-stack Node.js application running on **Cloud Run** and powered by **Google Gemini 3.7 Flash** via the `@google/genai` SDK:
 
 - **Frontend:** React 18+ styled with modern **Tailwind CSS** and animated with **Motion** for smooth state transitions.
 - **Backend:** Fast, lightweight **Express** server that proxies prompts safely to the Gemini API, maintaining total API key protection.

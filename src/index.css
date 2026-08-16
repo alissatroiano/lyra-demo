@@ -149,8 +149,41 @@
 
 
 h4.font-display.font-bold {
-  letter-spacing: .8px;
+  letter-spacing: 1.65px;
   text-transform: uppercase;
+  font-size: 40px;
+}
+
+/* 40px is a desktop display size. Left unqualified it overflows the card
+ * headings on a phone, so it steps down below the `sm` breakpoint rather
+ * than forcing a horizontal scroll on the landing page. */
+@media (max-width: 640px) {
+  h4.font-display.font-bold {
+    font-size: 28px;
+    letter-spacing: 1.1px;
+  }
+}
+
+/* Display type sitewide: larger and set with more air between the letters,
+ * which is what makes an uppercase serif readable at a glance across a
+ * classroom rather than just bigger. Headings scale with the viewport so
+ * the same rule holds from a laptop to a projector. */
+h1.font-display {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  letter-spacing: 1.2px;
+  line-height: 1.08;
+}
+
+h2.font-display {
+  font-size: clamp(1.9rem, 3.6vw, 3rem);
+  letter-spacing: 1.1px;
+  line-height: 1.12;
+}
+
+h3.font-display {
+  font-size: clamp(1.5rem, 2.6vw, 2.125rem);
+  letter-spacing: 1px;
+  line-height: 1.18;
 }
 
  .liquid-glass-light {

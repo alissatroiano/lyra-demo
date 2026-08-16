@@ -29,7 +29,7 @@ artifacts ready for a classroom:
 1. **Smart Slideshow** — conceptual slides with instructor scripts and teaching guidance
 2. **Hands-On Science Lab** — staggered, kid-safe experiment checklists with material tracking
 3. **Printable Worksheets** — typeset, with a teacher answer-key toggle
-4. **Smart Board Quiz** — a Jeopardy-style team review board with explanations
+4. **Interactive Display Quiz** — a Jeopardy-style team review board with explanations
 5. **Media Link Fixer** — detects dead or private links and generates high-yield replacement search terms
 
 That last one matters more than it sounds. Broken media is the single most common reason a
@@ -54,7 +54,7 @@ That is the difference between a generator and a co-teacher, and it is the part 
 came directly from instructors using it.
 
 **Gemini is the product, not a feature.** Two models do the work in the deployed application:
-`gemini-3.5-flash` for curriculum transformation and pedagogical structuring, and
+`gemini-3.7-flash` for curriculum transformation and pedagogical structuring, and
 `gemini-3.1-flash-image` for classroom visuals. Without them there is no product — there is a text
 box.
 
@@ -282,7 +282,7 @@ measured hours it gives them back.
 
 | Tool | Role |
 |---|---|
-| **Gemini 3.5 Flash** (`@google/genai`) | Curriculum transformation, pedagogical structuring, worksheets, quiz generation, dead-link analysis |
+| **Gemini 3.7 Flash** (`@google/genai`) | Curriculum transformation, pedagogical structuring, worksheets, quiz generation, dead-link analysis |
 | **Gemini 3.1 Flash Image** | Classroom visuals and lesson illustrations |
 
 Both run server-side through an Express proxy so the API key never reaches the browser.

@@ -3,9 +3,8 @@ import { motion, AnimatePresence } from "motion/react";
 import { 
   ChevronLeft, 
   ChevronRight, 
-  Sparkles, 
-  Eye, 
-  HelpCircle, 
+  Sparkles,
+  HelpCircle,
   Play, 
   Pause,
   Layers,
@@ -115,7 +114,7 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
           </div>
           <div className="space-y-0.5 text-left">
             <h4 className="text-sm font-bold text-teal-dark dark:text-teal-brand font-sans flex items-center gap-1.5">
-              <span>Smartboard Interactive Presentation</span>
+              <span>Interactive Display Presentation</span>
               <span className="text-[10px] bg-teal-100 dark:bg-teal-brand/20 border border-teal-200 dark:border-teal-brand/40 text-teal-800 dark:text-teal-300 font-bold px-2 py-0.5 rounded-full uppercase">
                 Active
               </span>
@@ -280,24 +279,6 @@ export default function InteractiveSlideshow({ slides }: InteractiveSlideshowPro
           </div>
         </div>
       </div>
-
-      {/* Visual Concept Block */}
-      {currentSlide.visualConcept && (
-        <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 space-y-3 shadow-3xs" id="visual-concept-card">
-          <div className="flex items-center gap-2.5 text-teal-900 dark:text-teal-brand">
-            <div className="w-7 h-7 rounded-lg bg-teal-light dark:bg-teal-brand/20 flex items-center justify-center text-teal-brand shrink-0">
-              <Eye className="w-4 h-4" />
-            </div>
-            <div>
-              <h5 className="text-xs font-bold uppercase font-sans tracking-tight text-slate-900 dark:text-slate-100">Smartboard Visual Concept</h5>
-              <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-none">Suggested live illustration or board sketch</p>
-            </div>
-          </div>
-          <p className="text-xs text-slate-800 dark:text-slate-200 leading-relaxed font-sans bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-xl italic font-medium">
-            "{currentSlide.visualConcept}"
-          </p>
-        </div>
-      )}
     </div>
   );
 }

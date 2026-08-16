@@ -62,7 +62,7 @@ export default function AICopilot({ lesson, onTriggerPaidFlow }: AICopilotProps)
   // ==========================================
   // STATE: 💬 CLASSROOM CHAT COPILOT
   // ==========================================
-  const [chatModel, setChatModel] = useState<"gemini-3.1-flash-lite" | "gemini-3.5-flash" | "gemini-3.1-pro-preview">("gemini-3.5-flash");
+  const [chatModel, setChatModel] = useState<"gemini-3.1-flash-lite" | "gemini-3.7-flash" | "gemini-3.1-pro-preview">("gemini-3.7-flash");
   const [chatRole, setChatRole] = useState<string>("Pedagogical Advisor");
   const [useSearch, setUseSearch] = useState<boolean>(false);
   const [chatInput, setChatInput] = useState<string>("");
@@ -662,34 +662,34 @@ Active Lesson Context:
               <div className="flex items-center gap-2">
                 <Cpu className="w-4.5 h-4.5 text-teal-brand" />
                 <div>
-                  <h4 className="text-sm font-bold text-primary font-sans leading-none">Classroom Chat Copilot</h4>
-                  <p className="text-[10px] text-secondary font-sans mt-1">Multi-turn planning and analogies</p>
+                  <h4 className="text-base font-bold text-primary font-sans leading-none">Classroom Chat Copilot</h4>
+                  <p className="text-xs text-secondary font-sans mt-1">Multi-turn planning and analogies</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2.5 flex-wrap">
                 {/* Model Selector */}
                 <div className="flex items-center gap-1.5 bg-surface-0 border border-black/[0.05] px-2.5 py-1.5 rounded-xl">
-                  <span className="text-[9px] font-bold text-secondary font-sans uppercase">Model:</span>
+                  <span className="text-[11px] font-bold text-secondary font-sans uppercase">Model:</span>
                   <select
                     value={chatModel}
                     onChange={(e) => setChatModel(e.target.value as any)}
-                    className="text-[10px] font-bold text-primary bg-transparent focus:outline-none cursor-pointer font-sans"
+                    className="text-xs font-bold text-primary bg-transparent focus:outline-none cursor-pointer font-sans"
                     disabled={useSearch}
                   >
                     <option value="gemini-3.1-flash-lite">Fast Helper (gemini-3.1-flash-lite)</option>
-                    <option value="gemini-3.5-flash">General Assistant (gemini-3.5-flash)</option>
+                    <option value="gemini-3.7-flash">General Assistant (gemini-3.7-flash)</option>
                     <option value="gemini-3.1-pro-preview">Expert Pedagogue (gemini-3.1-pro-preview + High Thinking)</option>
                   </select>
                 </div>
 
                 {/* Role/Persona Selector */}
                 <div className="flex items-center gap-1.5 bg-surface-0 border border-black/[0.05] px-2.5 py-1.5 rounded-xl">
-                  <span className="text-[9px] font-bold text-secondary font-sans uppercase">Role:</span>
+                  <span className="text-[11px] font-bold text-secondary font-sans uppercase">Role:</span>
                   <select
                     value={chatRole}
                     onChange={(e) => setChatRole(e.target.value)}
-                    className="text-[10px] font-bold text-primary bg-transparent focus:outline-none cursor-pointer font-sans"
+                    className="text-xs font-bold text-primary bg-transparent focus:outline-none cursor-pointer font-sans"
                   >
                     <option value="Pedagogical Advisor">Pedagogical Advisor</option>
                     <option value="Science Explainer">Science Explainer</option>
@@ -704,7 +704,7 @@ Active Lesson Context:
                   onClick={() => {
                     setUseSearch(!useSearch);
                     if (!useSearch) {
-                      setChatModel("gemini-3.5-flash"); // search is grounded on 3.5-flash
+                      setChatModel("gemini-3.7-flash"); // search is grounded on 3.5-flash
                     }
                   }}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-bold font-sans transition-all cursor-pointer ${
@@ -730,13 +730,13 @@ Active Lesson Context:
               {useSearch && (
                 <span className="flex items-center gap-1.5 text-sky-700 font-bold">
                   <Search className="w-3.5 h-3.5 text-sky-600" />
-                  Google Search Grounding Active: gemini-3.5-flash with real-time web citations
+                  Google Search Grounding Active: gemini-3.7-flash with real-time web citations
                 </span>
               )}
-              {!useSearch && chatModel === "gemini-3.5-flash" && (
+              {!useSearch && chatModel === "gemini-3.7-flash" && (
                 <span className="flex items-center gap-1.5 text-teal-800 font-medium">
                   <Cpu className="w-3.5 h-3.5 text-teal-600" />
-                  General Assistant: gemini-3.5-flash handling general teaching tasks
+                  General Assistant: gemini-3.7-flash handling general teaching tasks
                 </span>
               )}
               {!useSearch && chatModel === "gemini-3.1-flash-lite" && (

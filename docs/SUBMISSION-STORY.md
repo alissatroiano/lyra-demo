@@ -57,7 +57,7 @@ That is the difference between a generator and a co-teacher.
 
 ## Why this needs Gemini
 
-`gemini-3.5-flash` does the curriculum reasoning and `gemini-3.1-flash-image` draws the build
+`gemini-3.7-flash` does the curriculum reasoning and `gemini-3.1-flash-image` draws the build
 diagrams. Without them there is no product — there is a text box.
 
 The judgment above is not a template. Deciding that a Pre-K lesson listing four goals is really a

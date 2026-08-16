@@ -471,7 +471,7 @@ export default function App() {
   const [customGradeInput, setCustomGradeInput] = useState<string>("");
   const [selectedSize, setSelectedSize] = useState<string>("15-20 kids");
   const [selectedDuration, setSelectedDuration] = useState<string>("60 mins");
-  const [selectedSupplies, setSelectedSupplies] = useState<string[]>(["Smart Board"]);
+  const [selectedSupplies, setSelectedSupplies] = useState<string[]>(["Interactive Display"]);
   const [customSuppliesInput, setCustomSuppliesInput] = useState<string>("");
 
   // Once the instructor answers one of these by hand, auto-detect stops
@@ -764,7 +764,7 @@ export default function App() {
       },
       { id: "slides", label: "Interactive Slides", icon: Layers },
       { id: "nana-banana", label: "Visual Studio", icon: Palette },
-      { id: "quiz", label: "Smartboard Quiz", icon: HelpCircle },
+      { id: "quiz", label: "Interactive Display Quiz", icon: HelpCircle },
       { id: "media", label: "Media Fixer", icon: Link2Off },
     ];
   }, [selectedCategory]);
@@ -1610,6 +1610,19 @@ export default function App() {
                   type="button"
                   onClick={() => {
                     setCurrentView("studio");
+                    // Generating a lesson collapses the upload panel, and an
+                    // upload/preset load leaves a timer that folds the paste
+                    // box away 2.2s later. Every control the walkthrough
+                    // points at lives inside those two, so on a second run -
+                    // once the instructor already had a lesson on screen -
+                    // the script found none of its targets and ended
+                    // instantly, looking like a dead button. Reopen both and
+                    // cancel the pending auto-close before starting.
+                    if (textMaterialTimerRef.current) {
+                      clearTimeout(textMaterialTimerRef.current);
+                      textMaterialTimerRef.current = null;
+                    }
+                    setIsUploadExpanded(true);
                     setIsTextMaterialOpen(true);
                     setCustomContent("");
                     setIsDemoRunning(true);
@@ -1962,7 +1975,7 @@ export default function App() {
                         <div className="space-y-0.5">
                           <p className="text-xs font-bold font-sans dark:text-slate-100">Upload & Generate</p>
                           <p className="text-[10px] text-secondary dark:text-slate-300 leading-normal font-sans">
-                            Seamlessly transforms raw lesson plans into interactive slides, hands-on activities, prototype carousels, and smartboard quizzes.
+                            Seamlessly transforms raw lesson plans into interactive slides, hands-on activities, prototype carousels, and interactive display quizzes.
                           </p>
                         </div>
                       </div>
@@ -3248,14 +3261,14 @@ export default function App() {
                       {/* Header */}
                       <div className="flex justify-between items-center border-b border-white/[0.08] pb-4 mb-4 z-10">
                         <div>
-                          <span className="text-[9px] font-mono font-bold text-teal-brand uppercase tracking-widest block">CLASSROOM JEOPARDY STANDARD</span>
-                          <h4 className="text-sm font-bold text-teal-light font-sans">Smart Board Group Quiz</h4>
+                          <span className="text-xs font-mono font-bold text-teal-brand uppercase tracking-widest block">CLASSROOM JEOPARDY STANDARD</span>
+                          <h4 className="text-lg font-bold text-teal-light font-sans">Interactive Display Group Quiz</h4>
                         </div>
                         <div className="flex items-center gap-3.5">
-                          <span className="text-xs font-mono text-teal-light">Score: <strong className="text-teal-brand">{quizScore}</strong> / {lesson.quiz.length}</span>
+                          <span className="text-sm font-mono text-teal-light">Score: <strong className="text-teal-brand">{quizScore}</strong> / {lesson.quiz.length}</span>
                           <button
                             onClick={handleResetQuiz}
-                            className="text-[10px] font-mono text-teal-light hover:text-white border border-white/[0.12] hover:border-white/[0.22] px-2.5 py-1 rounded-lg transition-all"
+                            className="text-sm font-mono text-teal-light hover:text-white border border-white/[0.12] hover:border-white/[0.22] px-2.5 py-1 rounded-lg transition-all"
                           >
                             Reset
                           </button>
@@ -3270,14 +3283,14 @@ export default function App() {
                             <div className="w-16 h-16 rounded-full bg-teal-brand/10 border border-teal-brand/30 flex items-center justify-center text-teal-brand mx-auto shadow-sm">
                               <Award className="w-8 h-8" />
                             </div>
-                            <h4 className="text-xl font-display font-bold text-white">Outstanding, Team!</h4>
-                            <p className="text-xs text-teal-light/80 leading-relaxed font-sans">
+                            <h4 className="text-2xl font-display font-bold text-white">Outstanding, Team!</h4>
+                            <p className="text-sm text-teal-light/80 leading-relaxed font-sans">
                               Your classroom finished the interactive module. You scored <strong>{quizScore} out of {lesson.quiz.length}</strong> correct answers!
                             </p>
                             <div className="pt-2">
                               <button
                                 onClick={handleResetQuiz}
-                                className="px-5 py-2.5 bg-teal-brand hover:bg-teal-mid text-white rounded-xl text-xs font-bold transition-all shadow-sm"
+                                className="px-5 py-2.5 bg-teal-brand hover:bg-teal-mid text-white rounded-xl text-sm font-bold transition-all shadow-sm"
                               >
                                 Play Again
                               </button>
@@ -3287,8 +3300,8 @@ export default function App() {
                           /* Question Block */
                           <div className="space-y-6">
                             <div className="space-y-1.5">
-                              <span className="text-[10px] font-mono font-bold text-teal-brand uppercase">Question {currentQuizIndex + 1} of {lesson.quiz.length}</span>
-                              <h4 className="text-base sm:text-lg font-bold tracking-tight text-white leading-relaxed font-sans">
+                              <span className="text-xs font-mono font-bold text-teal-brand uppercase">Question {currentQuizIndex + 1} of {lesson.quiz.length}</span>
+                              <h4 className="text-lg sm:text-xl font-bold tracking-tight text-white leading-relaxed font-sans">
                                 {lesson.quiz[currentQuizIndex].question}
                               </h4>
                             </div>
@@ -3322,10 +3335,10 @@ export default function App() {
                                     key={idx}
                                     onClick={() => handleQuizOptionClick(idx)}
                                     disabled={selectedQuizOption !== null}
-                                    className={`p-4 rounded-xl border text-left text-xs sm:text-sm transition-all flex items-center justify-between gap-3 cursor-pointer ${borderClass}`}
+                                    className={`p-4 rounded-xl border text-left text-sm sm:text-base transition-all flex items-center justify-between gap-3 cursor-pointer ${borderClass}`}
                                   >
                                     <div className="flex items-center gap-3">
-                                      <div className="w-6 h-6 rounded-lg bg-black/[0.25] border border-white/[0.08] text-teal-light flex items-center justify-center text-[10px] font-mono font-bold shrink-0">
+                                      <div className="w-6 h-6 rounded-lg bg-black/[0.25] border border-white/[0.08] text-teal-light flex items-center justify-center text-sm font-mono font-bold shrink-0">
                                         {String.fromCharCode(65 + idx)}
                                       </div>
                                       <span className={`${textClass} font-sans`}>{option}</span>
@@ -3338,7 +3351,7 @@ export default function App() {
 
                             {/* Detailed explanation overlay */}
                             {showExplanation && (
-                              <div className="bg-black/[0.2] border border-white/[0.06] rounded-xl p-4 text-xs text-teal-light/90 leading-relaxed font-sans">
+                              <div className="bg-black/[0.2] border border-white/[0.06] rounded-xl p-4 text-sm text-teal-light/90 leading-relaxed font-sans">
                                 <span className="font-bold text-teal-brand block mb-1">🎯 Instructor Insight:</span>
                                 {lesson.quiz[currentQuizIndex].explanation}
                               </div>
@@ -3350,12 +3363,12 @@ export default function App() {
                       {/* Controls Footer */}
                       {!quizCompleted && (
                         <div className="border-t border-white/[0.08] pt-4 flex justify-between items-center z-10">
-                          <span className="text-[9px] text-teal-brand uppercase tracking-wider font-mono">Team Interactive Mode</span>
+                          <span className="text-xs text-teal-brand uppercase tracking-wider font-mono">Team Interactive Mode</span>
                           
                           <button
                             onClick={handleNextQuiz}
                             disabled={selectedQuizOption === null}
-                            className="px-4.5 py-2.5 bg-white text-teal-dark dark:text-teal-brand text-xs font-bold rounded-xl hover:bg-teal-light dark:bg-teal-brand/20 transition-all flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                            className="px-4.5 py-2.5 bg-white text-teal-dark dark:text-teal-brand text-sm font-bold rounded-xl hover:bg-teal-light dark:bg-teal-brand/20 transition-all flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
                           >
                             <span>{currentQuizIndex === lesson.quiz.length - 1 ? "End Module" : "Next Question"}</span>
                             <ChevronRight className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -3816,7 +3829,7 @@ export default function App() {
                     </div>
                     <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                       <HelpIcon className="w-4 h-4 text-sky-500 shrink-0" />
-                      <span>Interactive Smartboard Quiz</span>
+                      <span>Interactive Display Quiz</span>
                     </div>
                     <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                       <Video className="w-4 h-4 text-emerald-500 shrink-0" />
@@ -3868,8 +3881,8 @@ export default function App() {
                     <Sparkles className="w-4 h-4 text-teal-brand" />
                   </div>
                   <div>
-                    <h3 className="text-xs font-bold font-sans uppercase tracking-wide">Lyrah AI Co-Teacher</h3>
-                    <p className="text-[10px] text-teal-light/80 font-sans">Active Lesson Partner & Adaptations Assistant</p>
+                    <h3 className="text-sm font-bold font-sans uppercase tracking-wide">Lyrah AI Co-Teacher</h3>
+                    <p className="text-xs text-teal-light/80 font-sans">Active Lesson Partner & Adaptations Assistant</p>
                   </div>
                 </div>
                 <button
@@ -3915,7 +3928,7 @@ export default function App() {
             id="lyra-copilot-sparkle-trigger"
           >
             <div className="w-6 h-6 rounded-full overflow-hidden bg-teal-brand/20 border border-amber-300/60 shrink-0 flex items-center justify-center">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <img src="/assets/images/favicon.png" alt="" className="w-full h-full object-cover" />
             </div>
             <span className="font-sans font-bold text-xs pr-0.5">
               {copilotOpen ? "Close Lyrah AI" : "Ask Lyrah AI"}

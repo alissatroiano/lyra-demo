@@ -544,7 +544,7 @@ Convert this into the shortest plan that still teaches the learning goal in the 
 
     try {
       const research = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-3.7-flash",
         contents: `Research this STEM lesson topic for a K-12 instructor and report only what you verify.
 
 TOPIC / RAW LESSON:
@@ -599,7 +599,7 @@ The ${sourceFigures.length} image(s) attached are the diagrams and photographs f
       : "";
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
+      model: "gemini-3.7-flash",
       contents: sourceFigures.length
         ? [
             {
@@ -871,7 +871,7 @@ The ${sourceFigures.length} image(s) attached are the diagrams and photographs f
             },
             quiz: {
               type: Type.ARRAY,
-              description: "A fun 4-5 question multiple-choice checking quiz for smart-board review.",
+              description: "A fun 4-5 question multiple-choice checking quiz for interactive display review.",
               items: {
                 type: Type.OBJECT,
                 required: ["question", "options", "correctAnswerIndex", "explanation"],
@@ -1173,7 +1173,7 @@ app.post("/api/chat", async (req, res) => {
       parts: [{ text: m.content }]
     }));
 
-    const selectedModel = useSearch ? "gemini-3.5-flash" : (model || "gemini-3.5-flash");
+    const selectedModel = useSearch ? "gemini-3.7-flash" : (model || "gemini-3.7-flash");
 
     const tools: any[] = [];
     if (useSearch) {
