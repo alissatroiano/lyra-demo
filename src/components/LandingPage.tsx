@@ -208,7 +208,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-10 h-10 rounded-xl bg-teal-light dark:bg-teal-brand/20 text-teal-brand flex items-center justify-center font-bold">
               <Layers className="w-5 h-5" />
             </div>
-            <h4 className="font-display font-bold text-slate-800 dark:text-slate-100 text-base">Interactive Smartboard Slides</h4>
+            <h4 className="font-display font-bold text-slate-800 dark:text-slate-100 text-base">Interactive Display Slides</h4>
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
               Visual classroom slide decks with step-by-step teaching analogies, full-screen expansion mode, core takeaways, and instructor speaking notes.
             </p>
@@ -238,7 +238,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 flex items-center justify-center font-bold">
               <HelpCircle className="w-5 h-5" />
             </div>
-            <h4 className="font-display font-bold text-slate-800 dark:text-slate-100 text-base">Smartboard Trivia Quizzes</h4>
+            <h4 className="font-display font-bold text-slate-800 dark:text-slate-100 text-base">Interactive Display Trivia Quizzes</h4>
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
               Gamified classroom quizzes with instant score tracking, correct answer explanations, and team participation modes.
             </p>

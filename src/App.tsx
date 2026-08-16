@@ -470,7 +470,7 @@ export default function App() {
   const [customGradeInput, setCustomGradeInput] = useState<string>("");
   const [selectedSize, setSelectedSize] = useState<string>("15-20 kids");
   const [selectedDuration, setSelectedDuration] = useState<string>("60 mins");
-  const [selectedSupplies, setSelectedSupplies] = useState<string[]>(["Smart Board"]);
+  const [selectedSupplies, setSelectedSupplies] = useState<string[]>(["Interactive Display"]);
   const [customSuppliesInput, setCustomSuppliesInput] = useState<string>("");
 
   // Once the instructor answers one of these by hand, auto-detect stops
@@ -763,7 +763,7 @@ export default function App() {
       },
       { id: "slides", label: "Interactive Slides", icon: Layers },
       { id: "nana-banana", label: "Visual Studio", icon: Palette },
-      { id: "quiz", label: "Smartboard Quiz", icon: HelpCircle },
+      { id: "quiz", label: "Interactive Display Quiz", icon: HelpCircle },
       { id: "media", label: "Media Fixer", icon: Link2Off },
     ];
   }, [selectedCategory]);
@@ -1951,7 +1951,7 @@ export default function App() {
                         <div className="space-y-0.5">
                           <p className="text-xs font-bold font-sans dark:text-slate-100">Upload & Generate</p>
                           <p className="text-[10px] text-secondary dark:text-slate-300 leading-normal font-sans">
-                            Seamlessly transforms raw lesson plans into interactive slides, hands-on activities, prototype carousels, and smartboard quizzes.
+                            Seamlessly transforms raw lesson plans into interactive slides, hands-on activities, prototype carousels, and interactive display quizzes.
                           </p>
                         </div>
                       </div>
@@ -3238,7 +3238,7 @@ export default function App() {
                       <div className="flex justify-between items-center border-b border-white/[0.08] pb-4 mb-4 z-10">
                         <div>
                           <span className="text-[9px] font-mono font-bold text-teal-brand uppercase tracking-widest block">CLASSROOM JEOPARDY STANDARD</span>
-                          <h4 className="text-sm font-bold text-teal-light font-sans">Smart Board Group Quiz</h4>
+                          <h4 className="text-sm font-bold text-teal-light font-sans">Interactive Display Group Quiz</h4>
                         </div>
                         <div className="flex items-center gap-3.5">
                           <span className="text-xs font-mono text-teal-light">Score: <strong className="text-teal-brand">{quizScore}</strong> / {lesson.quiz.length}</span>
@@ -3805,7 +3805,7 @@ export default function App() {
                     </div>
                     <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                       <HelpIcon className="w-4 h-4 text-sky-500 shrink-0" />
-                      <span>Interactive Smartboard Quiz</span>
+                      <span>Interactive Display Quiz</span>
                     </div>
                     <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                       <Video className="w-4 h-4 text-emerald-500 shrink-0" />

@@ -156,7 +156,7 @@ export const INITIAL_PROCESSED_LESSON: ProcessedLesson = {
     {
       resourceType: "Interactive Web App",
       suggestedSearchQuery: "PhET Balloon Rocket Simulation physics html5",
-      whyItHelps: "A high-quality interactive virtual simulation that allows kids to change rocket mass, thrust, and angle on a digital smart-board if physical materials are limited."
+      whyItHelps: "A high-quality interactive virtual simulation that allows kids to change rocket mass, thrust, and angle on a digital interactive display if physical materials are limited."
     }
   ],
   feasibilityAudit: {
