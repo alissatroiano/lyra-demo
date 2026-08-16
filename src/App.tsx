@@ -385,7 +385,7 @@ export default function App() {
           return;
         }
 
-        await subscribeUser(data.plan || "Summer STEM Special ($12.99 One-Time Fee)");
+        await subscribeUser(data.plan || "Founding Instructor ($12.99/yr)");
         setPaymentNotice({ state: "success", plan: data.plan });
         window.history.replaceState({}, document.title, window.location.pathname);
       })
@@ -3515,8 +3515,8 @@ export default function App() {
                     <Crown className="w-5 h-5 text-amber-300" />
                   </div>
                   <div>
-                    <h4 className="font-display font-bold text-base text-white">Unlock Full Access — Summer STEM Special ($12.99 one-time)</h4>
-                    <p className="text-xs text-teal-100/80 font-sans">Register and subscribe to access unlimited AI transformations, persistent Cloud Firestore lesson saving, and full curriculum suite tools.</p>
+                    <h4 className="font-display font-bold text-base text-white">Unlock Full Access — Founding Instructor ($12.99/yr)</h4>
+                    <p className="text-xs text-teal-100/80 font-sans">Register and subscribe for 25 lesson credits and 10 visual credits, persistent Cloud Firestore lesson saving, and full curriculum suite tools.</p>
                   </div>
                 </div>
                 <button
@@ -3530,7 +3530,7 @@ export default function App() {
                   }}
                   className="px-5 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-extrabold text-xs rounded-xl shadow-sm transition-all cursor-pointer shrink-0 flex items-center gap-2"
                 >
-                  <span>{user ? 'Activate Access ($12.99 one-time)' : 'Sign In & Get Access'}</span>
+                  <span>{user ? 'Activate Access ($12.99/yr)' : 'Sign In & Get Access'}</span>
                   <ArrowRight className="w-4 h-4 text-slate-950" />
                 </button>
               </div>

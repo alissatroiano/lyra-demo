@@ -169,17 +169,16 @@ export default function SubscriptionModal({
                     }`}
                   >
                     <span className="absolute -top-2.5 left-2 bg-amber-500 text-slate-950 text-[8px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider shadow-2xs">
-                      Summer Special
+                      Best Value
                     </span>
                     <div className="flex justify-between items-start mt-1">
-                      <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100">Summer STEM Special</span>
+                      <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100">Founding Instructor</span>
                       <input type="radio" checked={selectedPlan === "summer"} onChange={() => {}} className="accent-amber-600" />
                     </div>
                     <div className="mt-1.5 flex items-baseline gap-1">
-                      <p className="text-lg font-serif font-extrabold text-amber-900 dark:text-amber-300">$12.99<span className="text-[9px] font-sans font-normal text-slate-600 dark:text-slate-400"> one-time</span></p>
+                      <p className="text-lg font-serif font-extrabold text-amber-900 dark:text-amber-300">$12.99<span className="text-[9px] font-sans font-normal text-slate-600 dark:text-slate-400"> / year</span></p>
                     </div>
-                    <p className="text-[9px] text-slate-600 dark:text-slate-400 mt-1 leading-tight">One-time charge (no subscription)</p>
-                    <p className="text-[9px] font-bold text-amber-700 dark:text-amber-400 mt-1 leading-tight">Ends 08/31/26</p>
+                    <p className="text-[9px] text-slate-600 dark:text-slate-400 mt-1 leading-tight">25 lesson credits + 10 visual credits</p>
                   </button>
 
                   <button
@@ -195,13 +194,13 @@ export default function SubscriptionModal({
                       Monthly
                     </span>
                     <div className="flex justify-between items-start mt-1">
-                      <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100">Instructor Monthly</span>
+                      <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100">Instructor Pro</span>
                       <input type="radio" checked={selectedPlan === "intro"} onChange={() => {}} className="accent-teal-700" />
                     </div>
                     <div className="mt-1.5 flex items-baseline gap-1">
                       <p className="text-lg font-serif font-extrabold text-teal-900 dark:text-teal-brand">$9.99<span className="text-[9px] font-sans font-normal text-slate-600 dark:text-slate-400"> / month</span></p>
                     </div>
-                    <p className="text-[9px] text-slate-600 dark:text-slate-400 mt-1 leading-tight">Unlimited lessons, every month.</p>
+                    <p className="text-[9px] text-slate-600 dark:text-slate-400 mt-1 leading-tight">10 lesson credits + 5 visual credits monthly</p>
                   </button>
 
                 </div>
