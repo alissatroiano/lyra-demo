@@ -25,13 +25,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <h2 className="font-display text-5xl sm:text-7xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
               Say goodbye to <span className="text-teal-700 dark:text-teal-brand underline decoration-amber-400 dark:decoration-amber-500 underline-offset-6">long, wordy lesson plans</span>
             </h2>
-
-            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans font-normal">
-              Paste in the curriculum you already have. Get slides, a hands-on lab checklist, a printable
-              worksheet with the answer key, and a review game — with the dead video links already flagged.
-              Ready to teach, not ready to edit for two more hours.
-            </p>
-
+    <p className="text-base sm:text-xl text-slate-700 dark:text-slate-200 leading-relaxed font-sans">
+              Add wordy curriculum and get <strong className="font-bold text-slate-900 dark:text-white">slides</strong>,
+              a <strong className="font-bold text-slate-900 dark:text-white">lab checklist</strong>,
+              a <strong className="font-bold text-slate-900 dark:text-white">worksheet with an answer key</strong>, and
+              a <strong className="font-bold text-slate-900 dark:text-white">review quiz</strong> — with the dead media
+              links already flagged.
+    </p>
             <div className="pt-2 flex flex-wrap items-center gap-3">
               {user ? (
                 <button
@@ -320,10 +320,20 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <p className="text-xs text-teal-100/80 font-sans">A full year of Lyrah for less than the monthly plan costs in two months.</p>
               </div>
 
-              <div className="flex items-baseline gap-1.5 pt-2">
+              {/* The struck price is the real list price, not an anchor
+                  invented for the page. It is marked up with <s> rather than a
+                  line-through class so assistive tech announces it as
+                  superseded instead of reading two live prices in a row. */}
+              <div className="flex items-baseline gap-2 pt-2 flex-wrap">
+                <span className="sr-only">Regular price</span>
+                <s className="font-display text-2xl font-bold text-teal-200/50 decoration-amber-300/70 decoration-2">$79.99</s>
+                <span className="sr-only">Beta price</span>
                 <span className="font-display text-4xl font-bold text-amber-300">$12.99</span>
                 <span className="text-xs text-teal-200 font-sans font-medium">/ year</span>
               </div>
+              <p className="text-[11px] font-bold text-amber-300 font-sans uppercase tracking-wide">
+                Beta price for founding instructors &mdash; offer expires 08/31
+              </p>
 
               <div className="border-t border-white/10 pt-4 space-y-2.5 text-xs text-teal-100 font-sans">
                 <div className="flex items-center gap-2">
@@ -376,10 +386,16 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">For instructors running new material every week through the school year.</p>
               </div>
 
-              <div className="flex items-baseline gap-1.5 pt-2">
+              <div className="flex items-baseline gap-2 pt-2 flex-wrap">
+                <span className="sr-only">Regular price</span>
+                <s className="font-display text-2xl font-bold text-slate-400 dark:text-slate-500 decoration-amber-500/70 decoration-2">$15.99</s>
+                <span className="sr-only">Introductory price</span>
                 <span className="font-display text-4xl font-extrabold text-teal-900 dark:text-teal-brand">$9.99</span>
                 <span className="text-xs text-slate-500 dark:text-slate-400 font-sans font-medium">/ month</span>
               </div>
+              <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 font-sans">
+                Introductory rate while Lyrah grows by word of mouth.
+              </p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">Credits refresh every month. Cancel anytime from your dashboard.</p>
 
               <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2.5 text-xs text-slate-700 dark:text-slate-300 font-sans">
