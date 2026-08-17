@@ -1,5 +1,5 @@
 import React from "react";
-import { Sparkles, ArrowRight, Layers, Activity, Palette, HelpCircle, Link2Off, Check, Database, FileCode, BookOpen, LogIn, Clock, Users, Briefcase } from "lucide-react";
+import { Sparkles, ArrowRight, Layers, Activity, Palette, HelpCircle, Link2Off, Check, Database, FileCode, BookOpen, LogIn, Clock, Briefcase } from "lucide-react";
 
 interface LandingPageProps {
   onLaunchStudio: () => void;
@@ -25,13 +25,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <h2 className="font-display text-5xl sm:text-7xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
               Say goodbye to <span className="text-teal-700 dark:text-teal-brand underline decoration-amber-400 dark:decoration-amber-500 underline-offset-6">long, wordy lesson plans</span>
             </h2>
-
-            <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-sans font-normal">
-              Paste in the curriculum you already have. Get slides, a hands-on lab checklist, a printable
-              worksheet with the answer key, and a review game — with the dead video links already flagged.
-              Ready to teach, not ready to edit for two more hours.
-            </p>
-
+    <p className="text-base sm:text-xl text-slate-700 dark:text-slate-200 leading-relaxed font-sans">
+              Add wordy curriculum and get <strong className="font-bold text-slate-900 dark:text-white">slides</strong>,
+              a <strong className="font-bold text-slate-900 dark:text-white">lab checklist</strong>,
+              a <strong className="font-bold text-slate-900 dark:text-white">worksheet with an answer key</strong>, and
+              a <strong className="font-bold text-slate-900 dark:text-white">review quiz</strong> — with the dead media
+              links already flagged.
+    </p>
             <div className="pt-2 flex flex-wrap items-center gap-3">
               {user ? (
                 <button
@@ -110,11 +110,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               body: "Shared curriculum templates often contain dead URLs and outdated video links that disrupt classrooms."
             },
             {
-              icon: Users,
-              title: "Catering to neurodiverse learning",
-              body: "It's incredibly difficult to adapt a single standard lesson plan to dyslexic, ADHD, and tactile learners in the same class."
-            },
-            {
               icon: Briefcase,
               title: "Disorganized teacher notes",
               body: "Facilitator scripts and lesson modifications are often stored across separate emails, drives, and printouts."
@@ -138,14 +133,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </section>
 
-      {/* How Lyrah works — five steps in the order they actually run, so the
-          numbering carries real sequence rather than decoration. */}
+      {/* How Lyrah works — four steps in the order they actually run, so the
+          numbering carries real sequence rather than decoration. A fifth step
+          claimed dyslexia-friendly bionic formatting and phonetic aids, which
+          the pipeline does not produce; describing the four it does run is the
+          honest version. */}
       <section className="space-y-4" id="pipeline-section">
         <span className="text-[11px] font-mono font-bold text-amber-500  uppercase tracking-[0.18em]">
           How Lyrah works
         </span>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 font-display leading-snug text-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-display leading-snug text-lg">
           {[
             {
               icon: FileCode,
@@ -170,12 +168,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               tint: "text-teal-brand",
               title: "Layout Generation",
               body: "Assembles beautifully structured slide decks, teaching scripts, and gamified quizzes."
-            },
-            {
-              icon: Activity,
-              tint: "text-teal-brand",
-              title: "Student Adaptation",
-              body: "Applies dyslexia-friendly bionic formatting and phonetic aids to the outputs."
             }
           ].map(({ icon: Icon, tint, title, body }, i) => (
             <div
@@ -208,7 +200,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-10 h-10 rounded-xl bg-teal-light dark:bg-teal-brand/20 text-teal-brand flex items-center justify-center font-bold">
               <Layers className="w-5 h-5" />
             </div>
-            <h4 className="font-display font-bold text-slate-800 dark:text-slate-100 text-base">Interactive Smartboard Slides</h4>
+            <h4 className="font-display font-bold text-slate-800 dark:text-slate-100 text-base">Interactive Display Slides</h4>
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
               Visual classroom slide decks with step-by-step teaching analogies, full-screen expansion mode, core takeaways, and instructor speaking notes.
             </p>
@@ -238,7 +230,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-800 dark:text-indigo-300 flex items-center justify-center font-bold">
               <HelpCircle className="w-5 h-5" />
             </div>
-            <h4 className="font-display font-bold text-slate-800 dark:text-slate-100 text-base">Smartboard Trivia Quizzes</h4>
+            <h4 className="font-display font-bold text-slate-800 dark:text-slate-100 text-base">Interactive Display Trivia Quizzes</h4>
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
               Gamified classroom quizzes with instant score tracking, correct answer explanations, and team participation modes.
             </p>
@@ -298,49 +290,63 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 
         {/* Two plans only. Educator Pro and Educator Yearly are held back for a
             later launch and documented in docs/BUSINESS-MODEL.md; showing them
-            now would bury the $12.99 offer instructors are actually being given. */}
+            now would bury the $12.99 offer instructors are actually being given.
+
+            Both tiers are sold in credits rather than "unlimited": a lesson
+            transformation and a visual generation each cost real inference, so
+            the page states what an instructor actually gets instead of a
+            promise that gets walked back later. */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-          {/* Plan 1: Summer STEM Special - $12.99 ONE TIME (leads) */}
+          {/* Plan 1: Founding Instructor - $12.99 / year (leads) */}
           <div className="bg-gradient-to-b from-teal-dark via-teal-900 to-slate-900 text-white rounded-3xl p-6 space-y-6 flex flex-col justify-between shadow-lg relative border-2 border-teal-brand/40 overflow-hidden">
             <div className="absolute top-0 right-0 bg-amber-400 text-slate-950 text-[10px] font-extrabold px-3.5 py-1 rounded-bl-xl uppercase tracking-wider font-mono shadow-xs">
-              SUMMER SPECIAL
+              BEST VALUE
             </div>
 
             <div className="space-y-4">
               <div className="space-y-1">
                 <span className="text-[10px] font-mono font-bold text-amber-300 uppercase tracking-wider bg-black/30 px-2.5 py-1 rounded-md border border-amber-400/30 inline-block">
-                  ONE TIME CHARGE
+                  BILLED YEARLY
                 </span>
-                <h4 className="font-display text-2xl font-bold text-white">Summer STEM Special</h4>
-                <p className="text-xs text-teal-100/80 font-sans">Special summer offer for educators &amp; camps. Full access for a single low charge.</p>
-                <p className="text-[10px] font-bold text-amber-300 font-sans uppercase tracking-wide">Ends 08/31/26</p>
+                <h4 className="font-display text-2xl font-bold text-white">Founding Instructor</h4>
+                <p className="text-xs text-teal-100/80 font-sans">A full year of Lyrah for less than the monthly plan costs in two months.</p>
               </div>
 
-              <div className="flex items-baseline gap-1.5 pt-2">
+              {/* The struck price is the real list price, not an anchor
+                  invented for the page. It is marked up with <s> rather than a
+                  line-through class so assistive tech announces it as
+                  superseded instead of reading two live prices in a row. */}
+              <div className="flex items-baseline gap-2 pt-2 flex-wrap">
+                <span className="sr-only">Regular price</span>
+                <s className="font-display text-2xl font-bold text-teal-200/50 decoration-amber-300/70 decoration-2">$79.99</s>
+                <span className="sr-only">Beta price</span>
                 <span className="font-display text-4xl font-bold text-amber-300">$12.99</span>
-                <span className="text-xs text-teal-200 font-sans font-medium">one-time charge</span>
+                <span className="text-xs text-teal-200 font-sans font-medium">/ year</span>
               </div>
+              <p className="text-[11px] font-bold text-amber-300 font-sans uppercase tracking-wide">
+                Beta price for founding instructors &mdash; offer expires 08/31
+              </p>
 
               <div className="border-t border-white/10 pt-4 space-y-2.5 text-xs text-teal-100 font-sans">
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-300 shrink-0" />
-                  <span><strong>Full access for one instructor</strong></span>
+                  <span><strong>25 Lesson Credits</strong></span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-300 shrink-0" />
-                  <span>Single $12.99 one-time payment (No subscription)</span>
+                  <span><strong>10 Visual Credits</strong></span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-300 shrink-0" />
-                  <span>Unlimited AI lesson transformations</span>
+                  <span>Lyrah Copilot</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-300 shrink-0" />
-                  <span>Summer curriculum &amp; camp templates</span>
+                  <span>Classroom materials &mdash; labs, worksheets &amp; answer keys</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-amber-300 shrink-0" />
-                  <span>Instant activation &amp; Stripe checkout</span>
+                  <span>Lesson memory across the whole year</span>
                 </div>
               </div>
             </div>
@@ -356,40 +362,54 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               }}
               className="w-full py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 rounded-xl text-xs font-black transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>Get Summer STEM Special ($12.99 One-Time)</span>
+              <span>Get Founding Instructor ($12.99/yr)</span>
               <ArrowRight className="w-4 h-4 text-slate-950" />
             </button>
           </div>
 
-          {/* Plan 2: Instructor Monthly - $9.99/mo */}
+          {/* Plan 2: Instructor Pro - $9.99/mo */}
           <div className="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-6 flex flex-col justify-between shadow-sm hover:border-teal-brand transition-all relative">
             <div className="space-y-4">
               <div className="space-y-1">
                 <span className="text-[10px] font-mono font-bold text-teal-900 dark:text-teal-brand uppercase tracking-wider bg-teal-50 dark:bg-teal-brand/20 px-2.5 py-1 rounded-md border border-teal-200 dark:border-teal-brand/30 inline-block">
                   ONGOING ACCESS
                 </span>
-                <h4 className="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-slate-100">Instructor Monthly</h4>
+                <h4 className="font-display text-3xl sm:text-4xl font-bold text-slate-900 dark:text-slate-100">Instructor Pro</h4>
                 <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">For instructors running new material every week through the school year.</p>
               </div>
 
-              <div className="flex items-baseline gap-1.5 pt-2">
+              <div className="flex items-baseline gap-2 pt-2 flex-wrap">
+                <span className="sr-only">Regular price</span>
+                <s className="font-display text-2xl font-bold text-slate-400 dark:text-slate-500 decoration-amber-500/70 decoration-2">$15.99</s>
+                <span className="sr-only">Introductory price</span>
                 <span className="font-display text-4xl font-extrabold text-teal-900 dark:text-teal-brand">$9.99</span>
                 <span className="text-xs text-slate-500 dark:text-slate-400 font-sans font-medium">/ month</span>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">Recurring monthly. Cancel anytime from your dashboard.</p>
+              <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 font-sans">
+                Introductory rate while Lyrah grows by word of mouth.
+              </p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">Credits refresh every month. Cancel anytime from your dashboard.</p>
 
               <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-2.5 text-xs text-slate-700 dark:text-slate-300 font-sans">
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span><strong>Everything in the Summer STEM Special</strong></span>
+                  <span><strong>10 Lesson Credits</strong> / month</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>Unlimited lessons every month, not a one-off</span>
+                  <span><strong>5 Visual Credits</strong> / month</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-teal-brand shrink-0" />
-                  <span>Your lesson library carries across the whole term</span>
+                  <span>Lyrah Copilot</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
+                  <span>Classroom memory across your lessons</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-teal-brand shrink-0" />
+                  <span>Classroom materials &mdash; labs, worksheets &amp; answer keys</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-teal-brand shrink-0" />
@@ -409,9 +429,41 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               }}
               className="w-full py-3 bg-teal-800 dark:bg-teal-600 hover:bg-slate-900 dark:hover:bg-teal-500 text-white rounded-xl text-xs font-extrabold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
             >
-              <span>Get Instructor Monthly ($9.99/mo)</span>
+              <span>Get Instructor Pro ($9.99/mo)</span>
               <ArrowRight className="w-4 h-4 text-amber-300" />
             </button>
+          </div>
+        </div>
+
+        {/* Top-ups. A plan that runs out mid-term is the moment an instructor
+            stops using Lyrah, so the way back is priced on the same page as
+            the plans rather than hidden behind a paywall they hit later. */}
+        <div className="max-w-3xl mx-auto pt-8">
+          <div className="bg-surface-0 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 space-y-4">
+            <div className="space-y-1 text-center">
+              <h4 className="font-display text-2xl font-bold text-slate-900 dark:text-slate-100">Additional Credits</h4>
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-sans">
+                Run out mid-term? Top up without changing your plan. Credits never expire.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div className="flex items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
+                <div className="space-y-0.5">
+                  <p className="text-xs font-bold text-slate-900 dark:text-slate-100 font-sans">5 Lesson Credits</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">Five more curriculum transformations</p>
+                </div>
+                <span className="font-display text-2xl font-bold text-teal-900 dark:text-teal-brand shrink-0">$4.99</span>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4">
+                <div className="space-y-0.5">
+                  <p className="text-xs font-bold text-slate-900 dark:text-slate-100 font-sans">5 Visual Credits</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-sans">Five more generated lesson visuals</p>
+                </div>
+                <span className="font-display text-2xl font-bold text-teal-900 dark:text-teal-brand shrink-0">$1.99</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

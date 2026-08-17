@@ -66,14 +66,20 @@ import { ProcessedLesson, PreloadedLesson } from "./types";
 import { useFirebase } from "./context/FirebaseContext";
 import SubscriptionModal from "./components/SubscriptionModal";
 import InteractiveSlideshow from "./components/InteractiveSlideshow";
-import AICopilot from "./components/AICopilot";
 import NanaBananaPro from "./components/NanaBananaPro";
 import { LandingPage } from "./components/LandingPage";
 
-// Official Lyrah Robot Bunny Mascot Logo
+// Official Lyrah mascot mark: the Lyra constellation the product is named
+// after. This slot held a generic sparkle icon, which said nothing about the
+// brand. The artwork is portrait (roughly 1:2), so it is fitted by height with
+// object-contain - sizing it to the square box would crop the outer stars off.
 export const RobotBunnyMascot = ({ className = "w-28 h-28" }: { className?: string }) => (
-  <div className={`flex items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500/20 via-teal-400/10 to-amber-500/20 border border-teal-brand/30 shadow-3xs ${className}`}>
-    <Sparkles className="w-1/2 h-1/2 text-teal-brand animate-pulse" />
+  <div className={`flex items-center justify-center rounded-2xl bg-gradient-to-br from-teal-500/20 via-teal-400/10 to-amber-500/20 border border-teal-brand/30 shadow-3xs p-2 ${className}`}>
+    <img
+      src="/orange-const.png"
+      alt="The Lyra constellation, Lyrah's mark"
+      className="h-full w-auto max-w-full object-contain"
+    />
   </div>
 );
 
@@ -310,7 +316,6 @@ export default function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"slides" | "lab" | "nana-banana" | "quiz" | "media">("slides");
-  const [copilotOpen, setCopilotOpen] = useState<boolean>(false);
   const [mediaSearchQuery, setMediaSearchQuery] = useState<string>("");
   const [showSubscriptionModal, setShowSubscriptionModal] = useState<boolean>(false);
   const [showPlanConfirmationModal, setShowPlanConfirmationModal] = useState<boolean>(false);
@@ -387,7 +392,7 @@ export default function App() {
           return;
         }
 
-        await subscribeUser(data.plan || "Summer STEM Special ($12.99 One-Time Fee)");
+        await subscribeUser(data.plan || "Founding Instructor ($12.99/yr)");
         setPaymentNotice({ state: "success", plan: data.plan });
         window.history.replaceState({}, document.title, window.location.pathname);
       })
@@ -470,7 +475,7 @@ export default function App() {
   const [customGradeInput, setCustomGradeInput] = useState<string>("");
   const [selectedSize, setSelectedSize] = useState<string>("15-20 kids");
   const [selectedDuration, setSelectedDuration] = useState<string>("60 mins");
-  const [selectedSupplies, setSelectedSupplies] = useState<string[]>(["Smart Board"]);
+  const [selectedSupplies, setSelectedSupplies] = useState<string[]>(["Interactive Display"]);
   const [customSuppliesInput, setCustomSuppliesInput] = useState<string>("");
 
   // Once the instructor answers one of these by hand, auto-detect stops
@@ -763,7 +768,7 @@ export default function App() {
       },
       { id: "slides", label: "Interactive Slides", icon: Layers },
       { id: "nana-banana", label: "Visual Studio", icon: Palette },
-      { id: "quiz", label: "Smartboard Quiz", icon: HelpCircle },
+      { id: "quiz", label: "Interactive Display Quiz", icon: HelpCircle },
       { id: "media", label: "Media Fixer", icon: Link2Off },
     ];
   }, [selectedCategory]);
@@ -1875,9 +1880,6 @@ export default function App() {
           
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="space-y-2.5 sm:space-y-3 max-w-2xl">
-              <span className="inline-block text-[10px] font-extrabold tracking-widest text-amber-700 dark:text-amber-400 uppercase font-sans">
-                XPRIZE · Education & Human Potential
-              </span>
               <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-slate-100 leading-tight">
                 Your AI copilot for <span className="text-teal-800 dark:text-teal-brand underline decoration-teal-brand/40 underline-offset-4">STEM lesson prep</span>
               </h1>
@@ -1951,7 +1953,7 @@ export default function App() {
                         <div className="space-y-0.5">
                           <p className="text-xs font-bold font-sans dark:text-slate-100">Upload & Generate</p>
                           <p className="text-[10px] text-secondary dark:text-slate-300 leading-normal font-sans">
-                            Seamlessly transforms raw lesson plans into interactive slides, hands-on activities, prototype carousels, and smartboard quizzes.
+                            Seamlessly transforms raw lesson plans into interactive slides, hands-on activities, prototype carousels, and interactive display quizzes.
                           </p>
                         </div>
                       </div>
@@ -3238,7 +3240,7 @@ export default function App() {
                       <div className="flex justify-between items-center border-b border-white/[0.08] pb-4 mb-4 z-10">
                         <div>
                           <span className="text-[9px] font-mono font-bold text-teal-brand uppercase tracking-widest block">CLASSROOM JEOPARDY STANDARD</span>
-                          <h4 className="text-sm font-bold text-teal-light font-sans">Smart Board Group Quiz</h4>
+                          <h4 className="text-sm font-bold text-teal-light font-sans">Interactive Display Group Quiz</h4>
                         </div>
                         <div className="flex items-center gap-3.5">
                           <span className="text-xs font-mono text-teal-light">Score: <strong className="text-teal-brand">{quizScore}</strong> / {lesson.quiz.length}</span>
@@ -3520,8 +3522,8 @@ export default function App() {
                     <Crown className="w-5 h-5 text-amber-300" />
                   </div>
                   <div>
-                    <h4 className="font-display font-bold text-base text-white">Unlock Full Access — Summer STEM Special ($12.99 one-time)</h4>
-                    <p className="text-xs text-teal-100/80 font-sans">Register and subscribe to access unlimited AI transformations, persistent Cloud Firestore lesson saving, and full curriculum suite tools.</p>
+                    <h4 className="font-display font-bold text-base text-white">Unlock Full Access — Founding Instructor ($12.99/yr)</h4>
+                    <p className="text-xs text-teal-100/80 font-sans">Register and subscribe for 25 lesson credits and 10 visual credits, persistent Cloud Firestore lesson saving, and full curriculum suite tools.</p>
                   </div>
                 </div>
                 <button
@@ -3535,7 +3537,7 @@ export default function App() {
                   }}
                   className="px-5 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-extrabold text-xs rounded-xl shadow-sm transition-all cursor-pointer shrink-0 flex items-center gap-2"
                 >
-                  <span>{user ? 'Activate Access ($12.99 one-time)' : 'Sign In & Get Access'}</span>
+                  <span>{user ? 'Activate Access ($12.99/yr)' : 'Sign In & Get Access'}</span>
                   <ArrowRight className="w-4 h-4 text-slate-950" />
                 </button>
               </div>
@@ -3805,7 +3807,7 @@ export default function App() {
                     </div>
                     <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                       <HelpIcon className="w-4 h-4 text-sky-500 shrink-0" />
-                      <span>Interactive Smartboard Quiz</span>
+                      <span>Interactive Display Quiz</span>
                     </div>
                     <div className="flex items-center gap-2 p-2 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                       <Video className="w-4 h-4 text-emerald-500 shrink-0" />
@@ -3840,83 +3842,6 @@ export default function App() {
           </div>
         )}
 
-        {/* Floating Sparkle Icon for Lyrah AI Co-Teacher Popup */}
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
-          {copilotOpen && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              transition={{ duration: 0.2 }}
-              className="w-[92vw] sm:w-[520px] max-h-[85vh] bg-white dark:bg-slate-900 rounded-3xl border border-teal-brand/30 dark:border-slate-800 shadow-2xl overflow-hidden flex flex-col mb-2"
-            >
-              {/* Modal Header */}
-              <div className="bg-teal-dark px-5 py-4 text-white flex items-center justify-between shrink-0">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-teal-brand/20 border border-teal-brand/40 overflow-hidden flex items-center justify-center shrink-0">
-                    <Sparkles className="w-4 h-4 text-teal-brand" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-bold font-sans uppercase tracking-wide">Lyrah AI Co-Teacher</h3>
-                    <p className="text-[10px] text-teal-light/80 font-sans">Active Lesson Partner & Adaptations Assistant</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setCopilotOpen(false)}
-                  className="w-8 h-8 rounded-xl hover:bg-white/10 flex items-center justify-center text-teal-light hover:text-white transition-all cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Modal Body */}
-              <div className="p-4 overflow-y-auto flex-1 bg-surface-0/30 dark:bg-slate-950/40">
-                <AICopilot 
-                  lesson={lesson} 
-                  onTriggerPaidFlow={() => {
-                    console.log("Triggering Paid Model flow via AI Studio build...");
-                    alert("Paid API Key selection dialog opened in your AI Studio build console. Please verify the active model settings.");
-                  }}
-                />
-              </div>
-            </motion.div>
-          )}
-
-          {/* Floating Action Button */}
-          <button
-            type="button"
-            onClick={() => {
-              // The copilot costs inference on every message, so it is a
-              // signed-in feature. Sending someone to sign-in is clearer than
-              // opening a panel whose first reply is a refusal.
-              if (!user) {
-                signInWithGoogle();
-                return;
-              }
-              setCopilotOpen(!copilotOpen);
-            }}
-            className={`group relative px-4 py-3.5 rounded-full font-bold text-xs shadow-xl transition-all duration-300 flex items-center gap-2.5 cursor-pointer border ${
-              copilotOpen
-                ? "bg-slate-900 text-white border-slate-700 hover:bg-slate-800"
-                : "bg-teal-dark text-white border-teal-brand/40 hover:bg-teal-brand hover:scale-105"
-            }`}
-            id="lyra-copilot-sparkle-trigger"
-          >
-            <div className="w-6 h-6 rounded-full overflow-hidden bg-teal-brand/20 border border-amber-300/60 shrink-0 flex items-center justify-center">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            </div>
-            <span className="font-sans font-bold text-xs pr-0.5">
-              {copilotOpen ? "Close Lyrah AI" : "Ask Lyrah AI"}
-            </span>
-            {!copilotOpen && (
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-400"></span>
-              </span>
-            )}
-          </button>
-        </div>
 
 
       </div>

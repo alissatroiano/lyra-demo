@@ -871,7 +871,7 @@ The ${sourceFigures.length} image(s) attached are the diagrams and photographs f
             },
             quiz: {
               type: Type.ARRAY,
-              description: "A fun 4-5 question multiple-choice checking quiz for smart-board review.",
+              description: "A fun 4-5 question multiple-choice checking quiz for interactive display review.",
               items: {
                 type: Type.OBJECT,
                 required: ["question", "options", "correctAnswerIndex", "explanation"],

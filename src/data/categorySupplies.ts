@@ -62,7 +62,7 @@ export const CATEGORY_SUPPLIES: Record<string, SupplyOption[]> = {
     { id: "Other", label: "Other", icon: "➕", description: "Custom engineering items" }
   ],
   Science: [
-    { id: "Smart Board", label: "Smart Board", icon: "🖥️", description: "Interactive classroom display" },
+    { id: "Interactive Display", label: "Interactive Display", icon: "🖥️", description: "Interactive classroom display" },
     { id: "Chromebooks / Tablets", label: "Chromebooks/Tablets", icon: "💻", description: "Digital research & virtual labs" },
     { id: "Baking Soda & Vinegar", label: "Baking Soda & Vinegar", icon: "🧪", description: "Acid-base gas reactions" },
     { id: "Test Tubes & Flasks", label: "Test Tubes & Flasks", icon: "🥼", description: "Graduated cylinders & beakers" },

@@ -29,7 +29,7 @@ artifacts ready for a classroom:
 1. **Smart Slideshow** — conceptual slides with instructor scripts and teaching guidance
 2. **Hands-On Science Lab** — staggered, kid-safe experiment checklists with material tracking
 3. **Printable Worksheets** — typeset, with a teacher answer-key toggle
-4. **Smart Board Quiz** — a Jeopardy-style team review board with explanations
+4. **Interactive Display Quiz** — a Jeopardy-style team review board with explanations
 5. **Media Link Fixer** — detects dead or private links and generates high-yield replacement search terms
 
 That last one matters more than it sounds. Broken media is the single most common reason a
