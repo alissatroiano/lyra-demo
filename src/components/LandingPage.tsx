@@ -1,5 +1,5 @@
 import React from "react";
-import { Sparkles, ArrowRight, Layers, Activity, Palette, HelpCircle, Link2Off, Check, Database, FileCode, BookOpen, LogIn, Clock, Users, Briefcase } from "lucide-react";
+import { Sparkles, ArrowRight, Layers, Activity, Palette, HelpCircle, Link2Off, Check, Database, FileCode, BookOpen, LogIn, Clock, Briefcase } from "lucide-react";
 
 interface LandingPageProps {
   onLaunchStudio: () => void;
@@ -110,11 +110,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               body: "Shared curriculum templates often contain dead URLs and outdated video links that disrupt classrooms."
             },
             {
-              icon: Users,
-              title: "Catering to neurodiverse learning",
-              body: "It's incredibly difficult to adapt a single standard lesson plan to dyslexic, ADHD, and tactile learners in the same class."
-            },
-            {
               icon: Briefcase,
               title: "Disorganized teacher notes",
               body: "Facilitator scripts and lesson modifications are often stored across separate emails, drives, and printouts."
@@ -138,14 +133,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         </div>
       </section>
 
-      {/* How Lyrah works — five steps in the order they actually run, so the
-          numbering carries real sequence rather than decoration. */}
+      {/* How Lyrah works — four steps in the order they actually run, so the
+          numbering carries real sequence rather than decoration. A fifth step
+          claimed dyslexia-friendly bionic formatting and phonetic aids, which
+          the pipeline does not produce; describing the four it does run is the
+          honest version. */}
       <section className="space-y-4" id="pipeline-section">
         <span className="text-[11px] font-mono font-bold text-amber-500  uppercase tracking-[0.18em]">
           How Lyrah works
         </span>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 font-display leading-snug text-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-display leading-snug text-lg">
           {[
             {
               icon: FileCode,
@@ -170,12 +168,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               tint: "text-teal-brand",
               title: "Layout Generation",
               body: "Assembles beautifully structured slide decks, teaching scripts, and gamified quizzes."
-            },
-            {
-              icon: Activity,
-              tint: "text-teal-brand",
-              title: "Student Adaptation",
-              body: "Applies dyslexia-friendly bionic formatting and phonetic aids to the outputs."
             }
           ].map(({ icon: Icon, tint, title, body }, i) => (
             <div
